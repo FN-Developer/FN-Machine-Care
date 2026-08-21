@@ -2747,9 +2747,17 @@ const UI = {
    This is a DIFFERENT project from FN-ERP-System. The two
    databases share nothing.
 
-   Still to do by hand, once per technician:
-   Firebase console → Authentication → Users → Add user.
-   Only accounts that exist there can read or write anything.
+   Sign-in  Anonymous — the tablet asks Firebase for a guest identity
+            on load. Nobody types anything, which is how the ERP works
+            too. The rules require an identity, so a stray crawler with
+            no Firebase client gets nothing.
+
+   Be honest about what that does and does not buy you: this page is
+   public, so anyone who reads the source can ask for a guest identity
+   of their own. The rules below stop a single call from wiping the
+   history, but they cannot tell a technician's tablet from a stranger's
+   browser. If the service records ever need real protection, switch to
+   Email/Password and give each technician an account.
 
    ── Why the keys below are safe to publish ───────────────────
    A Firebase web config is an address, not a password. It is meant
@@ -2845,7 +2853,12 @@ const FNCloud = (function () {
         } else {
           watching = false;
           seeded = false;
-          setStatus('signin');
+          /* Nobody types anything. The tablet asks Firebase for a guest
+             identity and the rules accept it — the same arrangement the
+             ERP uses. Anonymous accounts are cleaned up after 30 days,
+             so this also runs when an old one expires; the records live
+             under /records, not under the account, so nothing is lost. */
+          signInGuest();
         }
       });
 
@@ -2858,16 +2871,29 @@ const FNCloud = (function () {
     }
   }
 
-  /* ---------- sign in / out ---------- */
+  /* ---------- sign in ---------- */
 
-  async function signIn(email, password) {
-    if (!state.ready) throw new Error('not ready');
-    await api.authMod.signInWithEmailAndPassword(api.auth, email.trim(), password);
-  }
+  let guestTries = 0;
 
-  async function signOut() {
+  async function signInGuest() {
     if (!state.ready) return;
-    await api.authMod.signOut(api.auth);
+    setStatus('connecting');
+    try {
+      await api.authMod.signInAnonymously(api.auth);
+      guestTries = 0;
+    } catch (err) {
+      console.error('[FN cloud] guest sign-in refused:', err);
+      /* Almost always the tablet being off the network. Back off and try
+         again rather than sitting there dead — but never block the app,
+         which is still perfectly usable on its own storage. */
+      if (guestTries < 5) {
+        guestTries++;
+        setTimeout(signInGuest, Math.min(30000, 2000 * Math.pow(2, guestTries)));
+        setStatus('connecting');
+      } else {
+        setStatus('offline', 'Could not reach the shared database — working on this device only.');
+      }
+    }
   }
 
   /* ---------- data ---------- */
@@ -2976,7 +3002,7 @@ const FNCloud = (function () {
   }
 
   return {
-    init, signIn, signOut, push, removeRecord, onChange, configured,
+    init, push, removeRecord, onChange, configured,
     get state() { return state; },
   };
 })();
@@ -6054,7 +6080,6 @@ const FNCloud = (function () {
 
   function cloudLabel(st) {
     if (st.status === 'live') return { en: 'Synced', th: 'ซิงก์แล้ว' };
-    if (st.status === 'signin') return { en: 'Sign in to sync', th: 'เข้าสู่ระบบเพื่อซิงก์' };
     if (st.status === 'connecting') return { en: 'Connecting…', th: 'กำลังเชื่อมต่อ…' };
     if (st.status === 'offline') return { en: 'This device only', th: 'เฉพาะเครื่องนี้' };
     if (st.status === 'error') return { en: 'Sync problem', th: 'ซิงก์มีปัญหา' };
@@ -6073,64 +6098,25 @@ const FNCloud = (function () {
     host.appendChild(el('span', { class: 'cloud-dot' }));
     host.appendChild(el('span', { class: 'cloud-text', text: T(cloudLabel(st)) }));
 
-    if (st.signedIn && st.user) {
-      host.title = st.user.email;
-      host.appendChild(el('button', {
-        class: 'cloud-out',
-        title: T({ en: 'Sign out', th: 'ออกจากระบบ' }),
-        onclick: () => FNCloud.signOut(),
-        text: '⏻',
-      }));
-    } else if (st.status === 'signin') {
-      host.appendChild(el('button', {
-        class: 'cloud-out',
-        onclick: () => openSignIn(),
-        text: '→',
-      }));
-    }
+    /* Sign-in is automatic, so the badge is a status light, not a
+       control. Nothing here for a technician to press or get wrong. */
+    host.title = T(cloudTitle(st));
   }
 
-  function openSignIn() {
-    const email = el('input', { type: 'email', autocomplete: 'username', placeholder: 'name@company.com' });
-    const pass = el('input', { type: 'password', autocomplete: 'current-password', placeholder: '••••••••' });
-    const err = el('div', { class: 'modal-error', style: 'display:none' });
-    let busy = false;
-
-    const m = modal({
-      title: { en: 'Sign in to sync', th: 'เข้าสู่ระบบเพื่อซิงก์' },
-      note: { en: 'Your work is already saved on this device. Signing in shares it with the other tablets.',
-              th: 'งานของคุณบันทึกในเครื่องนี้แล้ว การเข้าสู่ระบบจะแชร์ให้แท็บเล็ตเครื่องอื่นด้วย' },
-      body: [
-        err,
-        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Email', th: 'อีเมล' })]), email]),
-        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Password', th: 'รหัสผ่าน' })]), pass]),
-      ],
-      confirmLabel: { en: 'Sign in', th: 'เข้าสู่ระบบ' },
-      onConfirm: () => {
-        if (busy) return false;
-        const e = email.value.trim(), p = pass.value;
-        if (!e || !p) {
-          err.style.display = '';
-          err.textContent = T({ en: 'Email and password are both needed.', th: 'ต้องกรอกทั้งอีเมลและรหัสผ่าน' });
-          return false;
-        }
-        busy = true;
-        FNCloud.signIn(e, p)
-          .then(() => { busy = false; m.close(); toast(T({ en: 'Signed in', th: 'เข้าสู่ระบบแล้ว' })); })
-          .catch((ex) => {
-            busy = false;
-            err.style.display = '';
-            err.textContent = /password|credential|user-not-found/i.test(String(ex && ex.code))
-              ? T({ en: 'That email and password do not match.', th: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' })
-              : T({ en: 'Could not sign in. Check the connection and try again.', th: 'เข้าสู่ระบบไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองใหม่' });
-          });
-        return false;   /* the modal closes only on success */
-      },
-    });
-    [email, pass].forEach((i) => i.addEventListener('keydown', (ev) => {
-      if (ev.key === 'Enter') $('.modal-foot .btn-primary').click();
-    }));
-    setTimeout(() => email.focus(), 60);
+  function cloudTitle(st) {
+    if (st.status === 'live') {
+      return { en: 'Records are shared with the other tablets.',
+               th: 'ข้อมูลถูกแชร์กับแท็บเล็ตเครื่องอื่นแล้ว' };
+    }
+    if (st.status === 'connecting') {
+      return { en: 'Connecting to the shared database…', th: 'กำลังเชื่อมต่อฐานข้อมูลกลาง…' };
+    }
+    if (st.status === 'error') {
+      return { en: st.message || 'The shared database refused this tablet.',
+               th: 'ฐานข้อมูลกลางปฏิเสธเครื่องนี้' };
+    }
+    return { en: 'No connection. Your work is safe on this tablet and will sync when the signal returns.',
+             th: 'ไม่มีการเชื่อมต่อ งานถูกเก็บไว้ในเครื่องนี้และจะซิงก์เมื่อสัญญาณกลับมา' };
   }
 
   function startCloud() {

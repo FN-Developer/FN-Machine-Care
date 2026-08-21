@@ -167,28 +167,34 @@ On top of that sits an optional shared database. When a technician is signed in,
 |---|---|
 | Firebase project | **FN-Service-System** — `fn.developer26@gmail.com` |
 | Realtime Database | `asia-southeast1` (Singapore) |
-| Sign-in | Email / password |
+| Sign-in | Anonymous — automatic, nobody types anything |
 
 This is a **separate project from FN-ERP-System**. The two databases share nothing: no data, no accounts, no rules. Wiping one cannot touch the other.
 
-### Adding a technician
+### There is nothing to set up on a tablet
 
-1. Firebase console → **Authentication → Users → Add user**
-2. Enter their work email and a password, hand it to them
-3. On the tablet: sidebar → the cloud badge → sign in, once. It stays signed in.
+Open the page. That's it. The app asks Firebase for a guest identity in the background and the rules accept it. No accounts to create, no passwords to hand out, nothing for a technician to get wrong at 7am in a customer's plant room — the same arrangement the ERP uses.
 
-Only accounts that exist there can read or write anything. Remove someone from that list and their tablet drops back to local-only on the next launch — the records already on it stay readable.
+Guest identities are cleaned up after 30 days. When one expires the app quietly asks for another; records live under `/records`, not under the identity, so nothing is lost.
 
-### Why the keys in `index.html` are not a leak
+### What this protects against, and what it does not
 
-A Firebase web config is an **address, not a password** — it is designed to ship inside the page. What actually guards the data is `database.rules.json`, which denies every read and write to anyone who is not signed in:
+Be clear-eyed about it. This page is **public**. Anyone who reads the source can ask for a guest identity of their own, and the database cannot tell their browser from a technician's tablet.
+
+What the rules still buy you:
 
 ```json
-{ "rules": { ".read": false, ".write": false,
-    "records": { ".read": "auth != null", ".write": "auth != null" } } }
+"records": {
+  ".write": false,                              // the collection itself cannot be written
+  "$recordId": { ".write": "auth != null" }     // only one record at a time
+}
 ```
 
-A service-account key is a different animal entirely: it bypasses every rule. **Never put one in this repo.**
+Wiping the service history would take one delete per record rather than a single call, and a random crawler — which carries no Firebase client at all — gets nothing. That is the honest extent of it.
+
+**If these records ever need real protection** — a customer contract demands it, or the history becomes something you would be hurt to lose — switch the sign-in method to Email/Password and give each technician an account. The rules do not change; only `signInAnonymously` becomes `signInWithEmailAndPassword`.
+
+A Firebase web config is an **address, not a password**; it is meant to ship inside the page. A service-account key is a different animal entirely — it bypasses every rule. **Never put one in this repo.**
 
 ---
 
@@ -199,7 +205,7 @@ The whole application is **one self-contained file** — no build step, no depen
 ```
 FN-Machine-Care/
 ├── index.html            The entire app — HTML + CSS + JavaScript in one file
-├── database.rules.json   Firebase security rules — deny by default
+├── database.rules.json   Firebase security rules — deny by default, no bulk writes
 ├── firebase.json         Points the CLI at those rules
 ├── example-data/         69 sample records across 5 customers
 └── README.md
