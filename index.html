@@ -29,25 +29,25 @@
   color-scheme: light;
 
   /* Environment behind the glass */
-  --env-1: #dfe7f7;
-  --env-2: #eef1f8;
-  --orb-a: rgba(10, 132, 255, .20);
-  --orb-b: rgba(191, 90, 243, .13);
-  --orb-c: rgba(48, 209, 88, .08);
+  --env-1: #c6d3ea;
+  --env-2: #dae2f0;
+  --orb-a: rgba(10, 132, 255, .16);
+  --orb-b: rgba(191, 90, 243, .10);
+  --orb-c: rgba(48, 209, 88, .07);
 
   /* Glass surfaces — layered by elevation */
-  --glass:        rgba(255, 255, 255, .66);
-  --glass-raised: rgba(255, 255, 255, .80);
-  --glass-bar:    rgba(250, 251, 254, .975);
-  --glass-drawer: rgba(247, 249, 253, .97);
-  --glass-sunken: rgba(255, 255, 255, .38);
-  --glass-hover:  rgba(255, 255, 255, .88);
+  --glass:        rgba(253, 254, 255, .58);
+  --glass-raised: rgba(253, 254, 255, .72);
+  --glass-bar:    rgba(246, 249, 253, .96);
+  --glass-drawer: rgba(244, 247, 252, .96);
+  --glass-sunken: rgba(255, 255, 255, .26);
+  --glass-hover:  rgba(255, 255, 255, .80);
 
   /* Edges: a bright specular rim above, a soft shadow below */
-  --edge:       rgba(255, 255, 255, .75);
-  --edge-quiet: rgba(9, 20, 48, .10);
-  --hairline:   rgba(9, 20, 48, .09);
-  --hairline-soft: rgba(9, 20, 48, .05);
+  --edge:       rgba(255, 255, 255, .70);
+  --edge-quiet: rgba(9, 20, 48, .12);
+  --hairline:   rgba(9, 20, 48, .12);
+  --hairline-soft: rgba(9, 20, 48, .07);
 
   --lift-1: 0 1px 2px rgba(12, 24, 56, .06), 0 6px 18px rgba(12, 24, 56, .07);
   --lift-2: 0 2px 6px rgba(12, 24, 56, .08), 0 18px 44px rgba(12, 24, 56, .12);
@@ -74,6 +74,13 @@
   --brand: var(--accent-blue);
 
   /* Wordmark: base ink, and the light that travels through it */
+  /* Chart series — validated with the dataviz palette checker against
+     this theme's surface: lightness band, chroma floor, colour-blind
+     separation (ΔE 27.8 protan) and 3:1 contrast all pass. Dark mode
+     uses its own steps, not a flip of these. */
+  --series-1: #1d6fd4;
+  --series-2: #c2410c;
+
   --scroll-thumb:       rgba(9, 20, 48, .26);
   --scroll-thumb-hover: rgba(9, 20, 48, .42);
 
@@ -142,6 +149,9 @@
 
   --field:       rgba(10, 14, 24, .55);
   --field-focus: rgba(10, 14, 24, .82);
+
+  --series-1: #2f80e0;
+  --series-2: #c9702a;
 
   --scroll-thumb:       rgba(255, 255, 255, .22);
   --scroll-thumb-hover: rgba(255, 255, 255, .38);
@@ -272,12 +282,13 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   box-shadow: var(--lift-2), var(--specular);
 }
 
-.brand { padding: 22px 20px 18px; border-bottom: 1px solid var(--hairline-soft); }
+.brand { padding: 24px 18px 20px; border-bottom: 1px solid var(--hairline-soft); }
+.brand-sub { text-align: center; }
 .brand-mark {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  gap: 13px;
   white-space: nowrap;
 }
 
@@ -289,7 +300,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 .brand-logo {
   position: relative;
-  width: 36px; height: 36px;
+  width: 50px; height: 50px;
   flex: 0 0 auto;
   border-radius: 11px;
   background: linear-gradient(140deg, var(--accent-blue), var(--accent-violet));
@@ -300,6 +311,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   isolation: isolate;
 }
 .brand-logo span { position: relative; z-index: 2; }
+.brand-logo { border-radius: 15px; font-size: 18px; }
 
 /* Orbiting rim highlight */
 .brand-logo::before {
@@ -587,6 +599,203 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
   font-variant-numeric: tabular-nums;
 }
 .stat-label { font-size: 13.5px; color: var(--text-dim); margin-top: 6px; line-height: 1.45; }
+
+/* ---------------- Panel ---------------- */
+
+.panel {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-window);
+  box-shadow: var(--lift-1), var(--specular);
+  overflow: hidden;
+}
+.panel-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  padding: 20px 22px 16px;
+  border-bottom: 1px solid var(--hairline-soft);
+}
+.panel-title { margin: 0; font-size: 19px; font-weight: 650; letter-spacing: -.02em; }
+.panel-sub { margin-top: 6px; font-size: 14px; color: var(--text-dim); line-height: 1.6; max-width: 62ch; }
+.panel-body { padding: 20px 22px; }
+.panel-body + .panel-body { border-top: 1px solid var(--hairline-soft); }
+.sub-title { margin: 0 0 6px; font-size: 15px; font-weight: 650; letter-spacing: -.015em; }
+
+/* ---------------- Bar chart ---------------- */
+
+.chart { width: 100%; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 18px; }
+.legend-item { display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--text-dim); }
+.legend-swatch { width: 12px; height: 12px; border-radius: 3px; flex: 0 0 auto; }
+
+.chart-plot { position: relative; padding: 22px 0 0 34px; }
+
+.chart-grid { position: absolute; inset: 22px 0 46px 34px; pointer-events: none; }
+.grid-line {
+  position: absolute; left: 0; right: 0;
+  border-top: 1px solid var(--hairline-soft);
+}
+.grid-label {
+  position: absolute; right: 100%; top: -.62em;
+  padding-right: 9px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-track {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  height: 236px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 46px;
+}
+
+.bar-group {
+  flex: 1 1 0;
+  min-width: 68px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: stretch;
+  height: 100%;
+  padding: 0 2px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
+  cursor: default;
+  font: inherit;
+  color: inherit;
+  position: relative;
+}
+.bar-group.is-clickable { cursor: pointer; }
+.bar-group:hover { background: var(--glass-hover); }
+.bar-group:focus-visible { outline: 2.5px solid var(--accent-blue); outline-offset: 1px; }
+
+.bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;              /* the 2px surface gap between adjacent fills */
+  height: 100%;
+  padding-top: 18px;
+}
+/* A bottom-aligned column, so the value label rides directly on top of
+   its bar instead of floating at the top of the plot. */
+.bar-slot {
+  flex: 1 1 0;
+  max-width: 42px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+.bar {
+  display: block;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;   /* rounded data-end, square on the baseline */
+  transition: filter .16s ease;
+}
+.bar-group:hover .bar { filter: brightness(1.08); }
+.bar-value {
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+  line-height: 1;
+  margin-bottom: 5px;
+  pointer-events: none;
+}
+
+.bar-label {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  margin-top: 9px;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+.bar-sub {
+  position: absolute;
+  top: 100%; left: 0; right: 0;
+  margin-top: 26px;
+  font-size: 11px;
+  color: var(--text-faint);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  text-align: center;
+}
+
+.chart-tip {
+  position: absolute;
+  bottom: 58px;
+  transform: translateX(-50%) translateY(6px);
+  min-width: 158px;
+  padding: 10px 13px;
+  background: var(--glass-bar);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-ctl);
+  box-shadow: var(--lift-2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .16s ease, transform .16s ease;
+  z-index: 5;
+}
+.chart-tip.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.tip-title { font-weight: 650; font-size: 13.5px; margin-bottom: 2px; }
+.tip-sub { font-size: 11.5px; color: var(--text-faint); margin-bottom: 7px; }
+.tip-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 4px; }
+.tip-key { color: var(--text-dim); flex: 1; }
+.tip-val { font-weight: 650; font-variant-numeric: tabular-nums; }
+
+/* ---------------- Summary cards ---------------- */
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 20px 22px;
+  border-top: 1px solid var(--hairline-soft);
+}
+.summary-card { padding: 18px; }
+.summary-note { font-size: 13px; color: var(--text-dim); line-height: 1.55; margin-bottom: 14px; }
+.summary-empty { font-size: 13.5px; color: var(--text-faint); padding: 10px 0; }
+.summary-list { display: flex; flex-direction: column; gap: 10px; }
+.summary-row { display: grid; grid-template-columns: minmax(96px, 40%) 1fr 30px; gap: 12px; align-items: center; }
+.summary-label { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.summary-meter {
+  height: 8px;
+  background: var(--glass-sunken);
+  border: 1px solid var(--hairline-soft);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.summary-fill { display: block; height: 100%; background: var(--series-2); border-radius: 999px; }
+.summary-count { font-size: 13.5px; font-weight: 650; text-align: right; font-variant-numeric: tabular-nums; }
+
+.cause-chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--series-2) 16%, transparent);
+  color: var(--series-2);
+  border: 1px solid color-mix(in srgb, var(--series-2) 34%, transparent);
+}
 
 /* ---------------- New-form stage groups ----------------
    Two questions, not four cards: is the machine still on our floor,
@@ -1286,6 +1495,9 @@ tbody tr.clickable { cursor: pointer; }
   .toolbar { top: 4px; }
   .page-title { font-size: 25px; }
 
+  .panel-head, .panel-body, .summary-grid { padding-left: 16px; padding-right: 16px; }
+  .chart-track { gap: 8px; }
+  .bar-group { min-width: 62px; }
   .check-row { grid-template-columns: 1fr; gap: 9px; }
   .perf-row, .measure-row { grid-template-columns: 1fr; }
   .ba-grid { grid-template-columns: 1fr; }
@@ -1340,7 +1552,7 @@ tbody tr.clickable { cursor: pointer; }
     color: #000 !important;
     font-size: 10.5pt;
   }
-  .ambient, .sidebar, .toolbar, .no-print, .nav, .btn,
+  .chart-tip, .ambient, .sidebar, .toolbar, .no-print, .nav, .btn,
   .mobile-bar, .scrim, .menu-toggle,
   .photo-actions, .sign-foot { display: none !important; }
 
@@ -2439,6 +2651,108 @@ const UI = {
     return Array.from(map.values()).sort((a, b) => a.workNo.localeCompare(b.workNo));
   }
 
+  /* ---------------- Service analytics ----------------
+     Everything the dashboard charts is derived from the records on
+     the fly — there is no separate analytics store to fall out of
+     sync with the forms. */
+
+  function serviceRecords(records) {
+    return records.filter((r) => r.type === 'SERVICE');
+  }
+
+  /* One row per customer: how many machines we have there, and how
+     many times we have been called out. */
+  function customerStats() {
+    const map = new Map();
+    db.records.forEach((r) => {
+      const name = (r.fields.customer || '').trim();
+      const key = name || '—';
+      if (!map.has(key)) map.set(key, { customer: key, machines: new Set(), services: 0, records: [] });
+      const e = map.get(key);
+      const mk = machineKey(r);
+      if (mk) e.machines.add(mk);
+      if (r.type === 'SERVICE') e.services++;
+      e.records.push(r);
+    });
+    return Array.from(map.values())
+      .map((e) => Object.assign(e, { machineCount: e.machines.size }))
+      .sort((a, b) => b.services - a.services || b.machineCount - a.machineCount || a.customer.localeCompare(b.customer));
+  }
+
+  /* One row per machine inside a customer. */
+  function machineStatsFor(customerName) {
+    const map = new Map();
+    db.records.forEach((r) => {
+      if (((r.fields.customer || '').trim() || '—') !== customerName) return;
+      const mk = machineKey(r);
+      if (!mk) return;
+      if (!map.has(mk)) {
+        map.set(mk, { key: mk, label: '', workNo: r.fields.workNo || '', serialNo: r.fields.serialNo || '', services: 0, records: [] });
+      }
+      const e = map.get(mk);
+      e.records.push(r);
+      if (r.type === 'SERVICE') e.services++;
+      if (r.fields.machineName) e.label = r.fields.machineName;
+      if (r.fields.workNo) e.workNo = r.fields.workNo;
+      if (r.fields.serialNo) e.serialNo = r.fields.serialNo;
+    });
+    return Array.from(map.values())
+      .map((e) => Object.assign(e, { label: e.label || e.workNo || e.serialNo || '—' }))
+      .sort((a, b) => b.services - a.services || a.label.localeCompare(b.label));
+  }
+
+  /* Lookup tables pulled straight from the service form definition, so
+     renaming a category there renames it here too. */
+  function serviceTypeOptions() {
+    const sec = FORM_BY_TYPE.SERVICE.sections.find((x) => x.type === 'fields');
+    const fld = sec && sec.fields.find((x) => x.key === 'serviceType');
+    return (fld && fld.options) || [];
+  }
+
+  function rootCauseOptions() {
+    const sec = FORM_BY_TYPE.SERVICE.sections.find((x) => x.type === 'rootcause');
+    return (sec && sec.categories) || [];
+  }
+
+  /* How many visits of each kind. */
+  function serviceTypeBreakdown(records) {
+    const opts = serviceTypeOptions();
+    const counts = {};
+    serviceRecords(records).forEach((r) => {
+      const v = r.fields.serviceType || 'unspecified';
+      counts[v] = (counts[v] || 0) + 1;
+    });
+    const rows = opts
+      .map((o) => ({ value: o.value, label: o.label, count: counts[o.value] || 0 }))
+      .filter((row) => row.count > 0);
+    if (counts.unspecified) {
+      rows.push({ value: 'unspecified', label: { en: 'Not specified', th: 'ไม่ได้ระบุ' }, count: counts.unspecified });
+    }
+    return rows.sort((a, b) => b.count - a.count);
+  }
+
+  /* The question a service manager actually asks: what keeps going
+     wrong on this machine? Counted from the root-cause categories the
+     technicians ticked, not from free text. */
+  function recurringCauses(records) {
+    const opts = rootCauseOptions();
+    const byCode = {};
+    opts.forEach((o) => { byCode[o.code] = o.label; });
+
+    const counts = {};
+    serviceRecords(records).forEach((r) => {
+      const seen = new Set();
+      Object.values(r.rootcause || {}).forEach((rc) => {
+        (rc.selected || []).forEach((code) => seen.add(code));
+      });
+      seen.forEach((code) => { counts[code] = (counts[code] || 0) + 1; });
+    });
+
+    return Object.keys(counts)
+      .map((code) => ({ code, label: byCode[code] || { en: code, th: code }, count: counts[code] }))
+      .sort((a, b) => b.count - a.count);
+  }
+
   /* Completion: how many check items have an answer */
   function sectionProgress(record, section) {
     if (section.type !== 'checklist' && section.type !== 'condition') return null;
@@ -2552,7 +2866,7 @@ const UI = {
 
   /* ---------------- Router ---------------- */
 
-  const state = { view: 'dashboard', recordId: null, machineKey: null, search: '' };
+  const state = { view: 'dashboard', recordId: null, machineKey: null, search: '', customer: null };
 
   /* The URL hash carries the current view so a tablet refresh — or a
      browser crash mid-inspection — returns to the same form. */
@@ -2588,6 +2902,7 @@ const UI = {
 
   function go(view, opts) {
     closeNav();
+    if (view !== 'dashboard') state.customer = null;
     state.view = view;
     state.recordId = (opts && opts.recordId) || null;
     state.machineKey = (opts && opts.machineKey) || null;
@@ -2714,18 +3029,338 @@ const UI = {
     });
     root.appendChild(grid);
 
-    /* Quick start */
-    root.appendChild(el('h2', { style: 'font-size:16px;margin:22px 0 12px' }, [L({ en: 'Start a new form', th: 'เริ่มเอกสารใหม่' })]));
-    root.appendChild(typeCards());
-
-    /* Recent */
-    root.appendChild(el('h2', { style: 'font-size:16px;margin:26px 0 12px' }, [L({ en: 'Recent activity', th: 'ความเคลื่อนไหวล่าสุด' })]));
-    const recent = recs.slice().sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1)).slice(0, 8);
-    root.appendChild(recent.length ? recordTable(recent) : el('div', { class: 'empty' }, [L(UI.noRecords)]));
+    root.appendChild(customerPanel());
   }
 
-  /* Grouped by where the machine physically is, because that is the
-     first thing the person filling this in already knows. */
+  /* ---------------- Customer / machine drill-down ---------------- */
+
+  function customerPanel() {
+    const drilled = state.customer;
+    const panel = el('section', { class: 'panel' });
+
+    /* --- header + breadcrumb --- */
+    const head = el('header', { class: 'panel-head' });
+    const heading = el('div', {}, [
+      el('h2', { class: 'panel-title' }, [
+        drilled
+          ? el('span', { text: drilled })
+          : L({ en: 'Customers', th: 'ลูกค้า' }),
+      ]),
+      el('div', { class: 'panel-sub' }, [
+        L(drilled
+          ? { en: 'Machines at this customer, and how often we have been called out to each.',
+              th: 'เครื่องจักรที่ลูกค้ารายนี้ และจำนวนครั้งที่เราเข้าบริการแต่ละเครื่อง' }
+          : { en: 'Machines installed and service visits, per customer. Tap a customer to open its machines.',
+              th: 'จำนวนเครื่องที่ติดตั้งและครั้งที่เข้าบริการ แยกตามลูกค้า แตะที่ลูกค้าเพื่อดูรายเครื่อง' }),
+      ]),
+    ]);
+    head.appendChild(heading);
+    if (drilled) {
+      head.appendChild(
+        el('button', {
+          class: 'btn btn-sm',
+          onclick: () => { state.customer = null; render(); },
+        }, [L({ en: '← All customers', th: '← ลูกค้าทั้งหมด' })])
+      );
+    }
+    panel.appendChild(head);
+
+    const body = el('div', { class: 'panel-body' });
+
+    let scopeRecords;
+
+    if (!drilled) {
+      const rows = customerStats().map((c) => ({
+        id: c.customer,
+        label: c.customer,
+        values: { machines: c.machineCount, services: c.services },
+      }));
+      body.appendChild(
+        barChart(rows, {
+          dimensionLabel: { en: 'Customer', th: 'ลูกค้า' },
+          emptyLabel: { en: 'No customers yet — fill in the Customer field on any form.',
+                        th: 'ยังไม่มีลูกค้า กรอกช่อง “ลูกค้า” ในเอกสารใดก็ได้' },
+          onSelect: (row) => { state.customer = row.id; render(); },
+        })
+      );
+      scopeRecords = db.records;
+    } else {
+      const rows = machineStatsFor(drilled).map((m) => ({
+        id: m.key,
+        label: m.label,
+        sub: [m.workNo, m.serialNo].filter(Boolean).join(' · '),
+        values: { services: m.services },
+      }));
+      body.appendChild(
+        barChart(rows, {
+          series: [{ key: 'services', label: { en: 'Service visits', th: 'ครั้งที่เข้าบริการ' }, varName: '--series-2' }],
+          dimensionLabel: { en: 'Machine', th: 'เครื่องจักร' },
+          emptyLabel: { en: 'No machines recorded for this customer yet.', th: 'ยังไม่มีเครื่องจักรของลูกค้ารายนี้' },
+          onSelect: (row) => go('machine', { machineKey: row.id }),
+        })
+      );
+      scopeRecords = db.records.filter((r) => ((r.fields.customer || '').trim() || '—') === drilled);
+    }
+
+    panel.appendChild(body);
+
+    /* --- what kind of work, and what keeps breaking --- */
+    const services = serviceRecords(scopeRecords);
+    const summaries = el('div', { class: 'summary-grid' });
+
+    summaries.appendChild(summaryCard(
+      { en: 'Service by type', th: 'ประเภทงานบริการ' },
+      { en: 'What we were called out to do.', th: 'ลักษณะงานที่เราถูกเรียกเข้าไปทำ' },
+      serviceTypeBreakdown(scopeRecords),
+      { en: 'No service visits recorded yet.', th: 'ยังไม่มีการบันทึกการเข้าบริการ' }
+    ));
+
+    summaries.appendChild(summaryCard(
+      { en: 'What keeps going wrong', th: 'ปัญหาที่เกิดซ้ำ' },
+      { en: 'Root causes the technicians ticked, most frequent first.', th: 'สาเหตุที่ช่างระบุไว้ เรียงจากที่พบบ่อยที่สุด' },
+      recurringCauses(scopeRecords),
+      { en: 'No root causes recorded yet.', th: 'ยังไม่มีการบันทึกสาเหตุ' }
+    ));
+
+    panel.appendChild(summaries);
+
+    /* --- per machine: its usual complaint --- */
+    if (drilled) {
+      const machines = machineStatsFor(drilled).filter((m) => m.services > 0);
+      if (machines.length) {
+        const wrap = el('div', { class: 'panel-body' });
+        wrap.appendChild(el('h3', { class: 'sub-title' }, [
+          L({ en: 'Usual problem, machine by machine', th: 'ปัญหาประจำของแต่ละเครื่อง' }),
+        ]));
+        const tw = el('div', { class: 'table-wrap' });
+        const t = el('table');
+        t.appendChild(el('thead', {}, el('tr', {}, [
+          el('th', {}, [L({ en: 'Machine', th: 'เครื่องจักร' })]),
+          el('th', {}, [L({ en: 'Visits', th: 'ครั้ง' })]),
+          el('th', {}, [L({ en: 'Most common cause', th: 'สาเหตุที่พบบ่อยที่สุด' })]),
+        ])));
+        const tb = el('tbody');
+        machines.forEach((m) => {
+          const causes = recurringCauses(m.records);
+          const top = causes[0];
+          tb.appendChild(el('tr', { class: 'clickable', onclick: () => go('machine', { machineKey: m.key }) }, [
+            el('td', { html: `<strong>${escapeHTML(m.label)}</strong>` +
+              `<div style="font-size:12.5px;color:var(--text-dim)">${escapeHTML([m.workNo, m.serialNo].filter(Boolean).join(' · '))}</div>` }),
+            el('td', { text: String(m.services) }),
+            el('td', {}, top
+              ? el('span', {}, [
+                  el('span', { class: 'cause-chip', text: T(top.label) }),
+                  el('span', { style: 'color:var(--text-dim);font-size:12.5px;margin-left:8px',
+                               text: `× ${top.count}` + (causes.length > 1 ? ` · +${causes.length - 1}` : '') }),
+                ])
+              : el('span', { style: 'color:var(--text-faint)', text: '—' })),
+          ]));
+        });
+        t.appendChild(tb);
+        tw.appendChild(t);
+        wrap.appendChild(tw);
+        panel.appendChild(wrap);
+      }
+    }
+
+    /* --- the service reports themselves --- */
+    const listWrap = el('div', { class: 'panel-body' });
+    listWrap.appendChild(el('h3', { class: 'sub-title' }, [
+      L({ en: 'Service reports', th: 'รายงานการเข้าบริการ' }),
+    ]));
+    listWrap.appendChild(
+      services.length
+        ? recordTable(services.slice().sort((a, b) => (primaryDate(b) > primaryDate(a) ? 1 : -1)))
+        : el('div', { class: 'empty' }, [L({ en: 'No service reports in this view.', th: 'ยังไม่มีรายงานการเข้าบริการในมุมมองนี้' })])
+    );
+    panel.appendChild(listWrap);
+
+    return panel;
+  }
+
+  /* A labelled count list with a proportional bar behind each row. */
+  function summaryCard(title, note, rows, emptyLabel) {
+    const card = el('div', { class: 'card summary-card' });
+    card.appendChild(el('h3', { class: 'sub-title' }, [L(title)]));
+    card.appendChild(el('div', { class: 'summary-note' }, [L(note)]));
+
+    if (!rows.length) {
+      card.appendChild(el('div', { class: 'summary-empty' }, [L(emptyLabel)]));
+      return card;
+    }
+    const max = Math.max(...rows.map((r) => r.count));
+    const list = el('div', { class: 'summary-list' });
+    rows.forEach((r) => {
+      list.appendChild(
+        el('div', { class: 'summary-row' }, [
+          el('span', { class: 'summary-label', text: T(r.label) }),
+          el('span', { class: 'summary-meter' }, [
+            el('span', { class: 'summary-fill', style: `width:${(r.count / max) * 100}%` }),
+          ]),
+          el('span', { class: 'summary-count', text: String(r.count) }),
+        ])
+      );
+    });
+    card.appendChild(list);
+    return card;
+  }
+
+  /* ---------------- Bar chart ----------------
+     Built from plain elements, not a library: each bar is a real
+     button, so it is keyboard reachable and screen-reader readable,
+     and a table view sits behind a toggle for anyone who would rather
+     read the numbers.
+
+     Series colours were validated with the dataviz palette checker
+     (lightness band, chroma, colour-blind separation, contrast) for
+     both themes — hence two different pairs rather than one flipped. */
+
+  const SERIES = [
+    { key: 'machines', label: { en: 'Machines', th: 'จำนวนเครื่อง' }, varName: '--series-1' },
+    { key: 'services', label: { en: 'Service visits', th: 'ครั้งที่เข้าบริการ' }, varName: '--series-2' },
+  ];
+
+  function niceCeil(v) {
+    if (v <= 5) return Math.max(v, 1);
+    const pow = Math.pow(10, Math.floor(Math.log10(v)));
+    return Math.ceil(v / (pow / 2)) * (pow / 2);
+  }
+
+  /* rows: [{ id, label, sub, values: {machines, services}, onClick }] */
+  function barChart(rows, opts) {
+    const options = opts || {};
+    const series = options.series || SERIES;
+    const box = el('div', { class: 'chart' });
+
+    if (!rows.length) {
+      box.appendChild(el('div', { class: 'empty' }, [L(options.emptyLabel || UI.noRecords)]));
+      return box;
+    }
+
+    /* Legend — always present for two or more series */
+    if (series.length > 1) {
+      const legend = el('div', { class: 'legend' });
+      series.forEach((sr) => {
+        legend.appendChild(
+          el('span', { class: 'legend-item' }, [
+            el('span', { class: 'legend-swatch', style: `background:var(${sr.varName})` }),
+            L(sr.label),
+          ])
+        );
+      });
+      box.appendChild(legend);
+    }
+
+    const max = niceCeil(Math.max(1, ...rows.map((r) => Math.max(...series.map((sr) => r.values[sr.key] || 0)))));
+    const ticks = 4;
+
+    const plot = el('div', { class: 'chart-plot' });
+
+    /* Recessive gridlines with their value on the axis */
+    const grid = el('div', { class: 'chart-grid' });
+    for (let i = 0; i <= ticks; i++) {
+      const v = Math.round((max / ticks) * i);
+      grid.appendChild(
+        el('div', { class: 'grid-line', style: `bottom:${(i / ticks) * 100}%` }, [
+          el('span', { class: 'grid-label', text: String(v) }),
+        ])
+      );
+    }
+    plot.appendChild(grid);
+
+    const tip = el('div', { class: 'chart-tip', role: 'status' });
+
+    const track = el('div', { class: 'chart-track' });
+    rows.forEach((row) => {
+      const group = el('button', {
+        class: 'bar-group' + (options.onSelect ? ' is-clickable' : ''),
+        type: 'button',
+        'aria-label': `${row.label}: ` + series.map((sr) => `${T(sr.label)} ${row.values[sr.key] || 0}`).join(', '),
+        onclick: () => { if (options.onSelect) options.onSelect(row); },
+        onmouseenter: (e) => showTip(e, row),
+        onmousemove: (e) => showTip(e, row),
+        onmouseleave: () => { tip.classList.remove('show'); },
+        onfocus: (e) => showTip(e, row),
+        onblur: () => { tip.classList.remove('show'); },
+      });
+
+      const bars = el('div', { class: 'bars' });
+      series.forEach((sr) => {
+        const v = row.values[sr.key] || 0;
+        const h = max ? (v / max) * 100 : 0;
+        bars.appendChild(
+          el('span', { class: 'bar-slot' }, [
+            el('span', { class: 'bar-value', text: v ? String(v) : '' }),
+            el('span', {
+              class: 'bar',
+              style: `height:${h}%;background:var(${sr.varName})`,
+            }),
+          ])
+        );
+      });
+      group.appendChild(bars);
+      group.appendChild(el('span', { class: 'bar-label', text: row.label, title: row.label }));
+      if (row.sub) group.appendChild(el('span', { class: 'bar-sub', text: row.sub }));
+      track.appendChild(group);
+    });
+
+    function showTip(e, row) {
+      tip.innerHTML = '';
+      tip.appendChild(el('div', { class: 'tip-title', text: row.label }));
+      if (row.sub) tip.appendChild(el('div', { class: 'tip-sub', text: row.sub }));
+      series.forEach((sr) => {
+        tip.appendChild(
+          el('div', { class: 'tip-row' }, [
+            el('span', { class: 'legend-swatch', style: `background:var(${sr.varName})` }),
+            el('span', { class: 'tip-key', text: T(sr.label) }),
+            el('span', { class: 'tip-val', text: String(row.values[sr.key] || 0) }),
+          ])
+        );
+      });
+      const host = plot.getBoundingClientRect();
+      const target = e.currentTarget.getBoundingClientRect();
+      const x = target.left - host.left + target.width / 2;
+      tip.style.left = Math.max(4, Math.min(x, host.width - 4)) + 'px';
+      tip.classList.add('show');
+    }
+
+    plot.appendChild(track);
+    plot.appendChild(tip);
+    box.appendChild(plot);
+
+    /* Table view — the numbers, for anyone who wants them straight */
+    const table = el('div', { class: 'table-wrap chart-table', style: 'display:none;margin-top:14px' });
+    const t = el('table');
+    t.appendChild(el('thead', {}, el('tr', {}, [
+      el('th', {}, [L(options.dimensionLabel || { en: 'Name', th: 'ชื่อ' })]),
+      ...series.map((sr) => el('th', {}, [L(sr.label)])),
+    ])));
+    const tb = el('tbody');
+    rows.forEach((row) => {
+      tb.appendChild(el('tr', {}, [
+        el('td', { text: row.label + (row.sub ? ' · ' + row.sub : '') }),
+        ...series.map((sr) => el('td', { text: String(row.values[sr.key] || 0) })),
+      ]));
+    });
+    t.appendChild(tb);
+    table.appendChild(t);
+
+    const toggle = el('button', {
+      class: 'btn btn-sm no-print',
+      style: 'margin-top:12px',
+      onclick: () => {
+        const shown = table.style.display !== 'none';
+        table.style.display = shown ? 'none' : '';
+        toggle.textContent = shown ? T({ en: 'Show numbers', th: 'ดูเป็นตัวเลข' }) : T({ en: 'Hide numbers', th: 'ซ่อนตัวเลข' });
+      },
+      text: T({ en: 'Show numbers', th: 'ดูเป็นตัวเลข' }),
+    });
+    box.appendChild(toggle);
+    box.appendChild(table);
+
+    return box;
+  }
+
   function typeCards() {
     const wrap = el('div', { class: 'stage-stack' });
 

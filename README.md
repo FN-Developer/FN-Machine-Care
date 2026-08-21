@@ -75,6 +75,9 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 - **Print to A4 PDF.** Print CSS strips the interface and prints only the selected answers, so the paper copy looks like a proper form.
 - **Automatic document numbers** — `PDI-2026-00125`, `SR-2026-00321`.
 - **Machine history timeline**, grouped by Work No. + Serial No.
+- **A dashboard that answers the service manager's questions.** A bar chart of customers — machines installed against service visits — that you tap to drill into that customer's machines. Underneath: what kind of work we were called out to do, what root causes keep recurring, and a machine-by-machine table of each one's usual problem.
+
+  Chart colours were run through a palette validator (lightness band, chroma floor, colour-blind separation, contrast against the actual surface) for each theme, so dark mode uses its own steps rather than a flip of the light ones. Every bar is a real button, and a **Show numbers** toggle reveals the same data as a table.
 - **Resumes where you left off.** The current form lives in the URL, so a tablet refresh mid-inspection loses nothing.
 - **Backup & restore** as JSON, plus a CSV summary for management — behind a developer sign-in, because that screen can erase everything.
 - **New Form asks where the machine is** — still in our factory, or already at the customer's — and shows only the forms that apply.
