@@ -56,8 +56,8 @@
 
   /* Ink */
   --text:       #0d1526;
-  --text-dim:   #4d5872;
-  --text-faint: #7b859c;
+  --text-dim:   #414c66;
+  --text-faint: #5c6780;
 
   /* Fields sit *under* the glass, so they go slightly darker */
   --field:       rgba(255, 255, 255, .70);
@@ -137,8 +137,8 @@
   --specular: inset 0 1px 0 rgba(255, 255, 255, .14);
 
   --text:       #f1f4fb;
-  --text-dim:   #a7b0c6;
-  --text-faint: #78829b;
+  --text-dim:   #b9c1d4;
+  --text-faint: #98a2b9;
 
   --field:       rgba(10, 14, 24, .55);
   --field-focus: rgba(10, 14, 24, .82);
@@ -392,10 +392,10 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   90%, 100% { background-position-x: 100%; }
 }
 .brand-sub {
-  margin-top: 9px;
-  font-size: 11.5px;
-  color: var(--text-faint);
-  line-height: 1.5;
+  margin-top: 11px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+  line-height: 1.62;
 }
 
 .nav { padding: 12px; display: flex; flex-direction: column; gap: 3px; }
@@ -434,7 +434,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .sidebar-foot { margin-top: auto; padding: 14px; border-top: 1px solid var(--hairline-soft); }
 
 .seg-label {
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: .07em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -479,7 +479,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .seg-icon { font-size: 13px; line-height: 1; }
 .seg-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.foot-note { font-size: 11px; color: var(--text-faint); line-height: 1.6; margin-top: 4px; }
+.foot-note { font-size: 12px; color: var(--text-dim); line-height: 1.65; margin-top: 4px; }
 .foot-note span { opacity: .75; }
 
 .main { flex: 1; min-width: 0; padding: 8px 10px 90px; max-width: 1180px; }
@@ -498,13 +498,13 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   margin: 0;
   line-height: 1.15;
 }
-.page-sub { color: var(--text-dim); font-size: 13.5px; margin-top: 6px; }
+.page-sub { color: var(--text-dim); font-size: 14.5px; line-height: 1.55; margin-top: 7px; max-width: 68ch; }
 
 .label-en { display: block; }
-.label-th { display: block; font-size: 12.5px; color: var(--text-dim); }
+.label-th { display: block; font-size: 13.5px; color: var(--text-dim); line-height: 1.45; }
 body.lang-en .label-th { display: none; }
 body.lang-th .label-en { display: none; }
-body.lang-th .label-th { font-size: inherit; color: inherit; }
+body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inherit; }
 
 /* ---------------- Buttons ---------------- */
 
@@ -586,7 +586,7 @@ body.lang-th .label-th { font-size: inherit; color: inherit; }
   letter-spacing: -.03em;
   font-variant-numeric: tabular-nums;
 }
-.stat-label { font-size: 12.5px; color: var(--text-dim); margin-top: 5px; }
+.stat-label { font-size: 13.5px; color: var(--text-dim); margin-top: 6px; line-height: 1.45; }
 
 /* ---------------- New-form stage groups ----------------
    Two questions, not four cards: is the machine still on our floor,
@@ -619,15 +619,15 @@ body.lang-th .label-th { font-size: inherit; color: inherit; }
   font-weight: 650;
   letter-spacing: -.02em;
 }
-.stage-title .th { font-size: 13px; color: var(--text-dim); font-weight: 500; letter-spacing: 0; }
+.stage-title .th { font-size: 14px; color: var(--text-dim); font-weight: 500; letter-spacing: 0; line-height: 1.45; }
 .stage-note {
-  margin-top: 4px;
-  font-size: 12.5px;
-  color: var(--text-faint);
-  line-height: 1.5;
-  max-width: 62ch;
+  margin-top: 7px;
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.62;
+  max-width: 58ch;
 }
-.stage-note .th { color: var(--text-faint); }
+.stage-note .th { color: var(--text-dim); margin-top: 2px; }
 
 .type-grid {
   display: grid;
@@ -671,7 +671,7 @@ body.lang-th .label-th { font-size: inherit; color: inherit; }
   margin-top: 11px;
 }
 .type-card .tc-name { font-weight: 600; font-size: 15.5px; margin-top: 4px; letter-spacing: -.015em; }
-.type-card .tc-name-th { font-size: 12.5px; color: var(--text-dim); margin-top: 1px; }
+.type-card .tc-name-th { font-size: 13.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.45; }
 
 /* ---------------- Tables ---------------- */
 
@@ -723,7 +723,7 @@ tbody tr.clickable { cursor: pointer; }
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
 .section-title { font-weight: 600; font-size: 15px; letter-spacing: -.015em; }
-.section-title .th { font-size: 12.5px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; }
+.section-title .th { font-size: 13.5px; color: var(--text-dim); font-weight: 400; letter-spacing: 0; line-height: 1.45; }
 .section-body { padding: 18px 19px; }
 
 .section.critical { border-color: color-mix(in srgb, var(--fail-fill) 34%, var(--edge)); }
@@ -733,7 +733,8 @@ tbody tr.clickable { cursor: pointer; }
 }
 
 .hint {
-  font-size: 12.5px;
+  font-size: 13.5px;
+  line-height: 1.55;
   color: var(--warn);
   background: color-mix(in srgb, var(--accent-yellow) 16%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent-yellow) 34%, transparent);
@@ -765,7 +766,7 @@ tbody tr.clickable { cursor: pointer; }
 /* ---- fields ---- */
 
 .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(236px, 1fr)); gap: 14px; }
-.field label { display: block; font-size: 12.5px; color: var(--text-dim); margin-bottom: 6px; font-weight: 500; }
+.field label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 7px; font-weight: 500; line-height: 1.45; }
 .field label .req { color: var(--fail); }
 .field input, .field select, .field textarea, .cell-input {
   width: 100%;
@@ -808,8 +809,8 @@ tbody tr.clickable { cursor: pointer; }
   font-weight: 500;
   letter-spacing: .04em;
 }
-.check-label { font-size: 14px; }
-.check-label .th { font-size: 12.5px; color: var(--text-dim); }
+.check-label { font-size: 14.5px; line-height: 1.45; }
+.check-label .th { font-size: 13.5px; color: var(--text-dim); line-height: 1.45; }
 
 /* --- THE VERDICT CONTROLS — opaque on purpose --- */
 .pfn { display: flex; gap: 6px; }
@@ -894,8 +895,8 @@ tbody tr.clickable { cursor: pointer; }
   overflow: hidden;
   display: flex; flex-direction: column;
 }
-.photo-slot .ps-head { padding: 9px 11px; font-size: 12px; border-bottom: 1px solid var(--hairline-soft); }
-.photo-slot .ps-head .th { color: var(--text-dim); font-size: 11px; }
+.photo-slot .ps-head { padding: 10px 12px; font-size: 13px; line-height: 1.4; border-bottom: 1px solid var(--hairline-soft); }
+.photo-slot .ps-head .th { color: var(--text-dim); font-size: 12px; }
 .photo-drop {
   flex: 1; min-height: 136px;
   display: grid; place-items: center;
@@ -973,7 +974,7 @@ tbody tr.clickable { cursor: pointer; }
   background: var(--field);
 }
 .sign-card h4 { margin: 0; padding: 11px 13px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--hairline-soft); }
-.sign-card h4 .th { color: var(--text-dim); font-size: 11.5px; font-weight: 400; }
+.sign-card h4 .th { color: var(--text-dim); font-size: 12.5px; font-weight: 400; line-height: 1.4; }
 .sign-pad { background: #fff; touch-action: none; display: block; width: 100%; height: 132px; cursor: crosshair; }
 .sign-meta { display: grid; grid-template-columns: 1fr 136px; gap: 9px; padding: 10px 11px; }
 .sign-foot { display: flex; justify-content: flex-end; padding: 0 11px 10px; }
@@ -1027,7 +1028,7 @@ tbody tr.clickable { cursor: pointer; }
   font-variant-numeric: tabular-nums;
 }
 .tb-ico { color: var(--accent, var(--accent-blue)); display: inline-flex; }
-.toolbar .tb-sub { font-size: 12px; color: var(--text-dim); }
+.toolbar .tb-sub { font-size: 13px; color: var(--text-dim); line-height: 1.45; }
 
 .search-input {
   width: 100%; max-width: 390px;
@@ -1108,14 +1109,14 @@ tbody tr.clickable { cursor: pointer; }
   box-shadow: var(--specular);
 }
 .lock-title { margin: 0 0 8px; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
-.lock-sub { margin: 0 0 20px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.lock-sub { margin: 0 0 22px; font-size: 14px; color: var(--text-dim); line-height: 1.6; }
 .lock-card .field { text-align: left; }
 .lock-btn { width: 100%; justify-content: center; }
 .lock-note {
   margin: 18px 0 0;
-  font-size: 11.5px;
-  line-height: 1.55;
-  color: var(--text-faint);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-dim);
   border-top: 1px solid var(--hairline-soft);
   padding-top: 14px;
 }
