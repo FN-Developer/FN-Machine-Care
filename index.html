@@ -7,7 +7,641 @@
 <meta name="theme-color" content="#0f1420">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%232f81f7'/><text y='68' x='50' font-size='52' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>FN</text></svg>">
-<link rel="stylesheet" href="styles.css">
+<style>
+/* =============================================================
+   FN MACHINE CARE — Stylesheet
+   Shop-floor first: large touch targets, high contrast,
+   readable on a tablet under factory lighting.
+   ============================================================= */
+
+:root {
+  --bg:        #0f1420;
+  --bg-2:      #151c2c;
+  --panel:     #1a2334;
+  --panel-2:   #212c40;
+  --line:      #2c3850;
+  --line-soft: #232e44;
+
+  --text:      #e8edf7;
+  --text-dim:  #97a3ba;
+  --text-faint:#6b7891;
+
+  --brand:     #2f81f7;
+  --brand-dim: #1f5fbd;
+
+  --pass:      #22c55e;
+  --fail:      #ef4444;
+  --na:        #64748b;
+  --warn:      #eab308;
+
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 6px 24px rgba(0,0,0,.35);
+
+  --font: "Segoe UI", "Noto Sans Thai", "Sarabun", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+
+/* ---------------- Layout ---------------- */
+
+.app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 240px;
+  flex: 0 0 240px;
+  background: var(--bg-2);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.brand {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.brand-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: .2px;
+}
+.brand-logo {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--brand), #7c3aed);
+  display: grid; place-items: center;
+  font-size: 15px; font-weight: 800; color: #fff;
+  flex: 0 0 auto;
+}
+.brand-sub {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.4;
+}
+
+.nav { padding: 10px; display: flex; flex-direction: column; gap: 2px; }
+.nav button {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-dim);
+  text-align: left;
+  cursor: pointer;
+  font-size: 14.5px;
+}
+.nav button:hover { background: var(--panel); color: var(--text); }
+.nav button.active { background: var(--brand); color: #fff; font-weight: 600; }
+.nav .nav-icon { width: 20px; text-align: center; }
+
+.sidebar-foot {
+  margin-top: auto;
+  padding: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 11.5px;
+  color: var(--text-faint);
+}
+
+.lang-switch { display: flex; gap: 4px; margin-bottom: 10px; }
+.lang-switch button {
+  flex: 1;
+  padding: 6px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12px;
+}
+.lang-switch button.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+.main { flex: 1; min-width: 0; padding: 26px 30px 80px; max-width: 1180px; }
+
+/* ---------------- Typography / headers ---------------- */
+
+.page-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 20px; flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+.page-title { font-size: 24px; font-weight: 700; margin: 0; }
+.page-sub { color: var(--text-dim); font-size: 13.5px; margin-top: 4px; }
+
+.label-en { display: block; }
+.label-th { display: block; font-size: 12.5px; color: var(--text-dim); }
+body.lang-en .label-th { display: none; }
+body.lang-th .label-en { display: none; }
+body.lang-th .label-th { font-size: inherit; color: inherit; }
+
+/* ---------------- Buttons ---------------- */
+
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 15px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.btn:hover { background: var(--panel-2); }
+.btn-primary { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 600; }
+.btn-primary:hover { background: var(--brand-dim); }
+.btn-danger { color: #fca5a5; border-color: #4a2020; }
+.btn-danger:hover { background: #331414; }
+.btn-sm { padding: 6px 11px; font-size: 13px; }
+.btn-row { display: flex; gap: 9px; flex-wrap: wrap; }
+
+/* ---------------- Cards / stats ---------------- */
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
+  gap: 13px;
+  margin-bottom: 24px;
+}
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius);
+  padding: 15px 16px;
+}
+.stat-value { font-size: 27px; font-weight: 700; line-height: 1.1; }
+.stat-label { font-size: 12.5px; color: var(--text-dim); margin-top: 4px; }
+
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+.type-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--accent, var(--brand));
+  border-radius: var(--radius);
+  padding: 18px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  transition: transform .12s ease, background .12s ease;
+}
+.type-card:hover { background: var(--panel-2); transform: translateY(-2px); }
+.type-card .tc-icon { font-size: 26px; }
+.type-card .tc-code { font-size: 11px; color: var(--text-faint); letter-spacing: 1.5px; margin-top: 8px; }
+.type-card .tc-name { font-weight: 650; font-size: 15.5px; margin-top: 3px; }
+.type-card .tc-name-th { font-size: 12.5px; color: var(--text-dim); }
+
+/* ---------------- Tables ---------------- */
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+thead th {
+  background: var(--bg-2);
+  text-align: left;
+  padding: 11px 12px;
+  font-size: 12px;
+  letter-spacing: .5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--panel-2); }
+tbody tr.clickable { cursor: pointer; }
+
+/* ---------------- Form rendering ---------------- */
+
+.form-shell { display: flex; flex-direction: column; gap: 16px; }
+
+.section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.section > header {
+  padding: 13px 17px;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+.section-title { font-weight: 650; font-size: 15px; }
+.section-title .th { font-size: 12.5px; color: var(--text-dim); font-weight: 400; }
+.section-body { padding: 16px 17px; }
+.section.critical > header { background: #2a1a1a; border-bottom-color: #4a2626; }
+.hint {
+  font-size: 12.5px; color: var(--warn);
+  background: rgba(234,179,8,.08);
+  border-left: 3px solid var(--warn);
+  padding: 8px 11px;
+  border-radius: 5px;
+  margin-bottom: 14px;
+}
+
+.section-progress {
+  font-size: 12px; color: var(--text-dim);
+  display: flex; align-items: center; gap: 8px;
+  white-space: nowrap;
+}
+.progress-bar { width: 70px; height: 5px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--pass); transition: width .2s; }
+
+/* fields */
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 13px;
+}
+.field label { display: block; font-size: 12.5px; color: var(--text-dim); margin-bottom: 5px; }
+.field label .req { color: var(--fail); }
+.field input, .field select, .field textarea, .cell-input {
+  width: 100%;
+  padding: 9px 11px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  outline: none;
+}
+.field input:focus, .field select:focus, .field textarea:focus, .cell-input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(47,129,247,.16);
+}
+.field textarea { min-height: 96px; resize: vertical; }
+.field .unit { font-size: 11.5px; color: var(--text-faint); margin-left: 5px; }
+.field.invalid input, .field.invalid select { border-color: var(--fail); }
+
+.cell-input { padding: 7px 9px; }
+
+/* checklist rows */
+.check-row {
+  display: grid;
+  grid-template-columns: 58px 1fr auto 200px;
+  gap: 12px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.check-row:last-child { border-bottom: none; }
+.check-code { font-size: 12px; color: var(--text-faint); font-weight: 600; letter-spacing: .5px; }
+.check-label { font-size: 14px; }
+.check-label .th { font-size: 12.5px; color: var(--text-dim); }
+
+.pfn { display: flex; gap: 5px; }
+.pfn button {
+  min-width: 58px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: .4px;
+}
+.pfn button:hover { border-color: var(--text-faint); }
+.pfn button.on[data-v="PASS"]   { background: var(--pass); border-color: var(--pass); color: #052e12; }
+.pfn button.on[data-v="FAIL"]   { background: var(--fail); border-color: var(--fail); color: #fff; }
+.pfn button.on[data-v="NA"]     { background: var(--na);   border-color: var(--na);   color: #fff; }
+.pfn button.on[data-v="NORMAL"]   { background: var(--pass); border-color: var(--pass); color: #052e12; }
+.pfn button.on[data-v="ABNORMAL"] { background: var(--fail); border-color: var(--fail); color: #fff; }
+.pfn button.on[data-v="YES"]    { background: var(--pass); border-color: var(--pass); color: #052e12; }
+.pfn button.on[data-v="NO"]     { background: var(--fail); border-color: var(--fail); color: #fff; }
+
+.check-row.is-fail { background: rgba(239,68,68,.06); }
+
+/* measurements & performance */
+.measure-row {
+  display: grid;
+  grid-template-columns: 1fr 150px 90px;
+  gap: 12px; align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.measure-row:last-child { border-bottom: none; }
+.perf-row {
+  display: grid;
+  grid-template-columns: 1fr 130px 150px 90px;
+  gap: 12px; align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line-soft);
+}
+.perf-row:last-child { border-bottom: none; }
+.perf-target { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.verdict {
+  font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  padding: 5px 9px; border-radius: 5px; text-align: center;
+}
+.verdict.pass { background: rgba(34,197,94,.16); color: var(--pass); }
+.verdict.fail { background: rgba(239,68,68,.16); color: var(--fail); }
+.verdict.none { color: var(--text-faint); }
+
+/* documents */
+.doc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
+.doc-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 11px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.doc-item input { width: 18px; height: 18px; accent-color: var(--brand); cursor: pointer; }
+.doc-item.on { border-color: var(--pass); background: rgba(34,197,94,.07); }
+
+/* photos */
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 13px; }
+.photo-slot {
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.photo-slot .ps-head { padding: 8px 10px; font-size: 12px; border-bottom: 1px solid var(--line-soft); }
+.photo-slot .ps-head .th { color: var(--text-dim); font-size: 11px; }
+.photo-drop {
+  flex: 1;
+  min-height: 132px;
+  display: grid; place-items: center;
+  cursor: pointer;
+  color: var(--text-faint);
+  font-size: 12.5px;
+  text-align: center;
+  padding: 10px;
+}
+.photo-drop:hover { background: var(--panel-2); color: var(--text-dim); }
+.photo-slot img { width: 100%; display: block; max-height: 190px; object-fit: cover; }
+.photo-actions { display: flex; gap: 6px; padding: 7px 8px; border-top: 1px solid var(--line-soft); }
+
+.ba-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+.ba-col h4 { margin: 0 0 9px; font-size: 12.5px; letter-spacing: 1px; color: var(--text-dim); }
+
+/* problem / priority */
+.priority-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.priority-row button {
+  padding: 9px 15px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+.priority-row button.on { color: #fff; }
+
+/* root cause */
+.rc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 7px; margin-bottom: 14px; }
+
+/* result */
+.result-row { display: flex; flex-direction: column; gap: 9px; }
+.result-row button {
+  display: flex; align-items: center; gap: 11px;
+  padding: 14px 17px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--line);
+  background: var(--bg);
+  color: var(--text-dim);
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 14.5px;
+  text-align: left;
+  letter-spacing: .4px;
+}
+.result-row button .dot { width: 15px; height: 15px; border-radius: 50%; flex: 0 0 auto; }
+.result-row button.on { color: #fff; background: var(--panel-2); }
+.result-row button.blocked { opacity: .4; cursor: not-allowed; }
+
+.alert-danger {
+  background: rgba(239,68,68,.12);
+  border: 1px solid rgba(239,68,68,.4);
+  color: #fca5a5;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  margin-bottom: 14px;
+}
+
+/* signatures */
+.sign-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 15px; }
+.sign-card { border: 1px solid var(--line); border-radius: var(--radius-sm); overflow: hidden; background: var(--bg); }
+.sign-card h4 { margin: 0; padding: 10px 12px; font-size: 13px; border-bottom: 1px solid var(--line-soft); }
+.sign-card h4 .th { color: var(--text-dim); font-size: 11.5px; font-weight: 400; }
+.sign-pad { background: #fff; touch-action: none; display: block; width: 100%; height: 130px; cursor: crosshair; }
+.sign-meta { display: grid; grid-template-columns: 1fr 130px; gap: 8px; padding: 9px 10px; }
+.sign-foot { display: flex; justify-content: flex-end; padding: 0 10px 9px; }
+
+/* status pills */
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11.5px;
+  font-weight: 650;
+  letter-spacing: .3px;
+  white-space: nowrap;
+}
+.pill.draft  { background: rgba(148,163,184,.18); color: #cbd5e1; }
+.pill.green  { background: rgba(34,197,94,.18);  color: #86efac; }
+.pill.yellow { background: rgba(234,179,8,.18);  color: #fde047; }
+.pill.red    { background: rgba(239,68,68,.18);  color: #fca5a5; }
+
+.type-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px; border-radius: 5px;
+  font-size: 11.5px; font-weight: 650;
+  background: var(--panel-2);
+  border-left: 3px solid var(--accent, var(--brand));
+}
+
+/* toolbar */
+.toolbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 12px 16px;
+  margin: -26px -30px 20px;
+  background: rgba(15,20,32,.93);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.toolbar .tb-title { font-weight: 650; }
+.toolbar .tb-sub { font-size: 12px; color: var(--text-dim); }
+
+.search-input {
+  width: 100%; max-width: 380px;
+  padding: 9px 13px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  outline: none;
+}
+.search-input:focus { border-color: var(--brand); }
+
+.empty {
+  padding: 44px 20px;
+  text-align: center;
+  color: var(--text-faint);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+/* timeline */
+.timeline { position: relative; padding-left: 26px; }
+.timeline::before {
+  content: ''; position: absolute; left: 7px; top: 6px; bottom: 6px;
+  width: 2px; background: var(--line);
+}
+.tl-item { position: relative; margin-bottom: 13px; }
+.tl-item::before {
+  content: ''; position: absolute; left: -23px; top: 15px;
+  width: 11px; height: 11px; border-radius: 50%;
+  background: var(--accent, var(--brand));
+  border: 2px solid var(--bg);
+}
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--pass); color: #052e12;
+  padding: 11px 22px; border-radius: 999px;
+  font-weight: 650; font-size: 14px;
+  box-shadow: var(--shadow);
+  opacity: 0; transition: all .22s ease;
+  z-index: 100; pointer-events: none;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.err { background: var(--fail); color: #fff; }
+
+.mobile-bar { display: none; }
+
+/* ---------------- Responsive ---------------- */
+
+@media (max-width: 900px) {
+  .app { flex-direction: column; }
+  .sidebar {
+    position: static; width: auto; height: auto; flex: none;
+    flex-direction: row; align-items: center; gap: 10px;
+    overflow-x: auto;
+  }
+  .brand { border-bottom: none; border-right: 1px solid var(--line); padding: 12px 14px; }
+  .brand-sub, .sidebar-foot { display: none; }
+  .nav { flex-direction: row; padding: 8px; }
+  .nav button span.nav-text { display: none; }
+  .nav button { padding: 10px 13px; }
+  .main { padding: 18px 15px 70px; }
+  .toolbar { margin: -18px -15px 16px; }
+  .check-row { grid-template-columns: 1fr; gap: 8px; }
+  .check-code { display: inline; }
+  .perf-row, .measure-row { grid-template-columns: 1fr; }
+  .ba-grid { grid-template-columns: 1fr; }
+}
+
+/* ---------------- Print ---------------- */
+
+@media print {
+  @page { size: A4; margin: 12mm; }
+
+  html, body { background: #fff !important; color: #000 !important; font-size: 10.5pt; }
+  .sidebar, .toolbar, .no-print, .nav, .btn, .photo-actions, .sign-foot { display: none !important; }
+  .main { padding: 0; max-width: none; }
+
+  .print-head { display: block !important; margin-bottom: 10mm; border-bottom: 2px solid #000; padding-bottom: 4mm; }
+
+  .section {
+    background: #fff !important;
+    border: 1px solid #999 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 5mm;
+  }
+  .section > header { background: #eee !important; border-bottom: 1px solid #999 !important; }
+  .section-title, .section-title .th, .check-label, .field label, .stat-label { color: #000 !important; }
+  .label-th, .check-label .th, .section-title .th { color: #444 !important; }
+
+  .field input, .field select, .field textarea, .cell-input {
+    background: #fff !important; color: #000 !important;
+    border: none !important; border-bottom: 1px solid #666 !important;
+    border-radius: 0 !important; padding: 2px 3px !important;
+  }
+  .field textarea { border: 1px solid #666 !important; min-height: 60px; }
+
+  thead th { background: #eee !important; color: #000 !important; }
+  tbody td { border-bottom: 1px solid #ccc !important; }
+
+  /* Only the chosen PASS/FAIL/NA button prints */
+  .pfn button { display: none !important; }
+  .pfn button.on {
+    display: inline-block !important;
+    background: #fff !important;
+    color: #000 !important;
+    border: 1.5px solid #000 !important;
+  }
+  .check-row { border-bottom: 1px solid #ddd !important; padding: 4px 0; }
+  .check-row.is-fail { background: #ffecec !important; }
+
+  .doc-item { background: #fff !important; border: 1px solid #999 !important; }
+  .result-row button { display: none !important; }
+  .result-row button.on {
+    display: flex !important;
+    background: #fff !important; color: #000 !important; border: 2px solid #000 !important;
+  }
+  .priority-row button { display: none !important; }
+  .priority-row button.on { display: inline-block !important; border: 1.5px solid #000 !important; color: #000 !important; }
+
+  .sign-pad { border: 1px solid #666; }
+  .sign-card { border: 1px solid #666 !important; }
+  .photo-slot { border: 1px solid #999 !important; break-inside: avoid; }
+  .photo-drop { display: none !important; }
+  .hint { color: #000 !important; background: #fff !important; border-left: 3px solid #000 !important; }
+  .verdict.pass, .verdict.fail { background: #fff !important; border: 1px solid #000; color: #000 !important; }
+  .pill { border: 1px solid #666; color: #000 !important; background: #fff !important; }
+}
+
+.print-head { display: none; }
+.print-head h1 { margin: 0 0 2mm; font-size: 16pt; }
+.print-head .ph-meta { font-size: 9pt; color: #333; }
+</style>
 </head>
 <body class="lang-both">
 
@@ -41,7 +675,2200 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="forms.js"></script>
-<script src="app.js"></script>
+<script>
+/* =============================================================
+   FN MACHINE CARE — Form Definitions
+   Machine Inspection & Service Management System
+   F N Technology
+   -------------------------------------------------------------
+   All form content lives here as data. The renderer in app.js
+   builds the UI from these definitions, so adding a new check
+   item means adding one line here — no UI code changes.
+
+   Label format:  { en: "...", th: "..." }
+   ============================================================= */
+
+/* ---------- Reusable check item groups ---------- */
+
+const MECHANICAL_ITEMS = [
+  ['M01', 'Machine frame / structure complete', 'โครงสร้างเครื่องครบถ้วน'],
+  ['M02', 'All bolts tightened', 'ขันน็อตครบทุกจุด'],
+  ['M03', 'Conveyor alignment', 'การตั้งศูนย์สายพานลำเลียง'],
+  ['M04', 'Pneumatic cylinder installation', 'การติดตั้งกระบอกลม'],
+  ['M05', 'Pneumatic tubing connected correctly', 'ต่อสายลมถูกต้อง'],
+  ['M06', 'Sensor brackets installed', 'ติดตั้งขายึดเซนเซอร์'],
+  ['M07', 'Moving mechanism operates smoothly', 'กลไกเคลื่อนที่ทำงานราบรื่น'],
+  ['M08', 'No abnormal noise', 'ไม่มีเสียงผิดปกติ'],
+  ['M09', 'Lubrication completed', 'หล่อลื่นเรียบร้อย'],
+  ['M10', 'Machine covers / guards installed', 'ติดตั้งฝาครอบ / การ์ดนิรภัย'],
+];
+
+const ELECTRICAL_ITEMS = [
+  ['E01', 'Electrical cabinet wiring completed', 'เดินสายไฟในตู้คอนโทรลเรียบร้อย'],
+  ['E02', 'Wire numbers match drawing', 'เลขสายไฟตรงกับแบบ'],
+  ['E03', 'Terminal connections checked', 'ตรวจสอบจุดต่อเทอร์มินอล'],
+  ['E04', 'Grounding completed', 'ต่อสายดินเรียบร้อย'],
+  ['E05', 'Main breaker operation', 'การทำงานของเบรกเกอร์หลัก'],
+  ['E06', '24VDC voltage checked', 'ตรวจวัดแรงดัน 24VDC'],
+  ['E07', 'PLC power checked', 'ตรวจสอบไฟเลี้ยง PLC'],
+  ['E08', 'HMI operation', 'การทำงานของ HMI'],
+  ['E09', 'Sensors detected correctly', 'เซนเซอร์ตรวจจับถูกต้อง'],
+  ['E10', 'Solenoid valves operate correctly', 'โซลินอยด์วาล์วทำงานถูกต้อง'],
+  ['E11', 'Servo / motor operation', 'การทำงานของเซอร์โว / มอเตอร์'],
+  ['E12', 'Inverter / drive parameters verified', 'ตรวจสอบพารามิเตอร์อินเวอร์เตอร์ / ไดรฟ์'],
+];
+
+const SOFTWARE_ITEMS = [
+  ['S01', 'PLC program installed', 'ติดตั้งโปรแกรม PLC'],
+  ['S02', 'Correct PLC program revision', 'เวอร์ชันโปรแกรม PLC ถูกต้อง'],
+  ['S03', 'HMI program installed', 'ติดตั้งโปรแกรม HMI'],
+  ['S04', 'HMI ↔ PLC communication', 'การสื่อสารระหว่าง HMI กับ PLC'],
+  ['S05', 'All input signals tested', 'ทดสอบสัญญาณอินพุตครบทุกจุด'],
+  ['S06', 'All output signals tested', 'ทดสอบสัญญาณเอาต์พุตครบทุกจุด'],
+  ['S07', 'Auto Mode tested', 'ทดสอบโหมดอัตโนมัติ'],
+  ['S08', 'Manual Mode tested', 'ทดสอบโหมดแมนนวล'],
+  ['S09', 'Cycle sequence tested', 'ทดสอบลำดับการทำงาน'],
+  ['S10', 'Alarm functions tested', 'ทดสอบฟังก์ชันแจ้งเตือน'],
+  ['S11', 'Sensor failure alarm tested', 'ทดสอบการแจ้งเตือนเซนเซอร์ผิดปกติ'],
+  ['S12', 'Emergency Stop tested', 'ทดสอบปุ่มหยุดฉุกเฉิน'],
+  ['S13', 'Safety interlock tested', 'ทดสอบระบบอินเตอร์ล็อกนิรภัย'],
+  ['S14', 'Production counter tested', 'ทดสอบตัวนับจำนวนผลิต'],
+  ['S15', 'Recipe / parameter functions tested', 'ทดสอบฟังก์ชันรีซิพี / พารามิเตอร์'],
+];
+
+const SAFETY_ITEMS = [
+  ['SAF01', 'Emergency Stop', 'ปุ่มหยุดฉุกเฉิน'],
+  ['SAF02', 'Safety Door Switch', 'สวิตช์ประตูนิรภัย'],
+  ['SAF03', 'Light Curtain', 'ม่านแสงนิรภัย'],
+  ['SAF04', 'Safety Relay', 'เซฟตี้รีเลย์'],
+  ['SAF05', 'Pneumatic safety', 'ความปลอดภัยระบบลม'],
+  ['SAF06', 'Warning labels', 'ป้ายเตือน'],
+  ['SAF07', 'Moving parts guarded', 'มีการ์ดป้องกันชิ้นส่วนเคลื่อนที่'],
+  ['SAF08', 'Electrical cabinet warning', 'ป้ายเตือนตู้ไฟฟ้า'],
+];
+
+const DOCUMENT_ITEMS = [
+  ['D01', 'Electrical Drawing', 'แบบไฟฟ้า'],
+  ['D02', 'Pneumatic Drawing', 'แบบนิวเมติก'],
+  ['D03', 'PLC Backup', 'สำรองโปรแกรม PLC'],
+  ['D04', 'HMI Backup', 'สำรองโปรแกรม HMI'],
+  ['D05', 'Operation Manual', 'คู่มือการใช้งาน'],
+  ['D06', 'Maintenance Manual', 'คู่มือการบำรุงรักษา'],
+  ['D07', 'Spare Parts List', 'รายการอะไหล่'],
+  ['D08', 'Recommended Spare Parts', 'อะไหล่แนะนำสำรอง'],
+  ['D09', 'Machine Specification', 'สเปคเครื่องจักร'],
+  ['D10', 'Software Version Record', 'บันทึกเวอร์ชันซอฟต์แวร์'],
+  ['D11', 'Customer Training Document', 'เอกสารอบรมลูกค้า'],
+  ['D12', 'Packing List', 'ใบรายการบรรจุ'],
+];
+
+const PDI_PHOTOS = [
+  ['P1', 'Front of Machine', 'ด้านหน้าเครื่อง'],
+  ['P2', 'Rear of Machine', 'ด้านหลังเครื่อง'],
+  ['P3', 'Electrical Cabinet', 'ตู้ไฟฟ้า'],
+  ['P4', 'HMI Screen', 'หน้าจอ HMI'],
+  ['P5', 'Nameplate / Serial Number', 'เนมเพลท / หมายเลขเครื่อง'],
+  ['P6', 'Final Machine Condition', 'สภาพเครื่องขั้นสุดท้าย'],
+  ['P7', 'Special Customer Requirement', 'ข้อกำหนดพิเศษของลูกค้า'],
+];
+
+/* Helper: turn the compact triples above into check-item objects */
+function checks(rows) {
+  return rows.map(([code, en, th]) => ({ code, label: { en, th } }));
+}
+
+/* ---------- Shared machine-identity header ---------- */
+
+function machineHeader(extra = []) {
+  return {
+    id: 'header',
+    title: { en: 'Machine Information', th: 'ข้อมูลเครื่องจักร' },
+    type: 'fields',
+    fields: [
+      { key: 'workNo', label: { en: 'Work No.', th: 'เลขที่งาน' }, type: 'text', placeholder: 'X722', required: true },
+      { key: 'machineName', label: { en: 'Machine Name', th: 'ชื่อเครื่องจักร' }, type: 'text', placeholder: 'AUTO CHECKER & APPEARANCE MCB MACHINE', required: true },
+      { key: 'serialNo', label: { en: 'Machine Serial No.', th: 'หมายเลขเครื่อง' }, type: 'text', placeholder: 'FN-X722-001', required: true },
+      { key: 'customer', label: { en: 'Customer', th: 'ลูกค้า' }, type: 'text', placeholder: 'ABC Manufacturing Co., Ltd.', required: true },
+      { key: 'poNo', label: { en: 'PO No.', th: 'เลขที่ใบสั่งซื้อ' }, type: 'text', placeholder: 'PO-2026-0088' },
+      ...extra,
+    ],
+  };
+}
+
+const SIGNOFF_ROLES_PDI = [
+  { key: 'inspector', label: { en: 'Inspector', th: 'ผู้ตรวจสอบ' } },
+  { key: 'projectEngineer', label: { en: 'Project Engineer', th: 'วิศวกรโครงการ' } },
+  { key: 'qaSupervisor', label: { en: 'QA / Supervisor', th: 'QA / หัวหน้างาน' } },
+  { key: 'manager', label: { en: 'Manager Approval', th: 'ผู้จัดการอนุมัติ' } },
+];
+
+/* =============================================================
+   FORM 01 — MACHINE BUILD CHECKLIST
+   ============================================================= */
+
+const FORM_BUILD = {
+  type: 'BUILD',
+  code: '01',
+  prefix: 'BLD',
+  name: { en: 'Machine Build Checklist', th: 'เช็คลิสต์การประกอบเครื่อง' },
+  short: { en: 'Build', th: 'ประกอบ' },
+  icon: '🔧',
+  accent: '#8b5cf6',
+  sections: [
+    machineHeader([
+      { key: 'buildDate', label: { en: 'Build Check Date', th: 'วันที่ตรวจ' }, type: 'date', required: true },
+      { key: 'assembler', label: { en: 'Assembler', th: 'ผู้ประกอบ' }, type: 'text' },
+      { key: 'checkedBy', label: { en: 'Checked By', th: 'ผู้ตรวจสอบ' }, type: 'text', required: true },
+      { key: 'buildStage', label: { en: 'Build Stage', th: 'ขั้นตอนการประกอบ' }, type: 'select',
+        options: [
+          { value: 'mechanical', label: { en: 'Mechanical assembly', th: 'ประกอบเครื่องกล' } },
+          { value: 'electrical', label: { en: 'Electrical wiring', th: 'เดินระบบไฟฟ้า' } },
+          { value: 'software', label: { en: 'Software / program', th: 'ซอฟต์แวร์ / โปรแกรม' } },
+          { value: 'complete', label: { en: 'Build complete', th: 'ประกอบเสร็จสมบูรณ์' } },
+        ] },
+    ]),
+    { id: 'mech', title: { en: 'A. Mechanical Check', th: 'A. ตรวจสอบเครื่องกล' }, type: 'checklist', items: checks(MECHANICAL_ITEMS) },
+    { id: 'elec', title: { en: 'B. Electrical Check', th: 'B. ตรวจสอบไฟฟ้า' }, type: 'checklist', items: checks(ELECTRICAL_ITEMS) },
+    { id: 'soft', title: { en: 'C. Software Check', th: 'C. ตรวจสอบซอฟต์แวร์' }, type: 'checklist', items: checks(SOFTWARE_ITEMS) },
+    { id: 'buildNotes', title: { en: 'D. Outstanding Work', th: 'D. งานที่ยังค้าง' }, type: 'notes',
+      placeholder: { en: 'List anything still to be finished before PDI…', th: 'ระบุงานที่ต้องทำให้เสร็จก่อนตรวจ PDI…' } },
+    { id: 'buildPhotos', title: { en: 'E. Build Photos', th: 'E. รูปถ่ายการประกอบ' }, type: 'photos', items: [], allowFree: true },
+    { id: 'signoff', title: { en: 'F. Sign-off', th: 'F. ลงนาม' }, type: 'signoff',
+      roles: [
+        { key: 'assembler', label: { en: 'Assembler', th: 'ผู้ประกอบ' } },
+        { key: 'checker', label: { en: 'Checker', th: 'ผู้ตรวจสอบ' } },
+      ] },
+  ],
+};
+
+/* =============================================================
+   FORM 02 — PRE-DELIVERY INSPECTION (PDI)
+   The final gate before the machine leaves F N Technology.
+   ============================================================= */
+
+const FORM_PDI = {
+  type: 'PDI',
+  code: '02',
+  prefix: 'PDI',
+  name: { en: 'Pre-Delivery Inspection', th: 'การตรวจสอบก่อนส่งมอบ' },
+  short: { en: 'PDI', th: 'PDI' },
+  icon: '✅',
+  accent: '#0ea5e9',
+  safetyGate: true, // any FAIL in the safety section blocks approval
+  sections: [
+    machineHeader([
+      { key: 'inspectionDate', label: { en: 'Inspection Date', th: 'วันที่ตรวจสอบ' }, type: 'date', required: true },
+      { key: 'deliveryDate', label: { en: 'Planned Delivery Date', th: 'วันที่ส่งมอบตามแผน' }, type: 'date' },
+      { key: 'inspector', label: { en: 'Inspector', th: 'ผู้ตรวจสอบ' }, type: 'text', required: true },
+      { key: 'projectEngineer', label: { en: 'Project Engineer', th: 'วิศวกรโครงการ' }, type: 'text' },
+    ]),
+
+    { id: 'mech', title: { en: 'A. Mechanical Checklist', th: 'A. เช็คลิสต์เครื่องกล' }, type: 'checklist', items: checks(MECHANICAL_ITEMS) },
+
+    { id: 'elec', title: { en: 'B. Electrical Checklist', th: 'B. เช็คลิสต์ไฟฟ้า' }, type: 'checklist', items: checks(ELECTRICAL_ITEMS) },
+
+    { id: 'measure', title: { en: 'B2. Measured Values', th: 'B2. ค่าที่วัดได้' },
+      hint: { en: 'Record the actual reading — not just Pass/Fail. This builds the machine\'s history.',
+              th: 'บันทึกค่าที่วัดได้จริง ไม่ใช่แค่ผ่าน/ไม่ผ่าน เพื่อเก็บเป็นประวัติเครื่อง' },
+      type: 'measurements',
+      items: [
+        { key: 'v24', label: { en: '24VDC Supply', th: 'แรงดัน 24VDC' }, unit: 'VDC', placeholder: '24.12' },
+        { key: 'motorCurrent', label: { en: 'Motor Current', th: 'กระแสมอเตอร์' }, unit: 'A', placeholder: '3.4' },
+        { key: 'airPressure', label: { en: 'Air Pressure', th: 'แรงดันลม' }, unit: 'bar', placeholder: '5.8' },
+      ] },
+
+    { id: 'soft', title: { en: 'C. PLC / Software / Automation Test', th: 'C. ทดสอบ PLC / ซอฟต์แวร์ / ระบบอัตโนมัติ' }, type: 'checklist', items: checks(SOFTWARE_ITEMS) },
+
+    { id: 'version', title: { en: 'C2. Program Version Record', th: 'C2. บันทึกเวอร์ชันโปรแกรม' },
+      hint: { en: 'Essential later for machine monitoring and troubleshooting.',
+              th: 'สำคัญมากสำหรับการติดตามและแก้ปัญหาเครื่องในอนาคต' },
+      type: 'fields',
+      fields: [
+        { key: 'plcVersion', label: { en: 'PLC Program', th: 'โปรแกรม PLC' }, type: 'text', placeholder: 'X722_PLC_V1.08' },
+        { key: 'hmiVersion', label: { en: 'HMI Program', th: 'โปรแกรม HMI' }, type: 'text', placeholder: 'X722_HMI_V1.05' },
+        { key: 'versionDate', label: { en: 'Version Date', th: 'วันที่ของเวอร์ชัน' }, type: 'date' },
+      ] },
+
+    { id: 'perf', title: { en: 'D. Production Performance Test', th: 'D. ทดสอบสมรรถนะการผลิต' }, type: 'performance',
+      items: [
+        { key: 'cycleTime', label: { en: 'Cycle Time', th: 'รอบเวลาการทำงาน' }, target: '≤ 12 sec', unit: 'sec', better: 'lower' },
+        { key: 'uph', label: { en: 'UPH', th: 'ผลผลิตต่อชั่วโมง' }, target: '≥ 300 pcs/hr', unit: 'pcs/hr', better: 'higher' },
+        { key: 'accuracy', label: { en: 'Accuracy', th: 'ความแม่นยำ' }, target: '≥ 99 %', unit: '%', better: 'higher' },
+        { key: 'rejectRate', label: { en: 'Reject Rate', th: 'อัตราของเสีย' }, target: '≤ 1 %', unit: '%', better: 'lower' },
+        { key: 'availability', label: { en: 'Machine Availability', th: 'ความพร้อมใช้งานเครื่อง' }, target: '≥ 95 %', unit: '%', better: 'higher' },
+      ] },
+
+    { id: 'trial', title: { en: 'D2. Trial Production', th: 'D2. ทดลองผลิต' }, type: 'fields',
+      fields: [
+        { key: 'trialQty', label: { en: 'Trial Quantity', th: 'จำนวนที่ทดลองผลิต' }, type: 'number', placeholder: '100', unit: 'pcs' },
+        { key: 'trialGood', label: { en: 'Good', th: 'ของดี' }, type: 'number', placeholder: '98', unit: 'pcs' },
+        { key: 'trialNG', label: { en: 'NG', th: 'ของเสีย' }, type: 'number', placeholder: '2', unit: 'pcs' },
+        { key: 'trialCycleAvg', label: { en: 'Average Cycle Time', th: 'รอบเวลาเฉลี่ย' }, type: 'number', placeholder: '11.4', unit: 'sec' },
+        { key: 'trialRunTime', label: { en: 'Total Run Time', th: 'เวลาเดินเครื่องรวม' }, type: 'number', placeholder: '19', unit: 'min' },
+        { key: 'trialStops', label: { en: 'Abnormal Stops', th: 'จำนวนครั้งที่หยุดผิดปกติ' }, type: 'number', placeholder: '1', unit: 'times' },
+      ] },
+
+    { id: 'safety', title: { en: 'E. Safety Checklist', th: 'E. เช็คลิสต์ความปลอดภัย' },
+      hint: { en: 'If ANY safety item fails, PDI cannot be approved.', th: 'หากรายการความปลอดภัยข้อใดไม่ผ่าน จะไม่สามารถอนุมัติ PDI ได้' },
+      type: 'checklist', critical: true, items: checks(SAFETY_ITEMS) },
+
+    { id: 'docs', title: { en: 'F. Documentation & Delivery', th: 'F. เอกสารและการส่งมอบ' }, type: 'documents', items: checks(DOCUMENT_ITEMS) },
+
+    { id: 'photos', title: { en: 'G. Photo Evidence', th: 'G. หลักฐานรูปถ่าย' }, type: 'photos', items: checks(PDI_PHOTOS), allowFree: true },
+
+    { id: 'result', title: { en: 'H. Final Approval', th: 'H. การอนุมัติขั้นสุดท้าย' }, type: 'result',
+      options: [
+        { value: 'ready', color: '#22c55e', label: { en: 'READY FOR DELIVERY', th: 'พร้อมส่งมอบ' } },
+        { value: 'minor', color: '#eab308', label: { en: 'READY WITH MINOR ACTION', th: 'พร้อมส่งมอบ แต่มีงานแก้ไขเล็กน้อย' } },
+        { value: 'notready', color: '#ef4444', label: { en: 'NOT READY FOR DELIVERY', th: 'ยังไม่พร้อมส่งมอบ' } },
+      ] },
+
+    { id: 'signoff', title: { en: 'Signatures', th: 'ลายเซ็น' }, type: 'signoff', roles: SIGNOFF_ROLES_PDI },
+  ],
+};
+
+/* =============================================================
+   FORM 03 — DELIVERY / INSTALLATION / COMMISSIONING
+   ============================================================= */
+
+const FORM_DELIVERY = {
+  type: 'DELIVERY',
+  code: '03',
+  prefix: 'DLV',
+  name: { en: 'Delivery, Installation & Commissioning', th: 'การส่งมอบ ติดตั้ง และเดินเครื่อง' },
+  short: { en: 'Delivery', th: 'ส่งมอบ' },
+  icon: '🚚',
+  accent: '#f59e0b',
+  sections: [
+    machineHeader([
+      { key: 'siteAddress', label: { en: 'Installation Site', th: 'สถานที่ติดตั้ง' }, type: 'text' },
+      { key: 'arrivalDate', label: { en: 'Arrival Date', th: 'วันที่เครื่องถึงหน้างาน' }, type: 'date' },
+      { key: 'commissionDate', label: { en: 'Commissioning Date', th: 'วันที่เดินเครื่อง' }, type: 'date', required: true },
+      { key: 'engineer', label: { en: 'Engineer In Charge', th: 'วิศวกรผู้รับผิดชอบ' }, type: 'text', required: true },
+      { key: 'customerContact', label: { en: 'Customer Contact', th: 'ผู้ติดต่อฝ่ายลูกค้า' }, type: 'text' },
+    ]),
+
+    { id: 'transport', title: { en: 'A. Transport & Unpacking', th: 'A. การขนส่งและแกะกล่อง' }, type: 'checklist',
+      items: checks([
+        ['T01', 'Machine arrived without transport damage', 'เครื่องถึงหน้างานโดยไม่เสียหายจากการขนส่ง'],
+        ['T02', 'All crates / boxes received per packing list', 'ได้รับลังและกล่องครบตามใบรายการบรรจุ'],
+        ['T03', 'Loose parts and accessories complete', 'อุปกรณ์และชิ้นส่วนแยกครบถ้วน'],
+        ['T04', 'Spare parts received', 'ได้รับอะไหล่สำรอง'],
+        ['T05', 'Documents handed to customer', 'ส่งมอบเอกสารให้ลูกค้า'],
+      ]) },
+
+    { id: 'install', title: { en: 'B. Installation', th: 'B. การติดตั้ง' }, type: 'checklist',
+      items: checks([
+        ['I01', 'Machine positioned and levelled', 'จัดวางและปรับระดับเครื่อง'],
+        ['I02', 'Anchor / foot fixing completed', 'ยึดขาเครื่องเรียบร้อย'],
+        ['I03', 'Main power connected by customer', 'ลูกค้าต่อไฟหลักเรียบร้อย'],
+        ['I04', 'Supply voltage verified', 'ตรวจสอบแรงดันไฟฟ้าที่จ่าย'],
+        ['I05', 'Grounding verified at site', 'ตรวจสอบระบบสายดินหน้างาน'],
+        ['I06', 'Compressed air connected and pressure verified', 'ต่อลมและตรวจสอบแรงดันลม'],
+        ['I07', 'Network / communication connected', 'เชื่อมต่อระบบเครือข่าย / การสื่อสาร'],
+        ['I08', 'Machine surroundings safe and clear', 'พื้นที่รอบเครื่องปลอดภัยและโล่ง'],
+      ]) },
+
+    { id: 'commission', title: { en: 'C. Commissioning', th: 'C. การเดินเครื่อง' }, type: 'checklist',
+      items: checks([
+        ['C01', 'Power-on test passed', 'ทดสอบจ่ายไฟผ่าน'],
+        ['C02', 'Manual mode verified', 'ตรวจสอบโหมดแมนนวล'],
+        ['C03', 'Auto mode verified', 'ตรวจสอบโหมดอัตโนมัติ'],
+        ['C04', 'All sensors verified on site', 'ตรวจสอบเซนเซอร์ทั้งหมดหน้างาน'],
+        ['C05', 'Emergency stop verified', 'ตรวจสอบปุ่มหยุดฉุกเฉิน'],
+        ['C06', 'Safety interlocks verified', 'ตรวจสอบระบบอินเตอร์ล็อกนิรภัย'],
+        ['C07', 'Alarm functions verified', 'ตรวจสอบฟังก์ชันแจ้งเตือน'],
+        ['C08', 'Production trial run with customer material', 'ทดลองผลิตด้วยชิ้นงานของลูกค้า'],
+        ['C09', 'Cycle time confirmed at site', 'ยืนยันรอบเวลาการทำงานหน้างาน'],
+        ['C10', 'Machine parameters saved and backed up', 'บันทึกและสำรองพารามิเตอร์เครื่อง'],
+      ]) },
+
+    { id: 'sitePerf', title: { en: 'C2. On-Site Performance', th: 'C2. สมรรถนะหน้างาน' }, type: 'performance',
+      items: [
+        { key: 'cycleTime', label: { en: 'Cycle Time', th: 'รอบเวลาการทำงาน' }, target: '≤ 12 sec', unit: 'sec', better: 'lower' },
+        { key: 'uph', label: { en: 'UPH', th: 'ผลผลิตต่อชั่วโมง' }, target: '≥ 300 pcs/hr', unit: 'pcs/hr', better: 'higher' },
+        { key: 'accuracy', label: { en: 'Accuracy', th: 'ความแม่นยำ' }, target: '≥ 99 %', unit: '%', better: 'higher' },
+        { key: 'rejectRate', label: { en: 'Reject Rate', th: 'อัตราของเสีย' }, target: '≤ 1 %', unit: '%', better: 'lower' },
+      ] },
+
+    { id: 'training', title: { en: 'D. Customer Training', th: 'D. การอบรมลูกค้า' }, type: 'checklist',
+      items: checks([
+        ['TR01', 'Machine operation training', 'อบรมการใช้งานเครื่อง'],
+        ['TR02', 'Safety instruction training', 'อบรมความปลอดภัย'],
+        ['TR03', 'Alarm handling and reset', 'การจัดการและรีเซ็ตการแจ้งเตือน'],
+        ['TR04', 'Daily / weekly maintenance', 'การบำรุงรักษาประจำวัน / ประจำสัปดาห์'],
+        ['TR05', 'Changeover / recipe setting', 'การเปลี่ยนรุ่นและตั้งค่ารีซิพี'],
+        ['TR06', 'Basic troubleshooting', 'การแก้ไขปัญหาเบื้องต้น'],
+      ]) },
+
+    { id: 'trainees', title: { en: 'D2. Trained Personnel', th: 'D2. รายชื่อผู้เข้ารับการอบรม' }, type: 'table',
+      columns: [
+        { key: 'name', label: { en: 'Name', th: 'ชื่อ' }, width: '32%' },
+        { key: 'position', label: { en: 'Position', th: 'ตำแหน่ง' }, width: '28%' },
+        { key: 'date', label: { en: 'Date', th: 'วันที่' }, type: 'date', width: '20%' },
+        { key: 'hours', label: { en: 'Hours', th: 'ชั่วโมง' }, type: 'number', width: '20%' },
+      ] },
+
+    { id: 'openItems', title: { en: 'E. Open Items / Punch List', th: 'E. รายการค้างที่ต้องแก้ไข' }, type: 'table',
+      columns: [
+        { key: 'item', label: { en: 'Item', th: 'รายการ' }, width: '40%' },
+        { key: 'owner', label: { en: 'Responsible', th: 'ผู้รับผิดชอบ' }, width: '25%' },
+        { key: 'due', label: { en: 'Due Date', th: 'กำหนดเสร็จ' }, type: 'date', width: '20%' },
+        { key: 'status', label: { en: 'Status', th: 'สถานะ' }, width: '15%' },
+      ] },
+
+    { id: 'photos', title: { en: 'F. Installation Photos', th: 'F. รูปถ่ายการติดตั้ง' }, type: 'photos',
+      items: checks([
+        ['IP1', 'Machine at site', 'เครื่องที่หน้างาน'],
+        ['IP2', 'Power connection', 'จุดต่อไฟฟ้า'],
+        ['IP3', 'Air connection', 'จุดต่อลม'],
+        ['IP4', 'Running production', 'ขณะเดินผลิต'],
+        ['IP5', 'Training session', 'ระหว่างการอบรม'],
+      ]), allowFree: true },
+
+    { id: 'result', title: { en: 'G. Customer Acceptance', th: 'G. การยอมรับของลูกค้า' }, type: 'result',
+      options: [
+        { value: 'accepted', color: '#22c55e', label: { en: 'ACCEPTED', th: 'ยอมรับการส่งมอบ' } },
+        { value: 'conditional', color: '#eab308', label: { en: 'ACCEPTED WITH OPEN ITEMS', th: 'ยอมรับ แต่มีรายการค้าง' } },
+        { value: 'rejected', color: '#ef4444', label: { en: 'NOT ACCEPTED', th: 'ยังไม่ยอมรับ' } },
+      ] },
+
+    { id: 'signoff', title: { en: 'Signatures', th: 'ลายเซ็น' }, type: 'signoff',
+      roles: [
+        { key: 'engineer', label: { en: 'F N Engineer', th: 'วิศวกร F N' } },
+        { key: 'customer', label: { en: 'Customer Representative', th: 'ตัวแทนลูกค้า' } },
+      ] },
+  ],
+};
+
+/* =============================================================
+   FORM 04 — CUSTOMER SERVICE REPORT
+   Answers: why did we go, what did we find, what did we do,
+   and what is the machine condition now?
+   ============================================================= */
+
+const FORM_SERVICE = {
+  type: 'SERVICE',
+  code: '04',
+  prefix: 'SR',
+  name: { en: 'Customer Service Report', th: 'รายงานการเข้าบริการลูกค้า' },
+  short: { en: 'Service', th: 'บริการ' },
+  icon: '🛠️',
+  accent: '#ef4444',
+  sections: [
+    { id: 'header', title: { en: 'A. Service Information', th: 'A. ข้อมูลการเข้าบริการ' }, type: 'fields',
+      fields: [
+        { key: 'workNo', label: { en: 'Work No.', th: 'เลขที่งาน' }, type: 'text', placeholder: 'X722', required: true },
+        { key: 'machineName', label: { en: 'Machine', th: 'เครื่องจักร' }, type: 'text', placeholder: 'AUTO CHECKER MACHINE', required: true },
+        { key: 'serialNo', label: { en: 'Machine S/N', th: 'หมายเลขเครื่อง' }, type: 'text', placeholder: 'FN-X722-001', required: true },
+        { key: 'customer', label: { en: 'Customer', th: 'ลูกค้า' }, type: 'text', placeholder: 'ABC Manufacturing', required: true },
+        { key: 'serviceDate', label: { en: 'Service Date', th: 'วันที่เข้าบริการ' }, type: 'date', required: true },
+        { key: 'technician', label: { en: 'Technician', th: 'ช่างผู้ให้บริการ' }, type: 'text', required: true },
+        { key: 'customerContact', label: { en: 'Customer Contact', th: 'ผู้ติดต่อฝ่ายลูกค้า' }, type: 'text' },
+        { key: 'timeIn', label: { en: 'Time In', th: 'เวลาเข้า' }, type: 'time' },
+        { key: 'timeOut', label: { en: 'Time Out', th: 'เวลาออก' }, type: 'time' },
+        { key: 'serviceType', label: { en: 'Service Type', th: 'ประเภทการบริการ' }, type: 'select', required: true,
+          options: [
+            { value: 'breakdown', label: { en: 'Breakdown', th: 'เครื่องเสีย' } },
+            { value: 'pm', label: { en: 'PM (Preventive Maintenance)', th: 'บำรุงรักษาเชิงป้องกัน' } },
+            { value: 'installation', label: { en: 'Installation', th: 'ติดตั้ง' } },
+            { value: 'training', label: { en: 'Training', th: 'อบรม' } },
+            { value: 'modification', label: { en: 'Modification', th: 'ปรับปรุง / ดัดแปลง' } },
+          ] },
+        { key: 'warranty', label: { en: 'Warranty', th: 'การรับประกัน' }, type: 'select',
+          options: [
+            { value: 'in', label: { en: 'In warranty', th: 'อยู่ในประกัน' } },
+            { value: 'out', label: { en: 'Out of warranty', th: 'หมดประกัน' } },
+            { value: 'contract', label: { en: 'Service contract', th: 'สัญญาบริการ' } },
+          ] },
+      ] },
+
+    { id: 'problem', title: { en: 'B. Customer Problem / Request', th: 'B. ปัญหา / คำร้องขอจากลูกค้า' }, type: 'problem',
+      placeholder: { en: 'e.g. Machine stops during Auto Cycle. HMI displays "Sensor S12 Error".',
+                     th: 'เช่น เครื่องหยุดระหว่างเดินอัตโนมัติ หน้าจอ HMI แสดง "Sensor S12 Error"' },
+      priorities: [
+        { value: 'critical', color: '#ef4444', label: { en: 'Critical', th: 'วิกฤต' } },
+        { value: 'high', color: '#f97316', label: { en: 'High', th: 'สูง' } },
+        { value: 'normal', color: '#eab308', label: { en: 'Normal', th: 'ปกติ' } },
+        { value: 'low', color: '#22c55e', label: { en: 'Low', th: 'ต่ำ' } },
+      ] },
+
+    { id: 'initial', title: { en: 'C. Initial Machine Condition', th: 'C. สภาพเครื่องเมื่อแรกถึง' }, type: 'condition',
+      items: checks([
+        ['C01', 'Machine Power', 'ระบบไฟเลี้ยงเครื่อง'],
+        ['C02', 'PLC', 'PLC'],
+        ['C03', 'HMI', 'HMI'],
+        ['C04', 'Pneumatic', 'ระบบลม'],
+        ['C05', 'Motor', 'มอเตอร์'],
+        ['C06', 'Sensor', 'เซนเซอร์'],
+        ['C07', 'Safety', 'ระบบความปลอดภัย'],
+        ['C08', 'Communication', 'ระบบสื่อสาร'],
+      ]) },
+
+    { id: 'trouble', title: { en: 'D. Troubleshooting Log', th: 'D. บันทึกการตรวจหาสาเหตุ' },
+      hint: { en: 'Time-stamped findings and actions. This becomes the real service history.',
+              th: 'บันทึกเวลา สิ่งที่พบ และสิ่งที่ทำ เพื่อเก็บเป็นประวัติการบริการจริง' },
+      type: 'table',
+      columns: [
+        { key: 'time', label: { en: 'Time', th: 'เวลา' }, type: 'time', width: '15%' },
+        { key: 'finding', label: { en: 'Finding', th: 'สิ่งที่พบ' }, width: '42%' },
+        { key: 'action', label: { en: 'Action', th: 'สิ่งที่ดำเนินการ' }, width: '43%' },
+      ] },
+
+    { id: 'rootcause', title: { en: 'E. Root Cause', th: 'E. สาเหตุที่แท้จริง' }, type: 'rootcause',
+      categories: checks([
+        ['RC01', 'Mechanical', 'เครื่องกล'],
+        ['RC02', 'Electrical', 'ไฟฟ้า'],
+        ['RC03', 'PLC Program', 'โปรแกรม PLC'],
+        ['RC04', 'Sensor', 'เซนเซอร์'],
+        ['RC05', 'Pneumatic', 'ระบบลม'],
+        ['RC06', 'Servo / Motor', 'เซอร์โว / มอเตอร์'],
+        ['RC07', 'HMI', 'HMI'],
+        ['RC08', 'Communication', 'ระบบสื่อสาร'],
+        ['RC09', 'Customer Operation', 'การใช้งานของลูกค้า'],
+        ['RC10', 'Wear & Tear', 'การสึกหรอตามอายุการใช้งาน'],
+        ['RC11', 'Other', 'อื่น ๆ'],
+      ]),
+      placeholder: { en: 'e.g. Sensor S12 mounting position shifted approximately 3 mm, causing intermittent detection.',
+                     th: 'เช่น ตำแหน่งยึดเซนเซอร์ S12 เคลื่อนประมาณ 3 มม. ทำให้ตรวจจับไม่สม่ำเสมอ' } },
+
+    { id: 'action', title: { en: 'F. Corrective Action', th: 'F. การแก้ไข' }, type: 'notes',
+      placeholder: { en: 'e.g. Adjusted S12 sensor position and tightened mounting bracket.',
+                     th: 'เช่น ปรับตำแหน่งเซนเซอร์ S12 และขันขายึดให้แน่น' } },
+
+    { id: 'parts', title: { en: 'F2. Parts Replaced', th: 'F2. อะไหล่ที่เปลี่ยน' }, type: 'table',
+      columns: [
+        { key: 'partNo', label: { en: 'Part No.', th: 'รหัสอะไหล่' }, width: '20%' },
+        { key: 'description', label: { en: 'Description', th: 'รายละเอียด' }, width: '36%' },
+        { key: 'qty', label: { en: 'Qty', th: 'จำนวน' }, type: 'number', width: '12%' },
+        { key: 'oldCondition', label: { en: 'Old Condition', th: 'สภาพของเดิม' }, width: '32%' },
+      ] },
+
+    { id: 'test', title: { en: 'G. Machine Test After Service', th: 'G. ทดสอบเครื่องหลังการบริการ' }, type: 'checklist',
+      items: checks([
+        ['G01', 'Manual Mode', 'โหมดแมนนวล'],
+        ['G02', 'Auto Mode', 'โหมดอัตโนมัติ'],
+        ['G03', 'Emergency Stop', 'ปุ่มหยุดฉุกเฉิน'],
+        ['G04', 'Sensor Detection', 'การตรวจจับของเซนเซอร์'],
+        ['G05', 'Cycle Test', 'ทดสอบรอบการทำงาน'],
+        ['G06', 'Production Test', 'ทดสอบการผลิต'],
+      ]) },
+
+    { id: 'testResult', title: { en: 'G2. Test Result', th: 'G2. ผลการทดสอบ' }, type: 'fields',
+      fields: [
+        { key: 'testQty', label: { en: 'Test Quantity', th: 'จำนวนที่ทดสอบ' }, type: 'number', placeholder: '50', unit: 'cycles' },
+        { key: 'testNG', label: { en: 'NG', th: 'ของเสีย' }, type: 'number', placeholder: '0', unit: 'pcs' },
+        { key: 'testCycleAvg', label: { en: 'Average Cycle Time', th: 'รอบเวลาเฉลี่ย' }, type: 'number', placeholder: '11.5', unit: 'sec' },
+      ] },
+
+    { id: 'beforeAfter', title: { en: 'H. Before / After Photos', th: 'H. รูปถ่ายก่อน / หลัง' }, type: 'beforeafter' },
+
+    { id: 'cost', title: { en: 'I. Parts & Cost', th: 'I. ค่าอะไหล่และค่าบริการ' },
+      hint: { en: 'Optional — leave blank for warranty service.', th: 'ไม่บังคับ — งานในประกันสามารถเว้นว่างได้' },
+      type: 'costtable',
+      columns: [
+        { key: 'item', label: { en: 'Item', th: 'รายการ' }, width: '40%' },
+        { key: 'qty', label: { en: 'Qty', th: 'จำนวน' }, type: 'number', width: '15%' },
+        { key: 'unitPrice', label: { en: 'Unit Price', th: 'ราคาต่อหน่วย' }, type: 'number', width: '20%' },
+      ] },
+
+    { id: 'result', title: { en: 'J. Machine Status After Service', th: 'J. สถานะเครื่องหลังการบริการ' }, type: 'result',
+      options: [
+        { value: 'normal', color: '#22c55e', label: { en: 'MACHINE OPERATING NORMALLY', th: 'เครื่องทำงานปกติ' } },
+        { value: 'recommend', color: '#eab308', label: { en: 'OPERATING WITH RECOMMENDATION', th: 'ใช้งานได้ แต่มีข้อแนะนำ' } },
+        { value: 'further', color: '#ef4444', label: { en: 'FURTHER SERVICE REQUIRED', th: 'ต้องเข้าบริการเพิ่มเติม' } },
+      ] },
+
+    { id: 'recommend', title: { en: 'J2. Recommendation to Customer', th: 'J2. ข้อแนะนำถึงลูกค้า' }, type: 'notes',
+      placeholder: { en: 'e.g. Recommend replacing S12 mounting bracket at next PM.',
+                     th: 'เช่น แนะนำให้เปลี่ยนขายึดเซนเซอร์ S12 ในการ PM ครั้งถัดไป' } },
+
+    { id: 'customerComment', title: { en: 'J3. Customer Comment', th: 'J3. ความเห็นของลูกค้า' }, type: 'notes',
+      placeholder: { en: 'e.g. Machine tested and accepted. No abnormal operation found.',
+                     th: 'เช่น ทดสอบเครื่องแล้วยอมรับ ไม่พบการทำงานผิดปกติ' } },
+
+    { id: 'signoff', title: { en: 'Signatures', th: 'ลายเซ็น' }, type: 'signoff',
+      roles: [
+        { key: 'technician', label: { en: 'Technician', th: 'ช่างผู้ให้บริการ' } },
+        { key: 'customer', label: { en: 'Customer', th: 'ลูกค้า' } },
+      ] },
+  ],
+};
+
+/* ---------- Registry ---------- */
+
+const FORM_TYPES = [FORM_BUILD, FORM_PDI, FORM_DELIVERY, FORM_SERVICE];
+
+const FORM_BY_TYPE = FORM_TYPES.reduce((acc, f) => {
+  acc[f.type] = f;
+  return acc;
+}, {});
+
+/* ---------- UI strings ---------- */
+
+const UI = {
+  appName: { en: 'FN Machine Care', th: 'FN Machine Care' },
+  tagline: { en: 'Machine Inspection & Service Management System', th: 'ระบบตรวจสอบและบริหารงานบริการเครื่องจักร' },
+  company: { en: 'F N Technology', th: 'F N Technology' },
+
+  nav_dashboard: { en: 'Dashboard', th: 'ภาพรวม' },
+  nav_machines: { en: 'Machines', th: 'เครื่องจักร' },
+  nav_records: { en: 'Records', th: 'เอกสารทั้งหมด' },
+  nav_new: { en: 'New Form', th: 'สร้างเอกสาร' },
+  nav_data: { en: 'Backup', th: 'สำรองข้อมูล' },
+
+  pass: { en: 'PASS', th: 'ผ่าน' },
+  fail: { en: 'FAIL', th: 'ไม่ผ่าน' },
+  na: { en: 'N/A', th: 'ไม่เกี่ยวข้อง' },
+  normal: { en: 'Normal', th: 'ปกติ' },
+  abnormal: { en: 'Abnormal', th: 'ผิดปกติ' },
+  remark: { en: 'Remark', th: 'หมายเหตุ' },
+  target: { en: 'Target', th: 'ค่าเป้าหมาย' },
+  actual: { en: 'Actual', th: 'ค่าที่วัดได้' },
+  result: { en: 'Result', th: 'ผล' },
+  addRow: { en: '+ Add row', th: '+ เพิ่มแถว' },
+  addPhoto: { en: '+ Add photo', th: '+ เพิ่มรูป' },
+  remove: { en: 'Remove', th: 'ลบ' },
+  save: { en: 'Save', th: 'บันทึก' },
+  saved: { en: 'Saved', th: 'บันทึกแล้ว' },
+  print: { en: 'Print / PDF', th: 'พิมพ์ / PDF' },
+  delete: { en: 'Delete', th: 'ลบ' },
+  open: { en: 'Open', th: 'เปิด' },
+  close: { en: 'Close', th: 'ปิด' },
+  clear: { en: 'Clear', th: 'ล้าง' },
+  signature: { en: 'Signature', th: 'ลายเซ็น' },
+  name: { en: 'Name', th: 'ชื่อ' },
+  date: { en: 'Date', th: 'วันที่' },
+  before: { en: 'BEFORE', th: 'ก่อน' },
+  after: { en: 'AFTER', th: 'หลัง' },
+  total: { en: 'TOTAL', th: 'รวมทั้งสิ้น' },
+  progress: { en: 'Progress', th: 'ความคืบหน้า' },
+  draft: { en: 'Draft', th: 'ฉบับร่าง' },
+  completed: { en: 'Completed', th: 'เสร็จสมบูรณ์' },
+  history: { en: 'Machine History', th: 'ประวัติเครื่องจักร' },
+  noRecords: { en: 'No records yet.', th: 'ยังไม่มีเอกสาร' },
+  search: { en: 'Search work no, serial, customer…', th: 'ค้นหาเลขที่งาน หมายเลขเครื่อง ลูกค้า…' },
+  safetyBlock: {
+    en: 'A safety item has FAILED. This PDI cannot be approved as READY FOR DELIVERY.',
+    th: 'มีรายการความปลอดภัยไม่ผ่าน จึงไม่สามารถอนุมัติ PDI เป็น “พร้อมส่งมอบ” ได้',
+  },
+  confirmDelete: { en: 'Delete this record permanently?', th: 'ต้องการลบเอกสารนี้ถาวรหรือไม่?' },
+};
+</script>
+
+<script>
+/* =============================================================
+   FN MACHINE CARE — Application
+   Machine Inspection & Service Management System
+   F N Technology
+
+   No build step, no framework, no server. Everything runs in the
+   browser and persists to localStorage. Records are keyed by
+   WORK NO + MACHINE SERIAL, so one machine's whole life —
+   Build → PDI → Delivery → Service — reads as a single history.
+   ============================================================= */
+
+(function () {
+  'use strict';
+
+  /* ---------------- Storage ---------------- */
+
+  const STORAGE_KEY = 'fn-machine-care.v1';
+
+  const DEFAULT_DB = { records: [], meta: { version: 1, counters: {} } };
+
+  function loadDB() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return structuredClone(DEFAULT_DB);
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.records)) return structuredClone(DEFAULT_DB);
+      parsed.meta = parsed.meta || { version: 1, counters: {} };
+      parsed.meta.counters = parsed.meta.counters || {};
+      return parsed;
+    } catch (e) {
+      console.error('[FN] Could not read saved data:', e);
+      return structuredClone(DEFAULT_DB);
+    }
+  }
+
+  function saveDB() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+      return true;
+    } catch (e) {
+      console.error('[FN] Save failed:', e);
+      toast(
+        lang === 'th'
+          ? 'บันทึกไม่สำเร็จ — พื้นที่จัดเก็บอาจเต็ม (รูปภาพใช้พื้นที่มาก)'
+          : 'Save failed — storage may be full (photos use a lot of space)',
+        true
+      );
+      return false;
+    }
+  }
+
+  let db = loadDB();
+  let lang = localStorage.getItem('fn-machine-care.lang') || 'both';
+
+  /* ---------------- Small helpers ---------------- */
+
+  const $ = (sel, root) => (root || document).querySelector(sel);
+
+  function el(tag, attrs, children) {
+    const node = document.createElement(tag);
+    if (attrs) {
+      for (const k in attrs) {
+        const v = attrs[k];
+        if (v === null || v === undefined || v === false) continue;
+        if (k === 'class') node.className = v;
+        else if (k === 'html') node.innerHTML = v;
+        else if (k === 'text') node.textContent = v;
+        else if (k.startsWith('on') && typeof v === 'function') node.addEventListener(k.slice(2), v);
+        else node.setAttribute(k, v);
+      }
+    }
+    (Array.isArray(children) ? children : children ? [children] : [])
+      .filter((c) => c !== null && c !== undefined && c !== false)
+      .forEach((c) => node.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+    return node;
+  }
+
+  /* Bilingual label — renders EN and TH lines; CSS hides one when
+     the user picks a single language. */
+  function L(obj, cls) {
+    if (!obj) return el('span');
+    if (typeof obj === 'string') return el('span', { text: obj });
+    return el('span', { class: cls || '' }, [
+      el('span', { class: 'label-en', text: obj.en || '' }),
+      el('span', { class: 'label-th th', text: obj.th || '' }),
+    ]);
+  }
+
+  /* Plain string in the active language — for titles, toasts, values. */
+  function T(obj) {
+    if (!obj) return '';
+    if (typeof obj === 'string') return obj;
+    if (lang === 'th') return obj.th || obj.en || '';
+    return obj.en || obj.th || '';
+  }
+
+  function todayISO() {
+    const d = new Date();
+    return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, '0'), String(d.getDate()).padStart(2, '0')].join('-');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    const parts = String(iso).split('-');
+    if (parts.length !== 3) return iso;
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+
+  function uid() {
+    return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  /* Document numbers: PDI-2026-00125 */
+  function nextDocNo(formDef) {
+    const year = new Date().getFullYear();
+    const key = `${formDef.prefix}-${year}`;
+    const used = db.records
+      .filter((r) => r.docNo && r.docNo.startsWith(key))
+      .map((r) => parseInt(r.docNo.slice(key.length + 1), 10))
+      .filter((n) => !isNaN(n));
+    const next = (used.length ? Math.max(...used) : 0) + 1;
+    return `${key}-${String(next).padStart(5, '0')}`;
+  }
+
+  let toastTimer = null;
+  function toast(msg, isError) {
+    const t = $('#toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (isError ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.className = 'toast'; }, 2600);
+  }
+
+  /* ---------------- Record model ---------------- */
+
+  function newRecord(type) {
+    const def = FORM_BY_TYPE[type];
+    return {
+      id: uid(),
+      type,
+      docNo: nextDocNo(def),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      status: 'draft',
+      fields: { inspectionDate: todayISO(), serviceDate: todayISO(), buildDate: todayISO(), commissionDate: todayISO() },
+      checks: {},      // sectionId -> { code: {value, remark} }
+      measures: {},    // sectionId -> { key: value }
+      perf: {},        // sectionId -> { key: actual }
+      docs: {},        // sectionId -> { code: bool }
+      photos: {},      // sectionId -> { code|freeIndex: dataURL }
+      tables: {},      // sectionId -> [ {col: val} ]
+      notes: {},       // sectionId -> string
+      rootcause: {},   // sectionId -> { selected: [], text: '' }
+      priority: {},    // sectionId -> value
+      beforeAfter: { before: [], after: [] },
+      result: null,
+      signatures: {},  // roleKey -> { data, name, date }
+    };
+  }
+
+  /* Identity used to group a machine's history */
+  function machineKey(r) {
+    const w = (r.fields.workNo || '').trim().toUpperCase();
+    const s = (r.fields.serialNo || '').trim().toUpperCase();
+    return w || s ? `${w}|${s}` : null;
+  }
+
+  function machineList() {
+    const map = new Map();
+    db.records.forEach((r) => {
+      const key = machineKey(r);
+      if (!key) return;
+      if (!map.has(key)) {
+        map.set(key, {
+          key,
+          workNo: r.fields.workNo || '',
+          serialNo: r.fields.serialNo || '',
+          machineName: r.fields.machineName || '',
+          customer: r.fields.customer || '',
+          records: [],
+        });
+      }
+      const m = map.get(key);
+      m.records.push(r);
+      // Latest non-empty descriptive fields win
+      if (r.fields.machineName) m.machineName = r.fields.machineName;
+      if (r.fields.customer) m.customer = r.fields.customer;
+    });
+    map.forEach((m) => m.records.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1)));
+    return Array.from(map.values()).sort((a, b) => a.workNo.localeCompare(b.workNo));
+  }
+
+  /* Completion: how many check items have an answer */
+  function sectionProgress(record, section) {
+    if (section.type !== 'checklist' && section.type !== 'condition') return null;
+    const answers = record.checks[section.id] || {};
+    const done = section.items.filter((it) => answers[it.code] && answers[it.code].value).length;
+    return { done, total: section.items.length };
+  }
+
+  function recordProgress(record) {
+    const def = FORM_BY_TYPE[record.type];
+    let done = 0, total = 0;
+    def.sections.forEach((s) => {
+      const p = sectionProgress(record, s);
+      if (p) { done += p.done; total += p.total; }
+    });
+    return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
+  }
+
+  /* Safety gate — a failed safety item blocks a READY result */
+  function hasSafetyFail(record) {
+    const def = FORM_BY_TYPE[record.type];
+    if (!def.safetyGate) return false;
+    return def.sections.some((s) => {
+      if (s.type !== 'checklist' || !s.critical) return false;
+      const answers = record.checks[s.id] || {};
+      return s.items.some((it) => answers[it.code] && answers[it.code].value === 'FAIL');
+    });
+  }
+
+  function failedItems(record) {
+    const def = FORM_BY_TYPE[record.type];
+    const out = [];
+    def.sections.forEach((s) => {
+      if (s.type !== 'checklist' && s.type !== 'condition') return;
+      const answers = record.checks[s.id] || {};
+      s.items.forEach((it) => {
+        const a = answers[it.code];
+        if (a && (a.value === 'FAIL' || a.value === 'ABNORMAL')) {
+          out.push({ section: s, item: it, remark: a.remark || '' });
+        }
+      });
+    });
+    return out;
+  }
+
+  function resultMeta(record) {
+    const def = FORM_BY_TYPE[record.type];
+    const section = def.sections.find((s) => s.type === 'result');
+    if (!section || !record.result) return null;
+    return section.options.find((o) => o.value === record.result) || null;
+  }
+
+  function pillClassFor(record) {
+    if (record.status === 'draft') return 'draft';
+    const m = resultMeta(record);
+    if (!m) return 'draft';
+    if (m.color === '#22c55e') return 'green';
+    if (m.color === '#eab308') return 'yellow';
+    return 'red';
+  }
+
+  /* ---------------- Router ---------------- */
+
+  const state = { view: 'dashboard', recordId: null, machineKey: null, search: '' };
+
+  /* The URL hash carries the current view so a tablet refresh — or a
+     browser crash mid-inspection — returns to the same form. */
+  function writeHash() {
+    const parts = [state.view];
+    if (state.recordId) parts.push(state.recordId);
+    else if (state.machineKey) parts.push(encodeURIComponent(state.machineKey));
+    const hash = '#/' + parts.join('/');
+    if (window.location.hash !== hash) {
+      suppressHashChange = true;
+      window.location.hash = hash;
+    }
+  }
+
+  let suppressHashChange = false;
+
+  function readHash() {
+    const raw = (window.location.hash || '').replace(/^#\/?/, '');
+    if (!raw) return false;
+    const [view, arg] = raw.split('/');
+    if (!view) return false;
+    state.view = view;
+    state.recordId = null;
+    state.machineKey = null;
+    if (view === 'form' && arg) {
+      if (!db.records.some((r) => r.id === arg)) { state.view = 'records'; return true; }
+      state.recordId = arg;
+    } else if (view === 'machine' && arg) {
+      state.machineKey = decodeURIComponent(arg);
+    }
+    return true;
+  }
+
+  function go(view, opts) {
+    state.view = view;
+    state.recordId = (opts && opts.recordId) || null;
+    state.machineKey = (opts && opts.machineKey) || null;
+    writeHash();
+    window.scrollTo(0, 0);
+    render();
+  }
+
+  /* ---------------- Render: shell ---------------- */
+
+  function render() {
+    document.body.className = 'lang-' + lang;
+    renderNav();
+    const main = $('#main');
+    main.innerHTML = '';
+    const views = {
+      dashboard: viewDashboard,
+      machines: viewMachines,
+      records: viewRecords,
+      newform: viewNewForm,
+      form: viewForm,
+      machine: viewMachine,
+      data: viewData,
+    };
+    (views[state.view] || viewDashboard)(main);
+  }
+
+  function renderNav() {
+    const nav = $('#nav');
+    nav.innerHTML = '';
+    const items = [
+      ['dashboard', '📊', UI.nav_dashboard],
+      ['machines', '🏭', UI.nav_machines],
+      ['records', '📄', UI.nav_records],
+      ['newform', '➕', UI.nav_new],
+      ['data', '💾', UI.nav_data],
+    ];
+    items.forEach(([view, icon, label]) => {
+      const active = state.view === view || (view === 'records' && state.view === 'form') || (view === 'machines' && state.view === 'machine');
+      nav.appendChild(
+        el('button', { class: active ? 'active' : '', onclick: () => go(view) }, [
+          el('span', { class: 'nav-icon', text: icon }),
+          el('span', { class: 'nav-text' }, [L(label)]),
+        ])
+      );
+    });
+
+    const ls = $('#langSwitch');
+    ls.innerHTML = '';
+    [['both', 'TH+EN'], ['en', 'EN'], ['th', 'ไทย']].forEach(([v, t]) => {
+      ls.appendChild(
+        el('button', {
+          class: lang === v ? 'active' : '',
+          text: t,
+          onclick: () => {
+            lang = v;
+            localStorage.setItem('fn-machine-care.lang', v);
+            render();
+          },
+        })
+      );
+    });
+  }
+
+  /* ---------------- View: Dashboard ---------------- */
+
+  function viewDashboard(root) {
+    const machines = machineList();
+    const recs = db.records;
+    const openIssues = recs.filter((r) => r.status !== 'draft' && ['notready', 'rejected', 'further'].includes(r.result)).length;
+    const drafts = recs.filter((r) => r.status === 'draft').length;
+
+    root.appendChild(
+      el('div', { class: 'page-head' }, [
+        el('div', {}, [
+          el('h1', { class: 'page-title', text: T(UI.appName) }),
+          el('div', { class: 'page-sub', text: T(UI.tagline) + ' · ' + T(UI.company) }),
+        ]),
+        el('div', { class: 'btn-row' }, [
+          el('button', { class: 'btn btn-primary', onclick: () => go('newform') }, [L(UI.nav_new)]),
+        ]),
+      ])
+    );
+
+    const stats = [
+      [machines.length, { en: 'Machines tracked', th: 'เครื่องจักรในระบบ' }, '#2f81f7'],
+      [recs.length, { en: 'Total records', th: 'เอกสารทั้งหมด' }, '#8b5cf6'],
+      [drafts, { en: 'Drafts in progress', th: 'ฉบับร่างที่ค้างอยู่' }, '#eab308'],
+      [openIssues, { en: 'Needs attention', th: 'ต้องติดตาม' }, '#ef4444'],
+    ];
+    const grid = el('div', { class: 'stat-grid' });
+    stats.forEach(([v, label, color]) => {
+      grid.appendChild(
+        el('div', { class: 'stat', style: `border-left-color:${color}` }, [
+          el('div', { class: 'stat-value', text: String(v) }),
+          el('div', { class: 'stat-label' }, [L(label)]),
+        ])
+      );
+    });
+    root.appendChild(grid);
+
+    /* Quick start */
+    root.appendChild(el('h2', { style: 'font-size:16px;margin:22px 0 12px' }, [L({ en: 'Start a new form', th: 'เริ่มเอกสารใหม่' })]));
+    root.appendChild(typeCards());
+
+    /* Recent */
+    root.appendChild(el('h2', { style: 'font-size:16px;margin:26px 0 12px' }, [L({ en: 'Recent activity', th: 'ความเคลื่อนไหวล่าสุด' })]));
+    const recent = recs.slice().sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1)).slice(0, 8);
+    root.appendChild(recent.length ? recordTable(recent) : el('div', { class: 'empty' }, [L(UI.noRecords)]));
+  }
+
+  function typeCards() {
+    const grid = el('div', { class: 'type-grid' });
+    FORM_TYPES.forEach((def) => {
+      grid.appendChild(
+        el('button', { class: 'type-card', style: `--accent:${def.accent}`, onclick: () => createAndOpen(def.type) }, [
+          el('div', { class: 'tc-icon', text: def.icon }),
+          el('div', { class: 'tc-code', text: def.code + ' · ' + def.prefix }),
+          el('div', { class: 'tc-name', text: def.name.en }),
+          el('div', { class: 'tc-name-th', text: def.name.th }),
+        ])
+      );
+    });
+    return grid;
+  }
+
+  function createAndOpen(type, prefill) {
+    const rec = newRecord(type);
+    if (prefill) Object.assign(rec.fields, prefill);
+    db.records.push(rec);
+    saveDB();
+    go('form', { recordId: rec.id });
+  }
+
+  /* ---------------- View: New form picker ---------------- */
+
+  function viewNewForm(root) {
+    root.appendChild(
+      el('div', { class: 'page-head' }, [
+        el('div', {}, [
+          el('h1', { class: 'page-title' }, [L({ en: 'New Form', th: 'สร้างเอกสารใหม่' })]),
+          el('div', { class: 'page-sub' }, [
+            L({
+              en: 'Machine lifecycle: Build → PDI → Delivery → Service',
+              th: 'วงจรชีวิตเครื่องจักร: ประกอบ → ตรวจก่อนส่ง → ส่งมอบ → บริการ',
+            }),
+          ]),
+        ]),
+      ])
+    );
+    root.appendChild(typeCards());
+  }
+
+  /* ---------------- View: Records ---------------- */
+
+  function viewRecords(root) {
+    root.appendChild(
+      el('div', { class: 'page-head' }, [
+        el('div', {}, [
+          el('h1', { class: 'page-title' }, [L({ en: 'All Records', th: 'เอกสารทั้งหมด' })]),
+          el('div', { class: 'page-sub', text: db.records.length + ' total' }),
+        ]),
+        el('input', {
+          class: 'search-input',
+          placeholder: T(UI.search),
+          value: state.search,
+          oninput: (e) => {
+            state.search = e.target.value;
+            const holder = $('#recordsHolder');
+            holder.innerHTML = '';
+            holder.appendChild(filteredTable());
+          },
+        }),
+      ])
+    );
+    const holder = el('div', { id: 'recordsHolder' });
+    holder.appendChild(filteredTable());
+    root.appendChild(holder);
+
+    function filteredTable() {
+      const q = state.search.trim().toLowerCase();
+      let list = db.records.slice().sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1));
+      if (q) {
+        list = list.filter((r) => {
+          const hay = [r.docNo, r.fields.workNo, r.fields.serialNo, r.fields.customer, r.fields.machineName, T(FORM_BY_TYPE[r.type].name)]
+            .join(' ').toLowerCase();
+          return hay.includes(q);
+        });
+      }
+      return list.length ? recordTable(list) : el('div', { class: 'empty' }, [L(UI.noRecords)]);
+    }
+  }
+
+  function recordTable(list) {
+    const wrap = el('div', { class: 'table-wrap' });
+    const table = el('table');
+    table.appendChild(
+      el('thead', {}, el('tr', {}, [
+        el('th', { text: 'Doc No.' }),
+        el('th', { text: 'Type' }),
+        el('th', { text: 'Work No.' }),
+        el('th', { text: 'Machine / Customer' }),
+        el('th', { text: 'Date' }),
+        el('th', { text: 'Progress' }),
+        el('th', { text: 'Status' }),
+      ]))
+    );
+    const tbody = el('tbody');
+    list.forEach((r) => {
+      const def = FORM_BY_TYPE[r.type];
+      const p = recordProgress(r);
+      const meta = resultMeta(r);
+      tbody.appendChild(
+        el('tr', { class: 'clickable', onclick: () => go('form', { recordId: r.id }) }, [
+          el('td', { html: `<strong>${escapeHTML(r.docNo)}</strong>` }),
+          el('td', {}, el('span', { class: 'type-badge', style: `--accent:${def.accent}`, text: def.icon + ' ' + def.prefix })),
+          el('td', { text: r.fields.workNo || '—' }),
+          el('td', {
+            html:
+              escapeHTML(r.fields.machineName || '—') +
+              `<div style="font-size:12px;color:var(--text-dim)">${escapeHTML(r.fields.customer || '')}</div>`,
+          }),
+          el('td', { text: fmtDate(primaryDate(r)) }),
+          el('td', { html: p.total ? `${p.done}/${p.total}` : '—' }),
+          el('td', {}, el('span', { class: 'pill ' + pillClassFor(r), text: meta ? T(meta.label) : T(UI.draft) })),
+        ])
+      );
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    return wrap;
+  }
+
+  function primaryDate(r) {
+    return r.fields.inspectionDate || r.fields.serviceDate || r.fields.commissionDate || r.fields.buildDate || r.createdAt.slice(0, 10);
+  }
+
+  function escapeHTML(s) {
+    return String(s === null || s === undefined ? '' : s).replace(/[&<>"']/g, (c) => (
+      { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+    ));
+  }
+
+  /* ---------------- View: Machines ---------------- */
+
+  function viewMachines(root) {
+    const machines = machineList();
+    root.appendChild(
+      el('div', { class: 'page-head' }, [
+        el('div', {}, [
+          el('h1', { class: 'page-title' }, [L({ en: 'Machines', th: 'เครื่องจักร' })]),
+          el('div', { class: 'page-sub' }, [
+            L({ en: 'Grouped by Work No. + Serial No.', th: 'จัดกลุ่มตามเลขที่งาน + หมายเลขเครื่อง' }),
+          ]),
+        ]),
+      ])
+    );
+
+    if (!machines.length) {
+      root.appendChild(
+        el('div', { class: 'empty' }, [
+          L({ en: 'No machines yet. Create a form and fill in Work No. + Serial No.', th: 'ยังไม่มีเครื่องจักร สร้างเอกสารและกรอกเลขที่งาน + หมายเลขเครื่อง' }),
+        ])
+      );
+      return;
+    }
+
+    const wrap = el('div', { class: 'table-wrap' });
+    const table = el('table');
+    table.appendChild(
+      el('thead', {}, el('tr', {}, [
+        el('th', { text: 'Work No.' }),
+        el('th', { text: 'Serial No.' }),
+        el('th', { text: 'Machine' }),
+        el('th', { text: 'Customer' }),
+        el('th', { text: 'Records' }),
+        el('th', { text: 'Last activity' }),
+      ]))
+    );
+    const tbody = el('tbody');
+    machines.forEach((m) => {
+      const counts = {};
+      m.records.forEach((r) => { counts[r.type] = (counts[r.type] || 0) + 1; });
+      const badges = el('div', { style: 'display:flex;gap:5px;flex-wrap:wrap' });
+      FORM_TYPES.forEach((def) => {
+        if (!counts[def.type]) return;
+        badges.appendChild(el('span', { class: 'type-badge', style: `--accent:${def.accent}`, text: `${def.icon} ${counts[def.type]}` }));
+      });
+      tbody.appendChild(
+        el('tr', { class: 'clickable', onclick: () => go('machine', { machineKey: m.key }) }, [
+          el('td', { html: `<strong>${escapeHTML(m.workNo || '—')}</strong>` }),
+          el('td', { text: m.serialNo || '—' }),
+          el('td', { text: m.machineName || '—' }),
+          el('td', { text: m.customer || '—' }),
+          el('td', {}, badges),
+          el('td', { text: fmtDate(primaryDate(m.records[0])) }),
+        ])
+      );
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    root.appendChild(wrap);
+  }
+
+  /* ---------------- View: One machine's history ---------------- */
+
+  function viewMachine(root) {
+    const m = machineList().find((x) => x.key === state.machineKey);
+    if (!m) return go('machines');
+
+    root.appendChild(
+      el('div', { class: 'page-head' }, [
+        el('div', {}, [
+          el('h1', { class: 'page-title', text: m.workNo || m.serialNo }),
+          el('div', { class: 'page-sub', text: [m.machineName, m.serialNo, m.customer].filter(Boolean).join(' · ') }),
+        ]),
+        el('div', { class: 'btn-row' }, [
+          el('button', { class: 'btn', onclick: () => go('machines') }, [L({ en: '← All machines', th: '← เครื่องจักรทั้งหมด' })]),
+          el('button', {
+            class: 'btn btn-primary',
+            onclick: () =>
+              createAndOpen('SERVICE', {
+                workNo: m.workNo, serialNo: m.serialNo, machineName: m.machineName, customer: m.customer,
+              }),
+          }, [L({ en: '+ Service Report', th: '+ รายงานบริการ' })]),
+        ]),
+      ])
+    );
+
+    root.appendChild(el('h2', { style: 'font-size:16px;margin:0 0 14px' }, [L(UI.history)]));
+
+    const tl = el('div', { class: 'timeline' });
+    m.records.forEach((r) => {
+      const def = FORM_BY_TYPE[r.type];
+      const meta = resultMeta(r);
+      const fails = failedItems(r);
+      tl.appendChild(
+        el('div', { class: 'tl-item', style: `--accent:${def.accent}` }, [
+          el('div', { class: 'card', style: 'cursor:pointer', onclick: () => go('form', { recordId: r.id }) }, [
+            el('div', { style: 'display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center' }, [
+              el('div', {}, [
+                el('span', { class: 'type-badge', style: `--accent:${def.accent}`, text: def.icon + ' ' + T(def.short) }),
+                el('strong', { style: 'margin-left:9px', text: r.docNo }),
+              ]),
+              el('span', { class: 'pill ' + pillClassFor(r), text: meta ? T(meta.label) : T(UI.draft) }),
+            ]),
+            el('div', { style: 'font-size:13px;color:var(--text-dim);margin-top:7px' , text:
+              fmtDate(primaryDate(r)) + ' · ' + (r.fields.inspector || r.fields.technician || r.fields.engineer || r.fields.checkedBy || '—') }),
+            fails.length
+              ? el('div', { style: 'margin-top:9px;font-size:13px;color:#fca5a5' , text:
+                  (lang === 'th' ? 'พบปัญหา ' : 'Issues: ') + fails.map((f) => f.item.code).join(', ') })
+              : null,
+          ]),
+        ])
+      );
+    });
+    root.appendChild(tl);
+  }
+
+  /* ---------------- View: Backup ---------------- */
+
+  function viewData(root) {
+    root.appendChild(
+      el('div', { class: 'page-head' }, [
+        el('div', {}, [
+          el('h1', { class: 'page-title' }, [L({ en: 'Backup & Restore', th: 'สำรองและกู้คืนข้อมูล' })]),
+          el('div', { class: 'page-sub' }, [
+            L({
+              en: 'Data lives in this browser only. Export regularly and keep the file on a company drive.',
+              th: 'ข้อมูลเก็บอยู่ในเบราว์เซอร์นี้เท่านั้น ควรส่งออกเป็นไฟล์และเก็บไว้ในไดรฟ์ของบริษัทอย่างสม่ำเสมอ',
+            }),
+          ]),
+        ]),
+      ])
+    );
+
+    const sizeKB = Math.round((localStorage.getItem(STORAGE_KEY) || '').length / 1024);
+
+    root.appendChild(
+      el('div', { class: 'card' }, [
+        el('div', { class: 'stat-grid', style: 'margin-bottom:16px' }, [
+          el('div', { class: 'stat' }, [
+            el('div', { class: 'stat-value', text: String(db.records.length) }),
+            el('div', { class: 'stat-label' }, [L({ en: 'Records stored', th: 'เอกสารที่เก็บไว้' })]),
+          ]),
+          el('div', { class: 'stat' }, [
+            el('div', { class: 'stat-value', text: sizeKB + ' KB' }),
+            el('div', { class: 'stat-label' }, [L({ en: 'Storage used', th: 'พื้นที่ที่ใช้' })]),
+          ]),
+        ]),
+        el('div', { class: 'btn-row' }, [
+          el('button', { class: 'btn btn-primary', onclick: exportJSON }, [L({ en: '⬇ Export backup (.json)', th: '⬇ ส่งออกไฟล์สำรอง (.json)' })]),
+          el('label', { class: 'btn' }, [
+            L({ en: '⬆ Import backup', th: '⬆ นำเข้าไฟล์สำรอง' }),
+            el('input', { type: 'file', accept: '.json,application/json', style: 'display:none', onchange: importJSON }),
+          ]),
+          el('button', { class: 'btn', onclick: exportCSV }, [L({ en: '⬇ Export summary (.csv)', th: '⬇ ส่งออกสรุป (.csv)' })]),
+          el('button', { class: 'btn btn-danger', onclick: wipeAll }, [L({ en: '⚠ Erase all data', th: '⚠ ลบข้อมูลทั้งหมด' })]),
+        ]),
+      ])
+    );
+  }
+
+  function download(filename, content, mime) {
+    const blob = new Blob([content], { type: mime || 'application/octet-stream' });
+    const url = URL.createObjectURL(blob);
+    const a = el('a', { href: url, download: filename });
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  }
+
+  function exportJSON() {
+    download(`fn-machine-care-backup-${todayISO()}.json`, JSON.stringify(db, null, 2), 'application/json');
+    toast(lang === 'th' ? 'ส่งออกไฟล์สำรองแล้ว' : 'Backup exported');
+  }
+
+  function exportCSV() {
+    const rows = [['Doc No', 'Type', 'Work No', 'Serial No', 'Machine', 'Customer', 'Date', 'Status', 'Result', 'Failed items']];
+    db.records.forEach((r) => {
+      const meta = resultMeta(r);
+      rows.push([
+        r.docNo, FORM_BY_TYPE[r.type].prefix, r.fields.workNo || '', r.fields.serialNo || '',
+        r.fields.machineName || '', r.fields.customer || '', primaryDate(r), r.status,
+        meta ? meta.label.en : '', failedItems(r).map((f) => f.item.code).join(' '),
+      ]);
+    });
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    download(`fn-machine-care-summary-${todayISO()}.csv`, '﻿' + csv, 'text/csv;charset=utf-8');
+  }
+
+  function importJSON(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || !Array.isArray(data.records)) throw new Error('bad format');
+        const existing = new Set(db.records.map((r) => r.id));
+        let added = 0;
+        data.records.forEach((r) => {
+          if (!existing.has(r.id)) { db.records.push(r); added++; }
+        });
+        saveDB();
+        toast((lang === 'th' ? 'นำเข้าแล้ว ' : 'Imported ') + added + (lang === 'th' ? ' รายการ' : ' records'));
+        render();
+      } catch (err) {
+        toast(lang === 'th' ? 'ไฟล์ไม่ถูกต้อง' : 'Invalid backup file', true);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  }
+
+  function wipeAll() {
+    const msg = lang === 'th'
+      ? 'ลบข้อมูลทั้งหมดถาวร? ควรส่งออกไฟล์สำรองก่อน'
+      : 'Permanently erase all data? Export a backup first.';
+    if (!confirm(msg)) return;
+    if (!confirm(lang === 'th' ? 'ยืนยันอีกครั้ง — ข้อมูลจะหายถาวร' : 'Confirm again — this cannot be undone.')) return;
+    db = structuredClone(DEFAULT_DB);
+    saveDB();
+    go('dashboard');
+  }
+
+  /* ---------------- View: The form itself ---------------- */
+
+  function viewForm(root) {
+    const rec = db.records.find((r) => r.id === state.recordId);
+    if (!rec) return go('records');
+    const def = FORM_BY_TYPE[rec.type];
+
+    /* Toolbar */
+    root.appendChild(
+      el('div', { class: 'toolbar no-print' }, [
+        el('div', {}, [
+          el('div', { class: 'tb-title', text: `${def.icon}  ${rec.docNo}` }),
+          el('div', { class: 'tb-sub', text: T(def.name) }),
+        ]),
+        el('div', { class: 'btn-row' }, [
+          el('button', { class: 'btn', onclick: () => go('records') }, [L({ en: '← Back', th: '← กลับ' })]),
+          el('button', { class: 'btn', onclick: () => window.print() }, [L(UI.print)]),
+          el('button', { class: 'btn btn-danger', onclick: () => deleteRecord(rec) }, [L(UI.delete)]),
+          el('button', { class: 'btn btn-primary', onclick: () => { touch(rec); toast(T(UI.saved)); } }, [L(UI.save)]),
+        ]),
+      ])
+    );
+
+    /* Print-only header */
+    root.appendChild(
+      el('div', { class: 'print-head' }, [
+        el('h1', { text: `${T(UI.company)} — ${def.name.en} / ${def.name.th}` }),
+        el('div', { class: 'ph-meta', text: `${rec.docNo}   |   Work No: ${rec.fields.workNo || '—'}   |   S/N: ${rec.fields.serialNo || '—'}   |   ${fmtDate(primaryDate(rec))}` }),
+      ])
+    );
+
+    const shell = el('div', { class: 'form-shell' });
+    def.sections.forEach((section) => shell.appendChild(renderSection(rec, def, section)));
+    root.appendChild(shell);
+
+    root.appendChild(
+      el('div', { class: 'btn-row no-print', style: 'margin-top:22px;justify-content:flex-end' }, [
+        el('button', { class: 'btn', onclick: () => window.print() }, [L(UI.print)]),
+        el('button', { class: 'btn btn-primary', onclick: () => { touch(rec); toast(T(UI.saved)); } }, [L(UI.save)]),
+      ])
+    );
+  }
+
+  function touch(rec) {
+    rec.updatedAt = new Date().toISOString();
+    saveDB();
+  }
+
+  function deleteRecord(rec) {
+    if (!confirm(T(UI.confirmDelete))) return;
+    db.records = db.records.filter((r) => r.id !== rec.id);
+    saveDB();
+    go('records');
+  }
+
+  /* ---- Section dispatcher ---- */
+
+  function renderSection(rec, def, section) {
+    const box = el('section', { class: 'section' + (section.critical ? ' critical' : ''), id: 'sec-' + section.id });
+
+    const head = el('header', {}, [
+      el('div', { class: 'section-title' }, [
+        el('div', { class: 'label-en', text: section.title.en }),
+        el('div', { class: 'label-th th', text: section.title.th }),
+      ]),
+    ]);
+    const prog = sectionProgress(rec, section);
+    if (prog) {
+      const bar = el('div', { class: 'progress-bar' }, el('div', {
+        class: 'progress-fill',
+        style: `width:${prog.total ? (prog.done / prog.total) * 100 : 0}%`,
+      }));
+      head.appendChild(el('div', { class: 'section-progress' }, [el('span', { text: `${prog.done}/${prog.total}` }), bar]));
+    }
+    box.appendChild(head);
+
+    const body = el('div', { class: 'section-body' });
+    if (section.hint) body.appendChild(el('div', { class: 'hint' }, [L(section.hint)]));
+
+    const renderers = {
+      fields: renderFields,
+      checklist: renderChecklist,
+      condition: renderChecklist,
+      measurements: renderMeasurements,
+      performance: renderPerformance,
+      documents: renderDocuments,
+      photos: renderPhotos,
+      beforeafter: renderBeforeAfter,
+      table: renderTable,
+      costtable: renderCostTable,
+      notes: renderNotes,
+      problem: renderProblem,
+      rootcause: renderRootCause,
+      result: renderResult,
+      signoff: renderSignoff,
+    };
+    (renderers[section.type] || renderNotes)(body, rec, def, section);
+    box.appendChild(body);
+    return box;
+  }
+
+  /* ---- fields ---- */
+
+  function renderFields(body, rec, def, section) {
+    const grid = el('div', { class: 'field-grid' });
+    section.fields.forEach((f) => {
+      const wrap = el('div', { class: 'field' });
+      const lab = el('label', {}, [
+        L(f.label),
+        f.required ? el('span', { class: 'req', text: ' *' }) : null,
+        f.unit ? el('span', { class: 'unit', text: '(' + f.unit + ')' }) : null,
+      ]);
+      wrap.appendChild(lab);
+
+      let input;
+      if (f.type === 'select') {
+        input = el('select', {
+          onchange: (e) => { rec.fields[f.key] = e.target.value; touch(rec); },
+        });
+        input.appendChild(el('option', { value: '', text: '—' }));
+        f.options.forEach((o) => {
+          const opt = el('option', { value: o.value, text: lang === 'th' ? o.label.th : `${o.label.en}${lang === 'both' ? ' / ' + o.label.th : ''}` });
+          if (rec.fields[f.key] === o.value) opt.selected = true;
+          input.appendChild(opt);
+        });
+      } else {
+        input = el('input', {
+          type: f.type || 'text',
+          placeholder: f.placeholder || '',
+          value: rec.fields[f.key] || '',
+          step: f.type === 'number' ? 'any' : null,
+          oninput: (e) => { rec.fields[f.key] = e.target.value; },
+          onchange: (e) => { rec.fields[f.key] = e.target.value; touch(rec); },
+        });
+      }
+      wrap.appendChild(input);
+      grid.appendChild(wrap);
+    });
+    body.appendChild(grid);
+  }
+
+  /* ---- checklist / condition ---- */
+
+  function renderChecklist(body, rec, def, section) {
+    const isCondition = section.type === 'condition';
+    const choices = isCondition
+      ? [['NORMAL', UI.normal], ['ABNORMAL', UI.abnormal]]
+      : [['PASS', UI.pass], ['FAIL', UI.fail], ['NA', UI.na]];
+
+    if (!rec.checks[section.id]) rec.checks[section.id] = {};
+    const answers = rec.checks[section.id];
+
+    /* Bulk action — mark everything unanswered as PASS */
+    if (!isCondition) {
+      body.appendChild(
+        el('div', { class: 'btn-row no-print', style: 'margin-bottom:12px' }, [
+          el('button', {
+            class: 'btn btn-sm',
+            onclick: () => {
+              section.items.forEach((it) => {
+                if (!answers[it.code] || !answers[it.code].value) {
+                  answers[it.code] = Object.assign({ remark: '' }, answers[it.code], { value: 'PASS' });
+                }
+              });
+              touch(rec);
+              render();
+            },
+          }, [L({ en: 'Mark remaining as PASS', th: 'ตั้งรายการที่เหลือเป็น “ผ่าน”' })]),
+          el('button', {
+            class: 'btn btn-sm',
+            onclick: () => {
+              section.items.forEach((it) => { delete answers[it.code]; });
+              touch(rec);
+              render();
+            },
+          }, [L(UI.clear)]),
+        ])
+      );
+    }
+
+    section.items.forEach((it) => {
+      const a = answers[it.code] || (answers[it.code] = { value: '', remark: '' });
+      const row = el('div', { class: 'check-row' + (a.value === 'FAIL' || a.value === 'ABNORMAL' ? ' is-fail' : '') });
+      row.appendChild(el('div', { class: 'check-code', text: it.code }));
+      row.appendChild(el('div', { class: 'check-label' }, [
+        el('div', { class: 'label-en', text: it.label.en }),
+        el('div', { class: 'label-th th', text: it.label.th }),
+      ]));
+
+      const pfn = el('div', { class: 'pfn' });
+      choices.forEach(([val, label]) => {
+        pfn.appendChild(
+          el('button', {
+            'data-v': val,
+            class: a.value === val ? 'on' : '',
+            text: T(label),
+            onclick: () => {
+              a.value = a.value === val ? '' : val;
+              touch(rec);
+              render();
+            },
+          })
+        );
+      });
+      row.appendChild(pfn);
+
+      row.appendChild(
+        el('input', {
+          class: 'cell-input',
+          placeholder: T(UI.remark),
+          value: a.remark || '',
+          oninput: (e) => { a.remark = e.target.value; },
+          onchange: (e) => { a.remark = e.target.value; touch(rec); },
+        })
+      );
+      body.appendChild(row);
+    });
+  }
+
+  /* ---- measurements ---- */
+
+  function renderMeasurements(body, rec, def, section) {
+    if (!rec.measures[section.id]) rec.measures[section.id] = {};
+    const vals = rec.measures[section.id];
+    section.items.forEach((m) => {
+      body.appendChild(
+        el('div', { class: 'measure-row' }, [
+          el('div', {}, [
+            el('div', { class: 'label-en', text: m.label.en }),
+            el('div', { class: 'label-th th', text: m.label.th }),
+          ]),
+          el('input', {
+            class: 'cell-input',
+            type: 'number',
+            step: 'any',
+            placeholder: m.placeholder || '',
+            value: vals[m.key] || '',
+            oninput: (e) => { vals[m.key] = e.target.value; },
+            onchange: (e) => { vals[m.key] = e.target.value; touch(rec); },
+          }),
+          el('div', { style: 'color:var(--text-dim);font-size:13px', text: m.unit }),
+        ])
+      );
+    });
+  }
+
+  /* ---- performance (target vs actual, auto verdict) ---- */
+
+  function renderPerformance(body, rec, def, section) {
+    if (!rec.perf[section.id]) rec.perf[section.id] = {};
+    const vals = rec.perf[section.id];
+
+    body.appendChild(
+      el('div', { class: 'perf-row', style: 'font-size:11.5px;letter-spacing:.5px;color:var(--text-faint);text-transform:uppercase' }, [
+        el('div', { text: 'Test' }),
+        el('div', { text: T(UI.target) }),
+        el('div', { text: T(UI.actual) }),
+        el('div', { text: T(UI.result) }),
+      ])
+    );
+
+    section.items.forEach((p) => {
+      const verdict = el('div', { class: 'verdict none', text: '—' });
+      const updateVerdict = () => {
+        const v = parseFloat(vals[p.key]);
+        const limit = parseFloat(String(p.target).replace(/[^0-9.]/g, ''));
+        if (isNaN(v) || isNaN(limit)) {
+          verdict.className = 'verdict none';
+          verdict.textContent = '—';
+          return;
+        }
+        const ok = p.better === 'lower' ? v <= limit : v >= limit;
+        verdict.className = 'verdict ' + (ok ? 'pass' : 'fail');
+        verdict.textContent = ok ? T(UI.pass) : T(UI.fail);
+      };
+
+      body.appendChild(
+        el('div', { class: 'perf-row' }, [
+          el('div', {}, [
+            el('div', { class: 'label-en', text: p.label.en }),
+            el('div', { class: 'label-th th', text: p.label.th }),
+          ]),
+          el('div', { class: 'perf-target', text: p.target }),
+          el('input', {
+            class: 'cell-input',
+            type: 'number',
+            step: 'any',
+            placeholder: p.unit,
+            value: vals[p.key] || '',
+            oninput: (e) => { vals[p.key] = e.target.value; updateVerdict(); },
+            onchange: (e) => { vals[p.key] = e.target.value; updateVerdict(); touch(rec); },
+          }),
+          verdict,
+        ])
+      );
+      updateVerdict();
+    });
+  }
+
+  /* ---- documents ---- */
+
+  function renderDocuments(body, rec, def, section) {
+    if (!rec.docs[section.id]) rec.docs[section.id] = {};
+    const vals = rec.docs[section.id];
+    const grid = el('div', { class: 'doc-grid' });
+    section.items.forEach((it) => {
+      const item = el('label', { class: 'doc-item' + (vals[it.code] ? ' on' : '') });
+      const cb = el('input', {
+        type: 'checkbox',
+        onchange: (e) => {
+          vals[it.code] = e.target.checked;
+          item.className = 'doc-item' + (e.target.checked ? ' on' : '');
+          touch(rec);
+        },
+      });
+      cb.checked = !!vals[it.code];
+      item.appendChild(cb);
+      item.appendChild(el('div', {}, [
+        el('div', { class: 'label-en', text: it.label.en }),
+        el('div', { class: 'label-th th', style: 'font-size:11.5px;color:var(--text-dim)', text: it.label.th }),
+      ]));
+      grid.appendChild(item);
+    });
+    body.appendChild(grid);
+  }
+
+  /* ---- photos ---- */
+
+  function compressImage(file, maxDim, quality) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          const canvas = el('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function photoSlot(rec, store, key, label, onRemove) {
+    const slot = el('div', { class: 'photo-slot' });
+    if (label) {
+      slot.appendChild(el('div', { class: 'ps-head' }, [
+        el('div', { class: 'label-en', text: label.en }),
+        el('div', { class: 'label-th th', text: label.th }),
+      ]));
+    }
+
+    const fileInput = el('input', {
+      type: 'file',
+      accept: 'image/*',
+      capture: 'environment',
+      style: 'display:none',
+      onchange: async (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        try {
+          store[key] = await compressImage(file, 1200, 0.72);
+          touch(rec);
+          render();
+        } catch (err) {
+          toast(lang === 'th' ? 'อ่านรูปไม่สำเร็จ' : 'Could not read image', true);
+        }
+        e.target.value = '';
+      },
+    });
+    slot.appendChild(fileInput);
+
+    if (store[key]) {
+      slot.appendChild(el('img', { src: store[key], alt: label ? label.en : 'photo' }));
+      slot.appendChild(
+        el('div', { class: 'photo-actions no-print' }, [
+          el('button', { class: 'btn btn-sm', onclick: () => fileInput.click() }, [L({ en: 'Replace', th: 'เปลี่ยนรูป' })]),
+          el('button', {
+            class: 'btn btn-sm btn-danger',
+            onclick: () => {
+              if (onRemove) onRemove();
+              else delete store[key];
+              touch(rec);
+              render();
+            },
+          }, [L(UI.remove)]),
+        ])
+      );
+    } else {
+      slot.appendChild(
+        el('div', { class: 'photo-drop', onclick: () => fileInput.click() }, [
+          el('div', {}, [
+            el('div', { style: 'font-size:22px', text: '📷' }),
+            el('div', { text: lang === 'th' ? 'แตะเพื่อถ่าย / เลือกรูป' : 'Tap to take / choose photo' }),
+          ]),
+        ])
+      );
+    }
+    return slot;
+  }
+
+  function renderPhotos(body, rec, def, section) {
+    if (!rec.photos[section.id]) rec.photos[section.id] = {};
+    const store = rec.photos[section.id];
+    const grid = el('div', { class: 'photo-grid' });
+
+    (section.items || []).forEach((it) => {
+      grid.appendChild(photoSlot(rec, store, it.code, it.label));
+    });
+
+    /* Free-form extra photos */
+    if (section.allowFree) {
+      Object.keys(store)
+        .filter((k) => k.startsWith('EX'))
+        .sort()
+        .forEach((k) => {
+          grid.appendChild(photoSlot(rec, store, k, { en: 'Additional', th: 'รูปเพิ่มเติม' }, () => { delete store[k]; }));
+        });
+    }
+    body.appendChild(grid);
+
+    if (section.allowFree) {
+      body.appendChild(
+        el('div', { class: 'btn-row no-print', style: 'margin-top:13px' }, [
+          el('button', {
+            class: 'btn btn-sm',
+            onclick: () => {
+              const n = Object.keys(store).filter((k) => k.startsWith('EX')).length;
+              store['EX' + String(n + 1).padStart(2, '0')] = '';
+              touch(rec);
+              render();
+            },
+          }, [L(UI.addPhoto)]),
+        ])
+      );
+    }
+  }
+
+  function renderBeforeAfter(body, rec) {
+    if (!rec.beforeAfter) rec.beforeAfter = { before: [], after: [] };
+    const ba = rec.beforeAfter;
+
+    const grid = el('div', { class: 'ba-grid' });
+    [['before', UI.before], ['after', UI.after]].forEach(([side, label]) => {
+      const col = el('div', { class: 'ba-col' });
+      col.appendChild(el('h4', { text: T(label) }));
+      const store = {};
+      ba[side].forEach((src, i) => { store[i] = src; });
+
+      const inner = el('div', { style: 'display:flex;flex-direction:column;gap:11px' });
+      ba[side].forEach((src, i) => {
+        inner.appendChild(
+          photoSlot(rec, {
+            get [i]() { return ba[side][i]; },
+            set [i](v) { ba[side][i] = v; },
+          }, i, null, () => { ba[side].splice(i, 1); })
+        );
+      });
+      inner.appendChild(
+        el('button', {
+          class: 'btn btn-sm no-print',
+          onclick: () => { ba[side].push(''); touch(rec); render(); },
+        }, [L(UI.addPhoto)])
+      );
+      col.appendChild(inner);
+      grid.appendChild(col);
+    });
+    body.appendChild(grid);
+  }
+
+  /* ---- generic table ---- */
+
+  function renderTable(body, rec, def, section) {
+    if (!rec.tables[section.id]) rec.tables[section.id] = [];
+    const rows = rec.tables[section.id];
+    if (!rows.length) rows.push({});
+
+    const wrap = el('div', { class: 'table-wrap' });
+    const table = el('table');
+    table.appendChild(
+      el('thead', {}, el('tr', {}, [
+        ...section.columns.map((c) => el('th', { style: c.width ? `width:${c.width}` : null }, [L(c.label)])),
+        el('th', { class: 'no-print', style: 'width:46px' }),
+      ]))
+    );
+    const tbody = el('tbody');
+    rows.forEach((row, idx) => {
+      tbody.appendChild(
+        el('tr', {}, [
+          ...section.columns.map((c) =>
+            el('td', {}, el('input', {
+              class: 'cell-input',
+              type: c.type || 'text',
+              step: c.type === 'number' ? 'any' : null,
+              value: row[c.key] || '',
+              oninput: (e) => { row[c.key] = e.target.value; },
+              onchange: (e) => { row[c.key] = e.target.value; touch(rec); },
+            }))
+          ),
+          el('td', { class: 'no-print' }, el('button', {
+            class: 'btn btn-sm btn-danger',
+            text: '✕',
+            onclick: () => { rows.splice(idx, 1); touch(rec); render(); },
+          })),
+        ])
+      );
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    body.appendChild(wrap);
+
+    body.appendChild(
+      el('div', { class: 'btn-row no-print', style: 'margin-top:11px' }, [
+        el('button', { class: 'btn btn-sm', onclick: () => { rows.push({}); touch(rec); render(); } }, [L(UI.addRow)]),
+      ])
+    );
+  }
+
+  /* ---- cost table (auto total) ---- */
+
+  function renderCostTable(body, rec, def, section) {
+    if (!rec.tables[section.id]) rec.tables[section.id] = [];
+    const rows = rec.tables[section.id];
+    if (!rows.length) rows.push({});
+
+    const totalCell = el('td', { style: 'font-weight:700;text-align:right' });
+    const recalc = () => {
+      const sum = rows.reduce((acc, r) => acc + (parseFloat(r.qty) || 0) * (parseFloat(r.unitPrice) || 0), 0);
+      totalCell.textContent = '฿' + sum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      Array.from(body.querySelectorAll('[data-line-total]')).forEach((cell, i) => {
+        const r = rows[i];
+        if (!r) return;
+        const line = (parseFloat(r.qty) || 0) * (parseFloat(r.unitPrice) || 0);
+        cell.textContent = line ? '฿' + line.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+      });
+    };
+
+    const wrap = el('div', { class: 'table-wrap' });
+    const table = el('table');
+    table.appendChild(
+      el('thead', {}, el('tr', {}, [
+        ...section.columns.map((c) => el('th', { style: c.width ? `width:${c.width}` : null }, [L(c.label)])),
+        el('th', { style: 'text-align:right' }, [L({ en: 'Total', th: 'รวม' })]),
+        el('th', { class: 'no-print', style: 'width:46px' }),
+      ]))
+    );
+    const tbody = el('tbody');
+    rows.forEach((row, idx) => {
+      tbody.appendChild(
+        el('tr', {}, [
+          ...section.columns.map((c) =>
+            el('td', {}, el('input', {
+              class: 'cell-input',
+              type: c.type || 'text',
+              step: c.type === 'number' ? 'any' : null,
+              value: row[c.key] || '',
+              oninput: (e) => { row[c.key] = e.target.value; recalc(); },
+              onchange: (e) => { row[c.key] = e.target.value; touch(rec); },
+            }))
+          ),
+          el('td', { 'data-line-total': '1', style: 'text-align:right;color:var(--text-dim)' }),
+          el('td', { class: 'no-print' }, el('button', {
+            class: 'btn btn-sm btn-danger',
+            text: '✕',
+            onclick: () => { rows.splice(idx, 1); touch(rec); render(); },
+          })),
+        ])
+      );
+    });
+    tbody.appendChild(
+      el('tr', {}, [
+        el('td', { colspan: String(section.columns.length), style: 'text-align:right;font-weight:700' }, [L(UI.total)]),
+        totalCell,
+        el('td', { class: 'no-print' }),
+      ])
+    );
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    body.appendChild(wrap);
+    body.appendChild(
+      el('div', { class: 'btn-row no-print', style: 'margin-top:11px' }, [
+        el('button', { class: 'btn btn-sm', onclick: () => { rows.push({}); touch(rec); render(); } }, [L(UI.addRow)]),
+      ])
+    );
+    recalc();
+  }
+
+  /* ---- notes ---- */
+
+  function renderNotes(body, rec, def, section) {
+    body.appendChild(
+      el('div', { class: 'field' }, [
+        el('textarea', {
+          placeholder: section.placeholder ? T(section.placeholder) : '',
+          oninput: (e) => { rec.notes[section.id] = e.target.value; },
+          onchange: (e) => { rec.notes[section.id] = e.target.value; touch(rec); },
+        }, rec.notes[section.id] || ''),
+      ])
+    );
+  }
+
+  /* ---- problem + priority ---- */
+
+  function renderProblem(body, rec, def, section) {
+    renderNotes(body, rec, def, section);
+    const row = el('div', { class: 'priority-row' });
+    section.priorities.forEach((p) => {
+      const on = rec.priority[section.id] === p.value;
+      row.appendChild(
+        el('button', {
+          class: on ? 'on' : '',
+          style: on ? `background:${p.color};border-color:${p.color}` : '',
+          text: '● ' + T(p.label),
+          onclick: () => {
+            rec.priority[section.id] = on ? null : p.value;
+            touch(rec);
+            render();
+          },
+        })
+      );
+    });
+    body.appendChild(el('div', { style: 'font-size:12.5px;color:var(--text-dim);margin-top:14px' }, [
+      L({ en: "Customer's Priority", th: 'ระดับความเร่งด่วนจากลูกค้า' }),
+    ]));
+    body.appendChild(row);
+  }
+
+  /* ---- root cause ---- */
+
+  function renderRootCause(body, rec, def, section) {
+    if (!rec.rootcause[section.id]) rec.rootcause[section.id] = { selected: [], text: '' };
+    const rc = rec.rootcause[section.id];
+
+    const grid = el('div', { class: 'rc-grid' });
+    section.categories.forEach((c) => {
+      const on = rc.selected.includes(c.code);
+      const item = el('label', { class: 'doc-item' + (on ? ' on' : '') });
+      const cb = el('input', {
+        type: 'checkbox',
+        onchange: (e) => {
+          if (e.target.checked) { if (!rc.selected.includes(c.code)) rc.selected.push(c.code); }
+          else rc.selected = rc.selected.filter((x) => x !== c.code);
+          item.className = 'doc-item' + (e.target.checked ? ' on' : '');
+          touch(rec);
+        },
+      });
+      cb.checked = on;
+      item.appendChild(cb);
+      item.appendChild(el('div', {}, [
+        el('div', { class: 'label-en', text: c.label.en }),
+        el('div', { class: 'label-th th', style: 'font-size:11.5px;color:var(--text-dim)', text: c.label.th }),
+      ]));
+      grid.appendChild(item);
+    });
+    body.appendChild(grid);
+
+    body.appendChild(
+      el('div', { class: 'field' }, [
+        el('label', {}, [L({ en: 'Root cause description', th: 'คำอธิบายสาเหตุที่แท้จริง' })]),
+        el('textarea', {
+          placeholder: section.placeholder ? T(section.placeholder) : '',
+          oninput: (e) => { rc.text = e.target.value; },
+          onchange: (e) => { rc.text = e.target.value; touch(rec); },
+        }, rc.text || ''),
+      ])
+    );
+  }
+
+  /* ---- result (with safety gate) ---- */
+
+  function renderResult(body, rec, def, section) {
+    const blocked = hasSafetyFail(rec);
+    if (blocked) body.appendChild(el('div', { class: 'alert-danger' }, [L(UI.safetyBlock)]));
+
+    const fails = failedItems(rec);
+    if (fails.length) {
+      const list = el('div', { style: 'margin-bottom:15px;font-size:13px' }, [
+        el('div', { style: 'color:var(--text-dim);margin-bottom:7px' }, [
+          L({ en: 'Items not passed:', th: 'รายการที่ไม่ผ่าน:' }),
+        ]),
+      ]);
+      fails.forEach((f) => {
+        list.appendChild(
+          el('div', { style: 'padding:5px 0;border-bottom:1px solid var(--line-soft)' , text:
+            `${f.item.code} — ${T(f.item.label)}${f.remark ? '  ·  ' + f.remark : ''}` })
+        );
+      });
+      body.appendChild(list);
+    }
+
+    const row = el('div', { class: 'result-row' });
+    section.options.forEach((o) => {
+      /* A failed safety item blocks only the "all clear" option */
+      const isBlocked = blocked && o.color === '#22c55e';
+      const on = rec.result === o.value;
+      row.appendChild(
+        el('button', {
+          class: (on ? 'on ' : '') + (isBlocked ? 'blocked' : ''),
+          style: on ? `border-color:${o.color};background:${o.color}22;color:${o.color}` : '',
+          onclick: () => {
+            if (isBlocked) { toast(T(UI.safetyBlock), true); return; }
+            rec.result = on ? null : o.value;
+            rec.status = rec.result ? 'completed' : 'draft';
+            touch(rec);
+            render();
+          },
+        }, [
+          el('span', { class: 'dot', style: `background:${o.color}` }),
+          el('span', {}, [
+            el('span', { class: 'label-en', text: o.label.en }),
+            el('span', { class: 'label-th th', text: o.label.th }),
+          ]),
+        ])
+      );
+    });
+    body.appendChild(row);
+  }
+
+  /* ---- signatures ---- */
+
+  function renderSignoff(body, rec, def, section) {
+    const grid = el('div', { class: 'sign-grid' });
+    section.roles.forEach((role) => {
+      if (!rec.signatures[role.key]) rec.signatures[role.key] = { data: '', name: '', date: '' };
+      const sig = rec.signatures[role.key];
+
+      const canvas = el('canvas', { class: 'sign-pad', width: 520, height: 130 });
+      const card = el('div', { class: 'sign-card' }, [
+        el('h4', {}, [
+          el('span', { class: 'label-en', text: role.label.en }),
+          el('span', { class: 'label-th th', text: ' ' + role.label.th }),
+        ]),
+        canvas,
+        el('div', { class: 'sign-meta' }, [
+          el('input', {
+            class: 'cell-input',
+            placeholder: T(UI.name),
+            value: sig.name || '',
+            oninput: (e) => { sig.name = e.target.value; },
+            onchange: (e) => { sig.name = e.target.value; touch(rec); },
+          }),
+          el('input', {
+            class: 'cell-input',
+            type: 'date',
+            value: sig.date || '',
+            onchange: (e) => { sig.date = e.target.value; touch(rec); },
+          }),
+        ]),
+        el('div', { class: 'sign-foot no-print' }, [
+          el('button', {
+            class: 'btn btn-sm',
+            onclick: () => {
+              sig.data = '';
+              const ctx = canvas.getContext('2d');
+              ctx.fillStyle = '#fff';
+              ctx.fillRect(0, 0, canvas.width, canvas.height);
+              touch(rec);
+            },
+          }, [L(UI.clear)]),
+        ]),
+      ]);
+      grid.appendChild(card);
+      setupSignaturePad(canvas, sig, rec);
+    });
+    body.appendChild(grid);
+  }
+
+  function setupSignaturePad(canvas, sig, rec) {
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 2.2;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    ctx.strokeStyle = '#111';
+
+    if (sig.data) {
+      const img = new Image();
+      img.onload = () => ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      img.src = sig.data;
+    }
+
+    let drawing = false;
+
+    function pos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const point = e.touches ? e.touches[0] : e;
+      return {
+        x: (point.clientX - rect.left) * (canvas.width / rect.width),
+        y: (point.clientY - rect.top) * (canvas.height / rect.height),
+      };
+    }
+
+    function start(e) {
+      e.preventDefault();
+      drawing = true;
+      const p = pos(e);
+      ctx.beginPath();
+      ctx.moveTo(p.x, p.y);
+    }
+    function move(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const p = pos(e);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+    }
+    function end() {
+      if (!drawing) return;
+      drawing = false;
+      sig.data = canvas.toDataURL('image/png');
+      touch(rec);
+    }
+
+    canvas.addEventListener('mousedown', start);
+    canvas.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', end);
+    canvas.addEventListener('touchstart', start, { passive: false });
+    canvas.addEventListener('touchmove', move, { passive: false });
+    canvas.addEventListener('touchend', end);
+  }
+
+  /* ---------------- Boot ---------------- */
+
+  function boot() {
+    $('#appName').textContent = 'FN Machine Care';
+    readHash();
+    render();
+
+    window.addEventListener('hashchange', () => {
+      if (suppressHashChange) { suppressHashChange = false; return; }
+      readHash();
+      render();
+    });
+    window.addEventListener('beforeunload', () => saveDB());
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+
+  /* Expose a little surface for debugging in the console */
+  window.FNMachineCare = {
+    get db() { return db; },
+    save: saveDB,
+    reset: () => { db = structuredClone(DEFAULT_DB); saveDB(); render(); },
+  };
+})();
+</script>
 </body>
 </html>

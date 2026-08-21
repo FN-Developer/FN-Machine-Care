@@ -81,7 +81,7 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 
 ## Running it
 
-Open `index.html` in a browser. That's the whole installation.
+Open `index.html` in a browser. That's the whole installation — a single file, everything inlined, works offline with no network at all.
 
 For shared use on the shop floor, serve the folder over any static host:
 
@@ -115,18 +115,25 @@ That means:
 
 ## Project layout
 
+The whole application is **one self-contained file** — no build step, no dependencies, nothing to install. Copy `index.html` onto a USB stick, email it, or drop it on a shared drive and it runs.
+
 ```
 FN-Machine-Care/
-├── index.html    App shell and sidebar
-├── forms.js      All form definitions — every check item, in TH + EN
-├── app.js        Rendering, storage, routing, signatures, photos, print
-├── styles.css    Dark shop-floor UI + A4 print stylesheet
+├── index.html    The entire app — HTML + CSS + JavaScript in one file (~124 KB)
 └── README.md
 ```
 
+Inside `index.html`, in order:
+
+| Block | What's in it |
+|---|---|
+| `<style>` | Dark shop-floor UI + the A4 print stylesheet |
+| First `<script>` | **Form definitions** — every check item, in Thai and English |
+| Second `<script>` | Rendering, storage, routing, signatures, photos, print |
+
 ### Adding or changing a check item
 
-Everything lives in `forms.js` as data. To add a mechanical check, add one line:
+Open `index.html` in any text editor and find the first `<script>` block. Everything is plain data. To add a mechanical check, add one line:
 
 ```js
 const MECHANICAL_ITEMS = [
@@ -139,6 +146,8 @@ const MECHANICAL_ITEMS = [
 The UI, the progress counter, the print layout and the CSV export all pick it up. No UI code to touch.
 
 To add a whole section, append an object to a form's `sections` array using one of the supported types: `fields`, `checklist`, `condition`, `measurements`, `performance`, `documents`, `photos`, `beforeafter`, `table`, `costtable`, `notes`, `problem`, `rootcause`, `result`, `signoff`.
+
+> Save your edit, refresh the browser, done. Records already stored on the device are not affected — new items simply appear unanswered on new forms.
 
 ---
 
