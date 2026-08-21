@@ -6,7 +6,10 @@
     "records": {
       ".read": "auth != null",
 
-      "//": "No write on the collection itself, only on a record inside it. That is what stops one call from deleting the whole service history: a wipe would have to be 69 separate deletes, not a single PUT of null. The app never writes here anyway — it updates records/<id> paths.",
+      // No write on the collection itself, only on a record inside it.
+      // That is what stops one call from deleting the whole service
+      // history: a wipe would need one delete per record, not a single
+      // PUT of null. The app only ever updates records/<id> paths.
       ".write": false,
 
       "$recordId": {
@@ -19,7 +22,8 @@
     "people": {
       ".read": "auth != null",
 
-      "//": "The people list may be replaced wholesale — it is small, rebuilt from each device, and losing it costs a few names rather than a year of inspections.",
+      // Small, and rebuilt from each device. Losing it costs a few
+      // names rather than a year of inspections.
       ".write": "auth != null"
     }
   }
