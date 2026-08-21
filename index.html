@@ -300,18 +300,18 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 .brand-logo {
   position: relative;
-  width: 50px; height: 50px;
+  width: 66px; height: 66px;
   flex: 0 0 auto;
   border-radius: 11px;
   background: linear-gradient(140deg, var(--accent-blue), var(--accent-violet));
   display: grid; place-items: center;
   font-size: 14px; font-weight: 700; color: #fff;
   letter-spacing: -.02em;
-  box-shadow: 0 5px 14px rgba(10, 132, 255, .38), inset 0 1px 0 rgba(255,255,255,.45);
+  box-shadow: 0 8px 22px rgba(10, 132, 255, .40), inset 0 1.5px 0 rgba(255,255,255,.5);
   isolation: isolate;
 }
 .brand-logo span { position: relative; z-index: 2; }
-.brand-logo { border-radius: 15px; font-size: 18px; }
+.brand-logo { border-radius: 20px; font-size: 24px; }
 
 /* Orbiting rim highlight */
 .brand-logo::before {
@@ -319,7 +319,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  padding: 1.5px;
+  padding: 2px;
   background: conic-gradient(from 0deg,
     transparent 0deg, transparent 250deg,
     rgba(255,255,255,.95) 300deg,
@@ -465,18 +465,18 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   border-radius: var(--radius-ctl);
 }
 .seg button {
-  flex: 1;
+  flex: 1 1 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 7px 4px;
+  gap: 4px;
+  padding: 7px 3px;
   background: transparent;
   border: none;
   border-radius: 10px;
   color: var(--text-dim);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 500;
   transition: background .16s ease, color .16s ease, box-shadow .16s ease;
   min-width: 0;
@@ -1624,7 +1624,7 @@ tbody tr.clickable { cursor: pointer; }
 .print-head .ph-meta { font-size: 9pt; color: #333; }
 </style>
 </head>
-<body class="lang-both">
+<body class="lang-th">
 
 <!-- The environment the glass floats over. Purely atmospheric. -->
 <div class="ambient" aria-hidden="true">
@@ -2368,7 +2368,13 @@ const UI = {
   }
 
   let db = loadDB();
-  let lang = localStorage.getItem('fn-machine-care.lang') || 'both';
+  /* Thai or English — one at a time. Anyone still carrying the old
+     side-by-side setting is moved to Thai, the shop-floor language. */
+  let lang = localStorage.getItem('fn-machine-care.lang') || 'th';
+  if (lang !== 'en' && lang !== 'th') {
+    lang = 'th';
+    try { localStorage.setItem('fn-machine-care.lang', lang); } catch (e) { /* private mode */ }
+  }
 
   /* ---------------- Theme ----------------
      'auto' follows the device. On a shop-floor tablet that means the
@@ -2958,7 +2964,7 @@ const UI = {
       [
         ['light', '☀', { en: 'Light', th: 'สว่าง' }],
         ['dark', '☾', { en: 'Dark', th: 'มืด' }],
-        ['auto', '◐', { en: 'Auto', th: 'อัตโนมัติ' }],
+        ['auto', '◐', { en: 'Auto', th: 'ตามระบบ' }],
       ].forEach(([v, icon, label]) => {
         ts.appendChild(
           el('button', {
@@ -2977,7 +2983,7 @@ const UI = {
 
     const ls = $('#langSwitch');
     ls.innerHTML = '';
-    [['both', 'TH+EN'], ['en', 'EN'], ['th', 'ไทย']].forEach(([v, t]) => {
+    [['th', 'ไทย'], ['en', 'English']].forEach(([v, t]) => {
       ls.appendChild(
         el('button', {
           class: lang === v ? 'active' : '',
@@ -3954,7 +3960,7 @@ const UI = {
         });
         input.appendChild(el('option', { value: '', text: '—' }));
         f.options.forEach((o) => {
-          const opt = el('option', { value: o.value, text: lang === 'th' ? o.label.th : `${o.label.en}${lang === 'both' ? ' / ' + o.label.th : ''}` });
+          const opt = el('option', { value: o.value, text: T(o.label) });
           if (rec.fields[f.key] === o.value) opt.selected = true;
           input.appendChild(opt);
         });
