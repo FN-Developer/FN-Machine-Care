@@ -68,6 +68,10 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 ## Features
 
 - **PASS / FAIL / N/A — never just Yes/No.** A failure needs a remark explaining what happened and what was done.
+- **Submit refuses an incomplete form.** Every required field, every unanswered check, the result and the signatures are counted; the page scrolls to the first gap and each one pulses red until it is filled, then turns green. Red only appears *after* Submit is pressed — nagging someone about a field they have not reached yet is just noise.
+- **Nothing is retyped.** Work No., Machine, Serial No., Customer and PO No. offer what has been entered before, and choosing one known value fills the rest of that machine's identity in.
+- **People are picked from a register**, not typed, with their position shown beside the name — so the same technician is spelled the same way on every report. Add someone new from inside any form.
+- **A submission slip** is generated on submit: document number, machine, result, the date and time, and who signed it off with their position. Saved with the record and downloadable as a PNG.
 - **Safety gate.** A failed safety item makes "READY FOR DELIVERY" un-selectable. Not a warning — a block.
 - **Automatic verdicts.** Type an actual value against a target and the app decides PASS or FAIL.
 - **Photos from the tablet camera**, downscaled to 1200 px and stored inside the record.
@@ -77,6 +81,7 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 - **Built for the tablet, not shrunk onto it.** Below 1280px — which covers tablets in landscape — the menu becomes a toggle drawer opened by ☰, with room for full labels plus appearance and language. Verdict buttons stretch to full width as thumb targets, and every control clears 42–58px on touch.
 - **Print to A4 PDF.** Print CSS strips the interface and prints only the selected answers, so the paper copy looks like a proper form.
 - **Automatic document numbers** — `FAT-2026-00125`, `SR-2026-00321`.
+- **Save draft vs Submit.** A draft saves whatever is there; Submit is the gate that demands completeness and stamps the record.
 - **Machine history timeline**, grouped by Work No. + Serial No.
 - **Machines page with customer → machine dropdowns.** Every machine's record counts at a glance, and a **service count you can tap** to see the visits behind it — date, type, technician, root cause, outcome — each one opening its full report. Pick a single machine and the page becomes that machine's card.
 - **Icons animate in three states** — a slow idle loop, a purposeful move on hover, a quick recoil on press. Idle loops run only in the menu and on the form cards, never on table badges, so a long list stays still.

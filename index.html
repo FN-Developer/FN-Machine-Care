@@ -703,6 +703,165 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
   animation: ico-press .26s cubic-bezier(.3,1.6,.5,1) !important;
 }
 
+/* ---------------- Completeness ----------------
+   Red pulses only after Submit has been pressed — nagging someone
+   about a field they have not reached yet is just noise. Green
+   confirms the moment a required field is satisfied. */
+
+@keyframes field-alarm {
+  0%, 100% { border-color: var(--fail-fill); box-shadow: 0 0 0 0 color-mix(in srgb, var(--fail-fill) 42%, transparent); }
+  50%      { border-color: var(--fail-fill); box-shadow: 0 0 0 5px color-mix(in srgb, var(--fail-fill) 4%, transparent); }
+}
+
+.field.is-missing input,
+.field.is-missing select,
+.field.is-missing textarea,
+.field.is-missing .person-select {
+  border-color: var(--fail-fill) !important;
+  animation: field-alarm 1.15s ease-in-out infinite;
+}
+.field.is-missing > label { color: var(--fail); font-weight: 600; }
+
+.field.is-ok input,
+.field.is-ok select,
+.field.is-ok textarea,
+.field.is-ok .person-select {
+  border-color: color-mix(in srgb, var(--pass-fill) 62%, transparent);
+}
+
+/* Unanswered check rows */
+.check-row.is-missing {
+  border-radius: 10px;
+  padding-left: 10px;
+  padding-right: 10px;
+  animation: field-alarm 1.15s ease-in-out infinite;
+  border: 1px solid var(--fail-fill);
+}
+.check-row.is-missing .check-code { color: var(--fail); font-weight: 700; }
+
+/* Nothing chosen in the result block */
+.result-row.is-missing {
+  padding: 10px;
+  border-radius: var(--radius-ctl);
+  border: 1px solid var(--fail-fill);
+  animation: field-alarm 1.15s ease-in-out infinite;
+}
+
+/* Signature still unnamed */
+.sign-card.is-missing { border-color: var(--fail-fill); animation: field-alarm 1.15s ease-in-out infinite; }
+.sign-card.is-ok { border-color: color-mix(in srgb, var(--pass-fill) 55%, transparent); }
+
+/* ---------------- Person picker ---------------- */
+
+.person-field { display: flex; flex-direction: column; gap: 5px; }
+.person-select {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--field);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-ctl);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.person-select:focus {
+  background: var(--field-focus);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-blue) 20%, transparent);
+}
+.person-note {
+  font-size: 12.5px;
+  color: var(--accent-blue);
+  font-weight: 600;
+  padding-left: 3px;
+}
+
+/* ---------------- Modal ---------------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(6, 10, 20, .5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity .22s ease;
+  overflow-y: auto;
+}
+.modal-overlay.show { opacity: 1; }
+
+.modal-card {
+  width: 100%;
+  max-width: 520px;
+  padding: 28px 26px 22px;
+  background: var(--glass-bar);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-window);
+  box-shadow: var(--lift-3), var(--specular);
+  transform: translateY(14px) scale(.98);
+  transition: transform .28s cubic-bezier(.22,1,.36,1);
+  max-height: 92vh;
+  overflow-y: auto;
+}
+.modal-overlay.show .modal-card { transform: none; }
+
+.modal-title { margin: 0 0 6px; font-size: 21px; font-weight: 650; letter-spacing: -.02em; text-align: center; }
+.modal-note { margin: 0 0 20px; font-size: 14px; color: var(--text-dim); line-height: 1.6; text-align: center; }
+.modal-body { display: flex; flex-direction: column; gap: 14px; }
+.modal-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 22px; }
+.modal-foot .btn { min-width: 96px; justify-content: center; }
+.modal-error {
+  background: color-mix(in srgb, var(--fail-fill) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--fail-fill) 40%, transparent);
+  color: var(--fail);
+  padding: 10px 13px;
+  border-radius: var(--radius-ctl);
+  font-size: 13.5px;
+}
+
+/* ---------------- Submitted ---------------- */
+
+.submit-mark {
+  width: 74px; height: 74px;
+  margin: 0 auto 4px;
+  border-radius: 50%;
+  background: var(--pass-fill);
+  display: grid; place-items: center;
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--pass-fill) 45%, transparent);
+  animation: submit-pop .45s cubic-bezier(.2,1.5,.4,1);
+}
+@keyframes submit-pop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+.submit-tick { color: #fff; font-size: 38px; font-weight: 700; line-height: 1; }
+
+.submit-doc  { text-align: center; font-size: 20px; font-weight: 700; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.submit-form { text-align: center; font-size: 14px; color: var(--text-dim); margin-bottom: 6px; }
+
+.submit-rows {
+  display: flex; flex-direction: column; gap: 9px;
+  padding: 16px 18px;
+  background: var(--glass-sunken);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--radius-ctl);
+}
+.submit-row { display: flex; justify-content: space-between; gap: 14px; font-size: 14.5px; }
+.submit-key { color: var(--text-dim); }
+.submit-val { font-weight: 650; text-align: right; }
+
+.submit-shot {
+  width: 100%;
+  margin-top: 16px;
+  border-radius: var(--radius-ctl);
+  border: 1px solid var(--hairline);
+  display: block;
+  box-shadow: var(--lift-1);
+}
+
 /* ---------------- Filter bar ----------------
    Native selects: on a tablet the OS picker beats any custom
    dropdown for speed and for gloved thumbs. */
@@ -1729,7 +1888,7 @@ tbody tr.clickable { cursor: pointer; }
     color: #000 !important;
     font-size: 10.5pt;
   }
-  .chart-tip, .ambient, .sidebar, .toolbar, .no-print, .nav, .btn,
+  .modal-overlay, .chart-tip, .ambient, .sidebar, .toolbar, .no-print, .nav, .btn,
   .mobile-bar, .scrim, .menu-toggle,
   .photo-actions, .sign-foot { display: none !important; }
 
@@ -1984,6 +2143,25 @@ const ICONS = {
   service:   '<path d="M15 6.1a4.1 4.1 0 00-5.5 5.5l-5.4 5.4a1.4 1.4 0 000 2l.9.9a1.4 1.4 0 002 0l5.4-5.4a4.1 4.1 0 005.5-5.5l-2.5 2.5-2.4-2.4L15 6.1z"/>',
 };
 
+/* ---------- People ----------
+   Whoever fills a form is picked from a list, not retyped, so the
+   same technician is spelled the same way on every record. */
+
+const POSITIONS = [
+  { value: 'design',      label: { en: 'Design Engineer',      th: 'วิศวกรออกแบบ' } },
+  { value: 'mechanical',  label: { en: 'Mechanical Engineer',  th: 'วิศวกรเครื่องกล' } },
+  { value: 'electrical',  label: { en: 'Electrical Engineer',  th: 'วิศวกรไฟฟ้า' } },
+  { value: 'controls',    label: { en: 'Controls / PLC Engineer', th: 'วิศวกรระบบควบคุม / PLC' } },
+  { value: 'project',     label: { en: 'Project Engineer',     th: 'วิศวกรโครงการ' } },
+  { value: 'service',     label: { en: 'Service Engineer',     th: 'วิศวกรบริการ' } },
+  { value: 'technician',  label: { en: 'Technician',           th: 'ช่างเทคนิค' } },
+  { value: 'assembler',   label: { en: 'Assembler',            th: 'ช่างประกอบ' } },
+  { value: 'qa',          label: { en: 'QA Inspector',         th: 'ผู้ตรวจสอบคุณภาพ' } },
+  { value: 'supervisor',  label: { en: 'Supervisor',           th: 'หัวหน้างาน' } },
+  { value: 'manager',     label: { en: 'Manager',              th: 'ผู้จัดการ' } },
+  { value: 'customer',    label: { en: 'Customer Representative', th: 'ตัวแทนลูกค้า' } },
+];
+
 /* ---------- Shared machine-identity header ---------- */
 
 function machineHeader(extra = []) {
@@ -1992,11 +2170,11 @@ function machineHeader(extra = []) {
     title: { en: 'Machine Information', th: 'ข้อมูลเครื่องจักร' },
     type: 'fields',
     fields: [
-      { key: 'workNo', label: { en: 'Work No.', th: 'เลขที่งาน' }, type: 'text', placeholder: 'X722', required: true },
-      { key: 'machineName', label: { en: 'Machine Name', th: 'ชื่อเครื่องจักร' }, type: 'text', placeholder: 'AUTO CHECKER & APPEARANCE MCB MACHINE', required: true },
-      { key: 'serialNo', label: { en: 'Machine Serial No.', th: 'หมายเลขเครื่อง' }, type: 'text', placeholder: 'FN-X722-001', required: true },
-      { key: 'customer', label: { en: 'Customer', th: 'ลูกค้า' }, type: 'text', placeholder: 'ABC Manufacturing Co., Ltd.', required: true },
-      { key: 'poNo', label: { en: 'PO No.', th: 'เลขที่ใบสั่งซื้อ' }, type: 'text', placeholder: 'PO-2026-0088' },
+      { key: 'workNo', label: { en: 'Work No.', th: 'เลขที่งาน' }, type: 'text', suggest: true, identity: true, placeholder: 'X722', required: true },
+      { key: 'machineName', label: { en: 'Machine Name', th: 'ชื่อเครื่องจักร' }, type: 'text', suggest: true, identity: true, placeholder: 'AUTO CHECKER & APPEARANCE MCB MACHINE', required: true },
+      { key: 'serialNo', label: { en: 'Machine Serial No.', th: 'หมายเลขเครื่อง' }, type: 'text', suggest: true, identity: true, placeholder: 'FN-X722-001', required: true },
+      { key: 'customer', label: { en: 'Customer', th: 'ลูกค้า' }, type: 'text', suggest: true, identity: true, placeholder: 'ABC Manufacturing Co., Ltd.', required: true },
+      { key: 'poNo', label: { en: 'PO No.', th: 'เลขที่ใบสั่งซื้อ' }, type: 'text', suggest: true, identity: true, placeholder: 'PO-2026-0088', required: true },
       ...extra,
     ],
   };
@@ -2015,6 +2193,7 @@ const SIGNOFF_ROLES_PDI = [
 
 const FORM_BUILD = {
   type: 'BUILD',
+  submitter: 'checkedBy',
   stage: 'inhouse',
   code: '01',
   prefix: 'ASSY',
@@ -2029,8 +2208,8 @@ const FORM_BUILD = {
   sections: [
     machineHeader([
       { key: 'buildDate', label: { en: 'Build Check Date', th: 'วันที่ตรวจ' }, type: 'date', required: true },
-      { key: 'assembler', label: { en: 'Assembler', th: 'ผู้ประกอบ' }, type: 'text' },
-      { key: 'checkedBy', label: { en: 'Checked By', th: 'ผู้ตรวจสอบ' }, type: 'text', required: true },
+      { key: 'assembler', label: { en: 'Assembler', th: 'ผู้ประกอบ' }, type: 'person', required: true },
+      { key: 'checkedBy', label: { en: 'Checked By', th: 'ผู้ตรวจสอบ' }, type: 'person', required: true },
       { key: 'buildStage', label: { en: 'Build Stage', th: 'ขั้นตอนการประกอบ' }, type: 'select',
         options: [
           { value: 'mechanical', label: { en: 'Mechanical assembly', th: 'ประกอบเครื่องกล' } },
@@ -2060,6 +2239,7 @@ const FORM_BUILD = {
 
 const FORM_PDI = {
   type: 'PDI',
+  submitter: 'inspector',
   stage: 'inhouse',
   code: '02',
   prefix: 'FAT',
@@ -2076,8 +2256,8 @@ const FORM_PDI = {
     machineHeader([
       { key: 'inspectionDate', label: { en: 'Test Date', th: 'วันที่ทดสอบ' }, type: 'date', required: true },
       { key: 'deliveryDate', label: { en: 'Planned Delivery Date', th: 'วันที่ส่งมอบตามแผน' }, type: 'date' },
-      { key: 'inspector', label: { en: 'Tested By', th: 'ผู้ทดสอบ' }, type: 'text', required: true },
-      { key: 'projectEngineer', label: { en: 'Project Engineer', th: 'วิศวกรโครงการ' }, type: 'text' },
+      { key: 'inspector', label: { en: 'Tested By', th: 'ผู้ทดสอบ' }, type: 'person', required: true },
+      { key: 'projectEngineer', label: { en: 'Project Engineer', th: 'วิศวกรโครงการ' }, type: 'person', required: true },
     ]),
 
     { id: 'mech', title: { en: 'A. Mechanical Checklist', th: 'A. เช็คลิสต์เครื่องกล' }, type: 'checklist', items: checks(MECHANICAL_ITEMS) },
@@ -2150,6 +2330,7 @@ const FORM_PDI = {
 
 const FORM_DELIVERY = {
   type: 'DELIVERY',
+  submitter: 'engineer',
   stage: 'onsite',
   code: '03',
   prefix: 'SAT',
@@ -2166,8 +2347,8 @@ const FORM_DELIVERY = {
       { key: 'siteAddress', label: { en: 'Installation Site', th: 'สถานที่ติดตั้ง' }, type: 'text' },
       { key: 'arrivalDate', label: { en: 'Arrival Date', th: 'วันที่เครื่องถึงหน้างาน' }, type: 'date' },
       { key: 'commissionDate', label: { en: 'Commissioning Date', th: 'วันที่เดินเครื่อง' }, type: 'date', required: true },
-      { key: 'engineer', label: { en: 'Engineer In Charge', th: 'วิศวกรผู้รับผิดชอบ' }, type: 'text', required: true },
-      { key: 'customerContact', label: { en: 'Customer Contact', th: 'ผู้ติดต่อฝ่ายลูกค้า' }, type: 'text' },
+      { key: 'engineer', label: { en: 'Engineer In Charge', th: 'วิศวกรผู้รับผิดชอบ' }, type: 'person', required: true },
+      { key: 'customerContact', label: { en: 'Customer Contact', th: 'ผู้ติดต่อฝ่ายลูกค้า' }, type: 'person', required: true },
     ]),
 
     { id: 'transport', title: { en: 'A. Transport & Unpacking', th: 'A. การขนส่งและแกะกล่อง' }, type: 'checklist',
@@ -2271,6 +2452,7 @@ const FORM_DELIVERY = {
 
 const FORM_SERVICE = {
   type: 'SERVICE',
+  submitter: 'technician',
   stage: 'onsite',
   code: '04',
   prefix: 'SR',
@@ -2285,13 +2467,13 @@ const FORM_SERVICE = {
   sections: [
     { id: 'header', title: { en: 'A. Service Information', th: 'A. ข้อมูลการเข้าบริการ' }, type: 'fields',
       fields: [
-        { key: 'workNo', label: { en: 'Work No.', th: 'เลขที่งาน' }, type: 'text', placeholder: 'X722', required: true },
-        { key: 'machineName', label: { en: 'Machine', th: 'เครื่องจักร' }, type: 'text', placeholder: 'AUTO CHECKER MACHINE', required: true },
-        { key: 'serialNo', label: { en: 'Machine S/N', th: 'หมายเลขเครื่อง' }, type: 'text', placeholder: 'FN-X722-001', required: true },
-        { key: 'customer', label: { en: 'Customer', th: 'ลูกค้า' }, type: 'text', placeholder: 'ABC Manufacturing', required: true },
+        { key: 'workNo', label: { en: 'Work No.', th: 'เลขที่งาน' }, type: 'text', suggest: true, identity: true, placeholder: 'X722', required: true },
+        { key: 'machineName', label: { en: 'Machine', th: 'เครื่องจักร' }, type: 'text', suggest: true, identity: true, placeholder: 'AUTO CHECKER MACHINE', required: true },
+        { key: 'serialNo', label: { en: 'Machine S/N', th: 'หมายเลขเครื่อง' }, type: 'text', suggest: true, identity: true, placeholder: 'FN-X722-001', required: true },
+        { key: 'customer', label: { en: 'Customer', th: 'ลูกค้า' }, type: 'text', suggest: true, identity: true, placeholder: 'ABC Manufacturing', required: true },
         { key: 'serviceDate', label: { en: 'Service Date', th: 'วันที่เข้าบริการ' }, type: 'date', required: true },
-        { key: 'technician', label: { en: 'Technician', th: 'ช่างผู้ให้บริการ' }, type: 'text', required: true },
-        { key: 'customerContact', label: { en: 'Customer Contact', th: 'ผู้ติดต่อฝ่ายลูกค้า' }, type: 'text' },
+        { key: 'technician', label: { en: 'Technician', th: 'ช่างผู้ให้บริการ' }, type: 'person', required: true },
+        { key: 'customerContact', label: { en: 'Customer Contact', th: 'ผู้ติดต่อฝ่ายลูกค้า' }, type: 'person', required: true },
         { key: 'timeIn', label: { en: 'Time In', th: 'เวลาเข้า' }, type: 'time' },
         { key: 'timeOut', label: { en: 'Time Out', th: 'เวลาออก' }, type: 'time' },
         { key: 'serviceType', label: { en: 'Service Type', th: 'ประเภทการบริการ' }, type: 'select', required: true,
@@ -2483,7 +2665,8 @@ const UI = {
   addRow: { en: '+ Add row', th: '+ เพิ่มแถว' },
   addPhoto: { en: '+ Add photo', th: '+ เพิ่มรูป' },
   remove: { en: 'Remove', th: 'ลบ' },
-  save: { en: 'Save', th: 'บันทึก' },
+  save: { en: 'Save draft', th: 'บันทึกร่าง' },
+  submit: { en: 'Submit', th: 'ส่งเอกสาร' },
   saved: { en: 'Saved', th: 'บันทึกแล้ว' },
   print: { en: 'Print / PDF', th: 'พิมพ์ / PDF' },
   delete: { en: 'Delete', th: 'ลบ' },
@@ -2794,6 +2977,106 @@ const UI = {
     toastTimer = setTimeout(() => { t.className = 'toast'; }, 2600);
   }
 
+  /* ---------------- People register ----------------
+     Names are picked, not retyped, so "Somchai" is not also stored as
+     "somchai" and "S. Somchai" on three different reports. */
+
+  function people() {
+    db.meta = db.meta || {};
+    if (!Array.isArray(db.meta.people)) db.meta.people = [];
+    if (!db.meta.peopleSeeded) seedPeople();
+    return db.meta.people;
+  }
+
+  /* Names already typed on existing records become selectable straight
+     away — importing a backup should not leave the picker empty. Their
+     position is blank until someone sets one. */
+  function seedPeople() {
+    db.meta.peopleSeeded = true;
+    const keys = ['inspector', 'projectEngineer', 'engineer', 'technician',
+                  'assembler', 'checkedBy', 'customerContact'];
+    const found = new Map();
+    db.records.forEach((r) => {
+      keys.forEach((k) => {
+        const name = (r.fields[k] || '').trim();
+        if (!name) return;
+        const key = name.toLowerCase();
+        if (!found.has(key)) found.set(key, { name, position: r.fields[k + '_pos'] || '' });
+        else if (!found.get(key).position && r.fields[k + '_pos']) found.get(key).position = r.fields[k + '_pos'];
+      });
+    });
+    found.forEach((p) => {
+      if (!db.meta.people.some((x) => x.name.toLowerCase() === p.name.toLowerCase())) db.meta.people.push(p);
+    });
+    db.meta.people.sort((x, y) => x.name.localeCompare(y.name));
+  }
+
+  function addPerson(name, position) {
+    const clean = (name || '').trim();
+    if (!clean) return null;
+    const list = people();
+    const found = list.find((p) => p.name.toLowerCase() === clean.toLowerCase());
+    if (found) {
+      if (position) found.position = position;
+      saveDB();
+      return found;
+    }
+    const person = { name: clean, position: position || '' };
+    list.push(person);
+    list.sort((x, y) => x.name.localeCompare(y.name));
+    saveDB();
+    return person;
+  }
+
+  function findPerson(name) {
+    const clean = (name || '').trim().toLowerCase();
+    if (!clean) return null;
+    return people().find((p) => p.name.toLowerCase() === clean) || null;
+  }
+
+  function positionLabel(value) {
+    const p = POSITIONS.find((x) => x.value === value);
+    return p ? p.label : { en: value || '', th: value || '' };
+  }
+
+  /* Someone's position, whether it came from the register or was
+     stamped onto the record when it was submitted. */
+  function positionOf(rec, key) {
+    const stamped = rec.fields[key + '_pos'];
+    if (stamped) return T(positionLabel(stamped));
+    const p = findPerson(rec.fields[key]);
+    return p && p.position ? T(positionLabel(p.position)) : '';
+  }
+
+  /* Values already used for a field, for its suggestion list. */
+  function suggestionsFor(key) {
+    const seen = new Set();
+    db.records.forEach((r) => {
+      const v = (r.fields[key] || '').trim();
+      if (v) seen.add(v);
+    });
+    return Array.from(seen).sort((x, y) => x.localeCompare(y));
+  }
+
+  /* Pick a Work No. that already exists and the rest of the machine's
+     identity fills itself in. */
+  const IDENTITY_KEYS = ['workNo', 'machineName', 'serialNo', 'customer', 'poNo'];
+
+  function machineMatching(key, value, excludeId) {
+    const v = (value || '').trim().toLowerCase();
+    if (!v) return null;
+    const hits = db.records.filter((r) =>
+      r.id !== excludeId &&                                   /* never match the form being filled in */
+      (r.fields[key] || '').trim().toLowerCase() === v
+    );
+    if (!hits.length) return null;
+    /* Prefer a record that actually carries the other details, then
+       the most recent of those. */
+    const score = (r) => IDENTITY_KEYS.filter((k) => (r.fields[k] || '').trim()).length;
+    hits.sort((x, y) => score(y) - score(x) || (y.updatedAt > x.updatedAt ? 1 : -1));
+    return hits[0];
+  }
+
   /* ---------------- Record model ---------------- */
 
   function newRecord(type) {
@@ -3064,6 +3347,276 @@ const UI = {
     });
 
     setNavOpen(false);
+  }
+
+  /* ---------------- Modal ---------------- */
+
+  function modal(opts) {
+    const overlay = el('div', { class: 'modal-overlay' });
+    const card = el('div', { class: 'modal-card', role: 'dialog', 'aria-modal': 'true' });
+
+    function close() {
+      overlay.classList.remove('show');
+      document.removeEventListener('keydown', onKey);
+      setTimeout(() => overlay.remove(), 220);
+    }
+    function onKey(e) { if (e.key === 'Escape' && !opts.blocking) close(); }
+
+    if (opts.title) card.appendChild(el('h2', { class: 'modal-title' }, [L(opts.title)]));
+    if (opts.note) card.appendChild(el('p', { class: 'modal-note' }, [L(opts.note)]));
+    const bodyBox = el('div', { class: 'modal-body' }, opts.body || []);
+    card.appendChild(bodyBox);
+
+    const foot = el('div', { class: 'modal-foot' });
+    if (opts.onConfirm) {
+      foot.appendChild(el('button', { class: 'btn', onclick: close }, [L({ en: 'Cancel', th: 'ยกเลิก' })]));
+    }
+    foot.appendChild(el('button', {
+      class: 'btn btn-primary',
+      onclick: () => { if (!opts.onConfirm || opts.onConfirm() !== false) close(); },
+    }, [L(opts.confirmLabel || { en: 'OK', th: 'ตกลง' })]));
+    card.appendChild(foot);
+
+    overlay.appendChild(card);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay && !opts.blocking) close(); });
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+    requestAnimationFrame(() => overlay.classList.add('show'));
+    return { close };
+  }
+
+  /* ---------------- Validation ----------------
+     A submitted form is a record someone will rely on months later, so
+     it has to be complete. Every gap is collected, not just the first,
+     and each one is pointed at directly. */
+
+  function validateRecord(rec) {
+    const def = FORM_BY_TYPE[rec.type];
+    const gaps = [];
+
+    def.sections.forEach((section) => {
+      if (section.type === 'fields') {
+        section.fields.forEach((f) => {
+          if (!f.required) return;
+          if (String(rec.fields[f.key] || '').trim()) return;
+          gaps.push({ kind: 'field', sectionId: section.id, key: f.key, label: f.label, section: section.title });
+        });
+      }
+
+      if (section.type === 'checklist' || section.type === 'condition') {
+        const answers = rec.checks[section.id] || {};
+        section.items.forEach((it) => {
+          if (answers[it.code] && answers[it.code].value) return;
+          gaps.push({ kind: 'check', sectionId: section.id, key: it.code, label: it.label, section: section.title });
+        });
+      }
+
+      if (section.type === 'result' && !rec.result) {
+        gaps.push({ kind: 'result', sectionId: section.id, key: 'result', label: section.title, section: section.title });
+      }
+
+      if (section.type === 'signoff') {
+        section.roles.forEach((role) => {
+          const sig = rec.signatures[role.key] || {};
+          if (String(sig.name || '').trim()) return;
+          gaps.push({ kind: 'sign', sectionId: section.id, key: role.key, label: role.label, section: section.title });
+        });
+      }
+    });
+
+    return gaps;
+  }
+
+  function focusGap(gap) {
+    const section = document.getElementById('sec-' + gap.sectionId);
+    if (!section) return;
+    let target = null;
+    if (gap.kind === 'field') target = section.querySelector(`[data-field="${gap.key}"]`);
+    else if (gap.kind === 'check') target = section.querySelector(`[data-code="${gap.key}"]`);
+    else if (gap.kind === 'sign') target = section.querySelector(`[data-role="${gap.key}"]`);
+    else target = section;
+    (target || section).scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const input = target && target.querySelector('input, select, textarea, button');
+    if (input) setTimeout(() => input.focus({ preventScroll: true }), 400);
+  }
+
+  /* ---------------- Submit ---------------- */
+
+  function submitRecord(rec) {
+    const gaps = validateRecord(rec);
+
+    if (gaps.length) {
+      rec._showErrors = true;
+      render();
+      setTimeout(() => focusGap(gaps[0]), 60);
+      toast(
+        lang === 'th'
+          ? `ยังกรอกไม่ครบ ${gaps.length} รายการ — ช่องที่ขาดกะพริบสีแดง`
+          : `${gaps.length} still to fill — the missing ones are flashing red`,
+        true
+      );
+      return;
+    }
+
+    const def = FORM_BY_TYPE[rec.type];
+    const byKey = def.submitter;
+    const name = (rec.fields[byKey] || '').trim() || '—';
+    const position = positionOf(rec, byKey) || '—';
+    const now = new Date();
+
+    rec._showErrors = false;
+    rec.status = 'submitted';
+    rec.submittedAt = now.toISOString();
+    rec.submittedBy = { name, position, key: byKey };
+    rec.receipt = drawReceipt(rec, def, name, position, now);
+    touch(rec);
+
+    showSubmitted(rec, def, name, position, now);
+    render();
+  }
+
+  function fmtDateTime(d) {
+    const p = (n) => String(n).padStart(2, '0');
+    return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()}  ${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  /* A submission slip drawn on canvas and stored with the record.
+     Drawn rather than screenshotted: the page is frosted glass over a
+     moving gradient, and no dependency-free DOM capture reproduces
+     that. This prints the facts cleanly instead, and always the same. */
+  function drawReceipt(rec, def, name, position, when) {
+    try {
+      const W = 900, H = 560, s = 2;
+      const c = el('canvas');
+      c.width = W * s; c.height = H * s;
+      const g = c.getContext('2d');
+      g.scale(s, s);
+
+      g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H);
+      g.fillStyle = '#0a84ff'; g.fillRect(0, 0, W, 8);
+
+      g.fillStyle = '#0d1526';
+      g.font = '700 30px "Segoe UI", system-ui, sans-serif';
+      g.fillText('FN Machine Care', 46, 74);
+      g.fillStyle = '#5c6780';
+      g.font = '15px "Segoe UI", system-ui, sans-serif';
+      g.fillText('F N Technology — submission record', 46, 100);
+
+      g.fillStyle = '#30d158';
+      g.beginPath(); g.arc(W - 84, 74, 26, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = '#fff'; g.lineWidth = 4; g.lineCap = 'round'; g.lineJoin = 'round';
+      g.beginPath(); g.moveTo(W - 96, 74); g.lineTo(W - 87, 83); g.lineTo(W - 71, 64); g.stroke();
+
+      g.strokeStyle = '#d7dded'; g.lineWidth = 1;
+      g.beginPath(); g.moveTo(46, 124); g.lineTo(W - 46, 124); g.stroke();
+
+      const rows = [
+        ['Document', `${rec.docNo}   (${def.prefix})`],
+        ['Form', def.name.en],
+        ['Work No.', rec.fields.workNo || '—'],
+        ['Machine', rec.fields.machineName || '—'],
+        ['Serial No.', rec.fields.serialNo || '—'],
+        ['Customer', rec.fields.customer || '—'],
+        ['PO No.', rec.fields.poNo || '—'],
+      ];
+      let y = 164;
+      rows.forEach(([k, v]) => {
+        g.fillStyle = '#5c6780';
+        g.font = '14px "Segoe UI", system-ui, sans-serif';
+        g.fillText(k, 46, y);
+        g.fillStyle = '#0d1526';
+        g.font = '600 16px "Segoe UI", system-ui, sans-serif';
+        g.fillText(String(v).slice(0, 58), 210, y);
+        y += 32;
+      });
+
+      const meta = resultMeta(rec);
+      if (meta) {
+        g.fillStyle = meta.color;
+        roundRect(g, 46, y - 4, 420, 38, 10); g.fill();
+        g.fillStyle = '#ffffff';
+        g.font = '700 15px "Segoe UI", system-ui, sans-serif';
+        g.fillText(meta.label.en, 62, y + 20);
+        y += 56;
+      }
+
+      g.strokeStyle = '#d7dded';
+      g.beginPath(); g.moveTo(46, y); g.lineTo(W - 46, y); g.stroke();
+      y += 30;
+
+      g.fillStyle = '#5c6780'; g.font = '14px "Segoe UI", system-ui, sans-serif';
+      g.fillText('Submitted', 46, y);
+      g.fillStyle = '#0d1526'; g.font = '600 16px "Segoe UI", system-ui, sans-serif';
+      g.fillText(fmtDateTime(when), 210, y);
+      y += 30;
+
+      g.fillStyle = '#5c6780'; g.font = '14px "Segoe UI", system-ui, sans-serif';
+      g.fillText('By', 46, y);
+      g.fillStyle = '#0d1526'; g.font = '600 16px "Segoe UI", system-ui, sans-serif';
+      g.fillText(name, 210, y);
+      y += 26;
+      g.fillStyle = '#5c6780'; g.font = '15px "Segoe UI", system-ui, sans-serif';
+      g.fillText(position, 210, y);
+
+      return c.toDataURL('image/png');
+    } catch (e) {
+      console.error('[FN] Could not draw the submission slip:', e);
+      return '';
+    }
+  }
+
+  function roundRect(g, x, y, w, h, r) {
+    g.beginPath();
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
+  }
+
+  function showSubmitted(rec, def, name, position, when) {
+    const body = [
+      el('div', { class: 'submit-mark' }, [
+        el('span', { class: 'submit-tick', text: '✓' }),
+      ]),
+      el('div', { class: 'submit-doc', text: rec.docNo }),
+      el('div', { class: 'submit-form', text: T(def.name) }),
+      el('div', { class: 'submit-rows' }, [
+        submitRow({ en: 'Submitted', th: 'ส่งเมื่อ' }, fmtDateTime(when)),
+        submitRow({ en: 'By', th: 'โดย' }, name),
+        submitRow({ en: 'Position', th: 'ตำแหน่ง' }, position),
+      ]),
+    ];
+
+    if (rec.receipt) {
+      body.push(el('img', { class: 'submit-shot', src: rec.receipt, alt: 'Submission record' }));
+      body.push(el('div', { class: 'btn-row', style: 'justify-content:center;margin-top:12px' }, [
+        el('button', {
+          class: 'btn btn-sm',
+          onclick: () => {
+            const a2 = el('a', { href: rec.receipt, download: `${rec.docNo}-submitted.png` });
+            document.body.appendChild(a2); a2.click(); a2.remove();
+          },
+        }, [L({ en: '⬇ Save this slip', th: '⬇ บันทึกสลิปนี้' })]),
+      ]));
+    }
+
+    modal({
+      title: { en: 'Submitted', th: 'ส่งเอกสารแล้ว' },
+      note: { en: 'This record is now complete and saved on this device.',
+              th: 'เอกสารนี้กรอกครบและบันทึกไว้ในเครื่องนี้แล้ว' },
+      body,
+      blocking: true,
+      confirmLabel: { en: 'OK', th: 'ตกลง' },
+    });
+  }
+
+  function submitRow(label, value) {
+    return el('div', { class: 'submit-row' }, [
+      el('span', { class: 'submit-key' }, [L(label)]),
+      el('span', { class: 'submit-val', text: value }),
+    ]);
   }
 
   /* ---------------- Router ---------------- */
@@ -4188,6 +4741,8 @@ const UI = {
         data.records.forEach((r) => {
           if (!existing.has(r.id)) { db.records.push(r); added++; }
         });
+        db.meta.peopleSeeded = false;   /* pick up names from the imported records */
+        people();
         saveDB();
         toast((lang === 'th' ? 'นำเข้าแล้ว ' : 'Imported ') + added + (lang === 'th' ? ' รายการ' : ' records'));
         render();
@@ -4231,7 +4786,8 @@ const UI = {
           el('button', { class: 'btn', onclick: () => go('records') }, [L({ en: '← Back', th: '← กลับ' })]),
           el('button', { class: 'btn', onclick: () => window.print() }, [L(UI.print)]),
           el('button', { class: 'btn btn-danger', onclick: () => deleteRecord(rec) }, [L(UI.delete)]),
-          el('button', { class: 'btn btn-primary', onclick: () => { touch(rec); toast(T(UI.saved)); } }, [L(UI.save)]),
+          el('button', { class: 'btn', onclick: () => { touch(rec); toast(T(UI.saved)); } }, [L(UI.save)]),
+          el('button', { class: 'btn btn-primary', onclick: () => submitRecord(rec) }, [L(UI.submit)]),
         ]),
       ])
     );
@@ -4251,7 +4807,8 @@ const UI = {
     root.appendChild(
       el('div', { class: 'btn-row no-print', style: 'margin-top:22px;justify-content:flex-end' }, [
         el('button', { class: 'btn', onclick: () => window.print() }, [L(UI.print)]),
-        el('button', { class: 'btn btn-primary', onclick: () => { touch(rec); toast(T(UI.saved)); } }, [L(UI.save)]),
+        el('button', { class: 'btn', onclick: () => { touch(rec); toast(T(UI.saved)); } }, [L(UI.save)]),
+        el('button', { class: 'btn btn-primary btn-submit', onclick: () => submitRecord(rec) }, [L(UI.submit)]),
       ])
     );
   }
@@ -4319,18 +4876,21 @@ const UI = {
   function renderFields(body, rec, def, section) {
     const grid = el('div', { class: 'field-grid' });
     section.fields.forEach((f) => {
-      const wrap = el('div', { class: 'field' });
-      const lab = el('label', {}, [
+      const wrap = el('div', { class: 'field', 'data-field': f.key });
+      wrap.appendChild(el('label', {}, [
         L(f.label),
         f.required ? el('span', { class: 'req', text: ' *' }) : null,
         f.unit ? el('span', { class: 'unit', text: '(' + f.unit + ')' }) : null,
-      ]);
-      wrap.appendChild(lab);
+      ]));
 
       let input;
-      if (f.type === 'select') {
+
+      if (f.type === 'person') {
+        input = personField(rec, f, wrap);
+
+      } else if (f.type === 'select') {
         input = el('select', {
-          onchange: (e) => { rec.fields[f.key] = e.target.value; touch(rec); },
+          onchange: (e) => { rec.fields[f.key] = e.target.value; touch(rec); markField(wrap, rec, f); },
         });
         input.appendChild(el('option', { value: '', text: '—' }));
         f.options.forEach((o) => {
@@ -4338,23 +4898,161 @@ const UI = {
           if (rec.fields[f.key] === o.value) opt.selected = true;
           input.appendChild(opt);
         });
+
       } else {
         input = el('input', {
           type: f.type || 'text',
           placeholder: f.placeholder || '',
           value: rec.fields[f.key] || '',
           step: f.type === 'number' ? 'any' : null,
-          oninput: (e) => { rec.fields[f.key] = e.target.value; },
-          onchange: (e) => { rec.fields[f.key] = e.target.value; touch(rec); },
+          oninput: (e) => { rec.fields[f.key] = e.target.value; markField(wrap, rec, f); },
+          onchange: (e) => {
+            rec.fields[f.key] = e.target.value;
+            if (f.identity) autofillIdentity(rec, f.key, e.target.value);
+            touch(rec);
+            markField(wrap, rec, f);
+          },
         });
+
+        /* Native suggestion list: it offers what has been typed before
+           without preventing a brand-new value. */
+        if (f.suggest) {
+          const values = suggestionsFor(f.key);
+          if (values.length) {
+            const listId = 'dl-' + f.key;
+            input.setAttribute('list', listId);
+            const dl = el('datalist', { id: listId });
+            values.forEach((v) => dl.appendChild(el('option', { value: v })));
+            wrap.appendChild(dl);
+          }
+        }
       }
+
       wrap.appendChild(input);
+      markField(wrap, rec, f);
       grid.appendChild(wrap);
     });
     body.appendChild(grid);
   }
 
-  /* ---- checklist / condition ---- */
+  /* Choose a person, see their position, or add someone new. */
+  function personField(rec, f, wrap) {
+    const holder = el('div', { class: 'person-field' });
+
+    const sel = el('select', {
+      class: 'person-select',
+      onchange: (e) => {
+        const v = e.target.value;
+        if (v === '__add') {
+          e.target.value = rec.fields[f.key] || '';
+          openAddPerson(rec, f, wrap, sel);
+          return;
+        }
+        rec.fields[f.key] = v;
+        const p = findPerson(v);
+        rec.fields[f.key + '_pos'] = p ? p.position : '';
+        touch(rec);
+        refresh();
+        markField(wrap, rec, f);
+      },
+    });
+
+    const note = el('div', { class: 'person-note' });
+
+    function refresh() {
+      sel.innerHTML = '';
+      sel.appendChild(el('option', { value: '', text: T({ en: '— select a person —', th: '— เลือกผู้รับผิดชอบ —' }) }));
+      people().forEach((p) => {
+        const o = el('option', { value: p.name, text: p.position ? `${p.name} — ${T(positionLabel(p.position))}` : p.name });
+        if ((rec.fields[f.key] || '') === p.name) o.selected = true;
+        sel.appendChild(o);
+      });
+      /* A name typed before this register existed still has to show */
+      const current = rec.fields[f.key];
+      if (current && !people().some((p) => p.name === current)) {
+        const o = el('option', { value: current, text: current });
+        o.selected = true;
+        sel.appendChild(o);
+      }
+      sel.appendChild(el('option', { value: '__add', text: T({ en: '+ Add a person…', th: '+ เพิ่มรายชื่อ…' }) }));
+
+      const pos = positionOf(rec, f.key);
+      note.textContent = pos ? pos : '';
+      note.style.display = pos ? '' : 'none';
+    }
+
+    refresh();
+    holder.appendChild(sel);
+    holder.appendChild(note);
+    holder._refresh = refresh;
+    return holder;
+  }
+
+  function openAddPerson(rec, f, wrap, sel) {
+    const nameInput = el('input', { type: 'text', placeholder: T({ en: 'Full name', th: 'ชื่อ-นามสกุล' }) });
+    const posSel = el('select', {});
+    posSel.appendChild(el('option', { value: '', text: T({ en: '— position —', th: '— ตำแหน่ง —' }) }));
+    POSITIONS.forEach((p) => posSel.appendChild(el('option', { value: p.value, text: T(p.label) })));
+
+    const err = el('div', { class: 'modal-error', style: 'display:none' });
+
+    modal({
+      title: { en: 'Add a person', th: 'เพิ่มรายชื่อ' },
+      note: { en: 'They will be available on every form from now on.',
+              th: 'เมื่อเพิ่มแล้วจะเลือกได้ในทุกเอกสารต่อไป' },
+      body: [
+        err,
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Name', th: 'ชื่อ' })]), nameInput]),
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Position', th: 'ตำแหน่ง' })]), posSel]),
+      ],
+      confirmLabel: { en: 'Add', th: 'เพิ่ม' },
+      onConfirm: () => {
+        const name = nameInput.value.trim();
+        if (!name) { err.style.display = ''; err.textContent = T({ en: 'Please type a name.', th: 'กรุณากรอกชื่อ' }); return false; }
+        if (!posSel.value) { err.style.display = ''; err.textContent = T({ en: 'Please choose a position.', th: 'กรุณาเลือกตำแหน่ง' }); return false; }
+        addPerson(name, posSel.value);
+        rec.fields[f.key] = name;
+        rec.fields[f.key + '_pos'] = posSel.value;
+        touch(rec);
+        if (sel.parentElement && sel.parentElement._refresh) sel.parentElement._refresh();
+        markField(wrap, rec, f);
+        toast(T({ en: 'Person added', th: 'เพิ่มรายชื่อแล้ว' }));
+        return true;
+      },
+    });
+    setTimeout(() => nameInput.focus(), 60);
+  }
+
+  /* Choosing one known identity value fills in the rest. */
+  function autofillIdentity(rec, key, value) {
+    const match = machineMatching(key, value, rec.id);
+    if (!match) return;
+    let filled = 0;
+    IDENTITY_KEYS.forEach((k) => {
+      if (k === key) return;
+      const from = (match.fields[k] || '').trim();
+      if (!from) return;
+      if ((rec.fields[k] || '').trim() === from) return;
+      rec.fields[k] = from;
+      filled++;
+    });
+    if (filled) {
+      touch(rec);
+      toast(T({ en: 'Machine details filled in', th: 'เติมข้อมูลเครื่องจักรให้แล้ว' }));
+      render();
+    }
+  }
+
+  /* Green when satisfied, blinking red when the form has been
+     submitted and this one is still empty. */
+  function markField(wrap, rec, f) {
+    if (!wrap) return;
+    const filled = String(rec.fields[f.key] || '').trim() !== '';
+    wrap.classList.toggle('is-ok', !!(f.required && filled));
+    wrap.classList.toggle('is-missing', !!(f.required && !filled && rec._showErrors));
+  }
+
+  /* ---- checklist / condition ---- */  /* ---- checklist / condition ---- */
 
   function renderChecklist(body, rec, def, section) {
     const isCondition = section.type === 'condition';
@@ -4395,7 +5093,12 @@ const UI = {
 
     section.items.forEach((it) => {
       const a = answers[it.code] || (answers[it.code] = { value: '', remark: '' });
-      const row = el('div', { class: 'check-row' + (a.value === 'FAIL' || a.value === 'ABNORMAL' ? ' is-fail' : '') });
+      const row = el('div', {
+        class: 'check-row'
+          + (a.value === 'FAIL' || a.value === 'ABNORMAL' ? ' is-fail' : '')
+          + (a.value ? ' is-answered' : (rec._showErrors ? ' is-missing' : '')),
+        'data-code': it.code,
+      });
       row.appendChild(el('div', { class: 'check-code', text: it.code }));
       row.appendChild(el('div', { class: 'check-label' }, [
         el('div', { class: 'label-en', text: it.label.en }),
@@ -4911,7 +5614,7 @@ const UI = {
       body.appendChild(list);
     }
 
-    const row = el('div', { class: 'result-row' });
+    const row = el('div', { class: 'result-row' + (!rec.result && rec._showErrors ? ' is-missing' : '') });
     section.options.forEach((o) => {
       /* A failed safety item blocks only the "all clear" option */
       const isBlocked = blocked && o.tone === 'good';
@@ -4948,7 +5651,11 @@ const UI = {
       const sig = rec.signatures[role.key];
 
       const canvas = el('canvas', { class: 'sign-pad', width: 520, height: 130 });
-      const card = el('div', { class: 'sign-card' }, [
+      const hasName = String(sig.name || '').trim() !== '';
+      const card = el('div', {
+        class: 'sign-card' + (hasName ? ' is-ok' : (rec._showErrors ? ' is-missing' : '')),
+        'data-role': role.key,
+      }, [
         el('h4', {}, [
           el('span', { class: 'label-en', text: role.label.en }),
           el('span', { class: 'label-th th', text: ' ' + role.label.th }),
@@ -4959,7 +5666,12 @@ const UI = {
             class: 'cell-input',
             placeholder: T(UI.name),
             value: sig.name || '',
-            oninput: (e) => { sig.name = e.target.value; },
+            oninput: (e) => {
+              sig.name = e.target.value;
+              const ok = e.target.value.trim() !== '';
+              card.classList.toggle('is-ok', ok);
+              card.classList.toggle('is-missing', !ok && !!rec._showErrors);
+            },
             onchange: (e) => { sig.name = e.target.value; touch(rec); },
           }),
           el('input', {
