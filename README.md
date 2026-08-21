@@ -149,15 +149,46 @@ Load it from **Backup → Import backup**. Import adds records without touching 
 
 ## Data & storage — read this before rolling out
 
-Records are stored in the **browser's `localStorage`, on that device only**. There is no server and no sync.
+**The device always comes first.** Every record is written to the browser's `localStorage` the moment you touch it. Signal or no signal, the app works; the tablet in the customer's plant room does not need Wi-Fi.
 
-That means:
+On top of that sits an optional shared database. When a technician is signed in, records sync to Firebase so every tablet and the office see the same work.
 
-- Each tablet holds its own records. Two tablets do not see each other's work.
-- Clearing browser data, or "reset device", erases the records on that device.
-- Photos dominate the storage budget (most browsers allow roughly 5–10 MB per site).
+- **Not signed in?** Everything still works. The badge in the sidebar reads *this device only*.
+- **Two tablets edit the same record?** The one with the newer `updatedAt` wins. Whole records, not fields.
+- **Photos dominate the storage budget** (most browsers allow roughly 5–10 MB per site).
 
-**Export a JSON backup regularly** from the Backup screen and keep the file on a company drive. If you outgrow this, the natural next step is a small backend — the data model in `app.js` is already shaped as plain JSON records ready to POST to an API.
+**Export a JSON backup regularly** from the Backup screen and keep the file on a company drive. The cloud is a convenience; the export is the archive.
+
+---
+
+## The shared database (Firebase)
+
+| | |
+|---|---|
+| Firebase project | **FN-Service-System** — `fn.developer26@gmail.com` |
+| Realtime Database | `asia-southeast1` (Singapore) |
+| Sign-in | Email / password |
+
+This is a **separate project from FN-ERP-System**. The two databases share nothing: no data, no accounts, no rules. Wiping one cannot touch the other.
+
+### Adding a technician
+
+1. Firebase console → **Authentication → Users → Add user**
+2. Enter their work email and a password, hand it to them
+3. On the tablet: sidebar → the cloud badge → sign in, once. It stays signed in.
+
+Only accounts that exist there can read or write anything. Remove someone from that list and their tablet drops back to local-only on the next launch — the records already on it stay readable.
+
+### Why the keys in `index.html` are not a leak
+
+A Firebase web config is an **address, not a password** — it is designed to ship inside the page. What actually guards the data is `database.rules.json`, which denies every read and write to anyone who is not signed in:
+
+```json
+{ "rules": { ".read": false, ".write": false,
+    "records": { ".read": "auth != null", ".write": "auth != null" } } }
+```
+
+A service-account key is a different animal entirely: it bypasses every rule. **Never put one in this repo.**
 
 ---
 
@@ -167,7 +198,10 @@ The whole application is **one self-contained file** — no build step, no depen
 
 ```
 FN-Machine-Care/
-├── index.html    The entire app — HTML + CSS + JavaScript in one file (~124 KB)
+├── index.html            The entire app — HTML + CSS + JavaScript in one file
+├── database.rules.json   Firebase security rules — deny by default
+├── firebase.json         Points the CLI at those rules
+├── example-data/         69 sample records across 5 customers
 └── README.md
 ```
 
@@ -177,7 +211,8 @@ Inside `index.html`, in order:
 |---|---|
 | `<style>` | The visionOS theme, both appearances, and the A4 print stylesheet |
 | First `<script>` | **Form definitions** — every check item, in Thai and English — plus the icon set |
-| Second `<script>` | Rendering, storage, routing, theme, signatures, photos, print |
+| Second `<script>` | Cloud sync — Firebase config, sign-in, merge. Loads the SDK only when signed in |
+| Third `<script>` | Rendering, storage, routing, theme, signatures, photos, print |
 
 ### One design rule
 
@@ -213,7 +248,7 @@ To add a whole section, append an object to a form's `sections` array using one 
 
 ## Roadmap
 
-- Shared backend so all tablets and the office see the same records
+- Per-role rules — technicians write their own reports, the office reads everything
 - PM scheduling — due dates and reminders per machine
 - Spare-parts consumption tracking across service reports
 - Machine QR codes: scan the nameplate, open that machine's history

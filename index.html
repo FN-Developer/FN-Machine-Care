@@ -776,6 +776,42 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
   padding-left: 3px;
 }
 
+/* ---------------- Cloud status ---------------- */
+
+.cloud-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 8px 11px;
+  font-size: 12px;
+  border-radius: var(--radius-ctl);
+  background: var(--glass-sunken);
+  border: 1px solid var(--hairline-soft);
+  color: var(--text-dim);
+}
+.cloud-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  background: var(--text-faint);
+}
+.cloud-badge.is-live  .cloud-dot { background: var(--pass-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pass-fill) 22%, transparent); }
+.cloud-badge.is-signin .cloud-dot { background: var(--accent-yellow); }
+.cloud-badge.is-error .cloud-dot { background: var(--fail-fill); }
+.cloud-badge.is-connecting .cloud-dot { animation: field-alarm 1.4s ease-in-out infinite; background: var(--accent-blue); }
+.cloud-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cloud-out {
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+.cloud-out:hover { background: var(--glass-hover); color: var(--text); }
+
 /* ---------------- Modal ---------------- */
 
 .modal-overlay {
@@ -1958,6 +1994,7 @@ tbody tr.clickable { cursor: pointer; }
 .print-head { display: none; }
 .print-head h1 { margin: 0 0 2mm; font-size: 16pt; }
 .print-head .ph-meta { font-size: 9pt; color: #333; }
+
 </style>
 </head>
 <body class="lang-th">
@@ -2007,6 +2044,8 @@ tbody tr.clickable { cursor: pointer; }
 
       <div class="seg-label">Language / ภาษา</div>
       <div class="seg" id="langSwitch" role="group" aria-label="Language"></div>
+
+      <div class="cloud-badge" id="cloudBadge" style="display:none"></div>
 
       <div class="foot-note">
         Build → FAT → SAT → Service<br>
@@ -2691,8 +2730,238 @@ const UI = {
   },
   confirmDelete: { en: 'Delete this record permanently?', th: 'ต้องการลบเอกสารนี้ถาวรหรือไม่?' },
 };
-</script>
 
+</script>
+<script>
+/* =============================================================
+   FN MACHINE CARE — Cloud sync (Firebase Realtime Database)
+   -------------------------------------------------------------
+   OFF BY DEFAULT. With an empty config below the app behaves
+   exactly as it always has: everything on the device, no network,
+   no dependency. Paste a config in and it additionally syncs to a
+   Realtime Database that every tablet shares.
+
+   ── Where this one points ────────────────────────────────────
+   Firebase project  FN-Service-System  (fn.developer26@gmail.com)
+   Realtime Database  asia-southeast1 (Singapore)
+   This is a DIFFERENT project from FN-ERP-System. The two
+   databases share nothing.
+
+   Still to do by hand, once per technician:
+   Firebase console → Authentication → Users → Add user.
+   Only accounts that exist there can read or write anything.
+
+   ── Why the keys below are safe to publish ───────────────────
+   A Firebase web config is an address, not a password. It is meant
+   to ship inside the page. What actually protects the data is the
+   rules file plus requiring a signed-in user — which is why the
+   rules in this repo deny all access to anyone who is not.
+
+   NEVER paste a service-account key here. Those ARE secret, they
+   bypass every rule, and this file is public.
+   ============================================================= */
+
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyBgXa0Mx0F90Vnkm_ynD262EiNpZvB9ar4',
+  authDomain: 'fn-service-system.firebaseapp.com',
+  databaseURL: 'https://fn-service-system-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'fn-service-system',
+  storageBucket: 'fn-service-system.firebasestorage.app',
+  messagingSenderId: '1055055351717',
+  appId: '1:1055055351717:web:dd640717c9f3223d86a24c',
+};
+
+/* Pinned so the app cannot be broken by an upstream release. */
+const FIREBASE_SDK = 'https://www.gstatic.com/firebasejs/10.12.5/';
+
+const FNCloud = (function () {
+  'use strict';
+
+  const state = {
+    enabled: false,
+    ready: false,
+    signedIn: false,
+    user: null,
+    status: 'off',      // off | connecting | offline | signin | live | error
+    message: '',
+  };
+
+  let api = null;                 // the bits of the SDK we use
+  let listeners = [];             // told whenever state or data changes
+  let pushTimer = null;
+  let applyingRemote = false;     // stops a remote update echoing straight back
+
+  function emit() { listeners.forEach((fn) => { try { fn(state); } catch (e) { console.error(e); } }); }
+  function onChange(fn) { listeners.push(fn); return () => { listeners = listeners.filter((f) => f !== fn); }; }
+
+  function setStatus(status, message) {
+    state.status = status;
+    state.message = message || '';
+    emit();
+  }
+
+  function configured() {
+    return !!(FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL);
+  }
+
+  /* ---------- start-up ---------- */
+
+  async function init(hooks) {
+    api = Object.assign({ getDB: null, setDB: null, onData: null }, hooks || {});
+
+    if (!configured()) {
+      state.enabled = false;
+      setStatus('off');
+      return false;
+    }
+
+    state.enabled = true;
+    setStatus('connecting');
+
+    try {
+      /* Imported only when cloud mode is on, so the offline build
+         stays free of any external dependency. */
+      const [appMod, authMod, dbMod] = await Promise.all([
+        import(FIREBASE_SDK + 'firebase-app.js'),
+        import(FIREBASE_SDK + 'firebase-auth.js'),
+        import(FIREBASE_SDK + 'firebase-database.js'),
+      ]);
+
+      const app = appMod.initializeApp(FIREBASE_CONFIG);
+      api.auth = authMod.getAuth(app);
+      api.db = dbMod.getDatabase(app);
+      api.authMod = authMod;
+      api.dbMod = dbMod;
+      state.ready = true;
+
+      authMod.onAuthStateChanged(api.auth, (user) => {
+        state.signedIn = !!user;
+        state.user = user ? { email: user.email, uid: user.uid } : null;
+        if (user) {
+          setStatus('live');
+          watch();
+        } else {
+          setStatus('signin');
+        }
+      });
+
+      return true;
+    } catch (err) {
+      console.error('[FN cloud] could not start:', err);
+      state.ready = false;
+      setStatus('offline', 'Could not reach Firebase — working on this device only.');
+      return false;
+    }
+  }
+
+  /* ---------- sign in / out ---------- */
+
+  async function signIn(email, password) {
+    if (!state.ready) throw new Error('not ready');
+    await api.authMod.signInWithEmailAndPassword(api.auth, email.trim(), password);
+  }
+
+  async function signOut() {
+    if (!state.ready) return;
+    await api.authMod.signOut(api.auth);
+  }
+
+  /* ---------- data ---------- */
+
+  function watch() {
+    const { ref, onValue } = api.dbMod;
+    onValue(ref(api.db, 'records'), (snap) => {
+      const remote = snap.val() || {};
+      applyingRemote = true;
+      try {
+        const local = api.getDB();
+        const byId = new Map(local.records.map((r) => [r.id, r]));
+        let changed = 0;
+
+        Object.values(remote).forEach((r) => {
+          if (!r || !r.id) return;
+          const mine = byId.get(r.id);
+          /* Last write wins, decided by the record's own timestamp
+             rather than by who happened to sync last. */
+          if (!mine || (r.updatedAt || '') > (mine.updatedAt || '')) {
+            byId.set(r.id, r);
+            changed++;
+          }
+        });
+
+        if (changed) {
+          local.records = Array.from(byId.values());
+          api.setDB(local);
+          if (api.onData) api.onData(changed);
+        }
+      } finally {
+        applyingRemote = false;
+      }
+    }, (err) => {
+      console.error('[FN cloud] read refused:', err);
+      setStatus('error', 'The database refused this account. Check the rules and that this user exists.');
+    });
+
+    onValue(ref(api.db, 'people'), (snap) => {
+      const remote = snap.val();
+      if (!Array.isArray(remote)) return;
+      applyingRemote = true;
+      try {
+        const local = api.getDB();
+        local.meta = local.meta || {};
+        const have = new Set((local.meta.people || []).map((p) => p.name.toLowerCase()));
+        let added = 0;
+        remote.forEach((p) => {
+          if (!p || !p.name) return;
+          if (have.has(p.name.toLowerCase())) return;
+          (local.meta.people = local.meta.people || []).push(p);
+          added++;
+        });
+        if (added) { api.setDB(local); if (api.onData) api.onData(added); }
+      } finally {
+        applyingRemote = false;
+      }
+    });
+  }
+
+  /* Debounced: a checklist being filled in fires constantly. */
+  function push() {
+    if (!state.enabled || !state.ready || !state.signedIn || applyingRemote) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(doPush, 900);
+  }
+
+  async function doPush() {
+    try {
+      const { ref, update } = api.dbMod;
+      const local = api.getDB();
+      const payload = {};
+      local.records.forEach((r) => { payload['records/' + r.id] = r; });
+      payload['people'] = (local.meta && local.meta.people) || [];
+      await update(ref(api.db), payload);
+    } catch (err) {
+      console.error('[FN cloud] write refused:', err);
+      setStatus('error', 'Could not save to the shared database. Your work is still safe on this device.');
+    }
+  }
+
+  async function removeRecord(id) {
+    if (!state.enabled || !state.ready || !state.signedIn) return;
+    try {
+      const { ref, remove } = api.dbMod;
+      await remove(ref(api.db, 'records/' + id));
+    } catch (err) {
+      console.error('[FN cloud] delete refused:', err);
+    }
+  }
+
+  return {
+    init, signIn, signOut, push, removeRecord, onChange, configured,
+    get state() { return state; },
+  };
+})();
+
+</script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Application
@@ -2732,6 +3001,7 @@ const UI = {
   function saveDB() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+      if (typeof FNCloud !== 'undefined') FNCloud.push();
       return true;
     } catch (e) {
       console.error('[FN] Save failed:', e);
@@ -4822,6 +5092,7 @@ const UI = {
     if (!confirm(T(UI.confirmDelete))) return;
     db.records = db.records.filter((r) => r.id !== rec.id);
     saveDB();
+    if (typeof FNCloud !== 'undefined') FNCloud.removeRecord(rec.id);
     go('records');
   }
 
@@ -5755,12 +6026,116 @@ const UI = {
     canvas.addEventListener('touchend', end);
   }
 
+  /* ---------------- Cloud ----------------
+     Optional. With no Firebase config the app is exactly what it has
+     always been: one device, no network. With a config it also syncs
+     to a database every tablet shares — but only for a signed-in user,
+     because the app sits on a public URL. */
+
+  function cloudLabel(st) {
+    if (st.status === 'live') return { en: 'Synced', th: 'ซิงก์แล้ว' };
+    if (st.status === 'signin') return { en: 'Sign in to sync', th: 'เข้าสู่ระบบเพื่อซิงก์' };
+    if (st.status === 'connecting') return { en: 'Connecting…', th: 'กำลังเชื่อมต่อ…' };
+    if (st.status === 'offline') return { en: 'This device only', th: 'เฉพาะเครื่องนี้' };
+    if (st.status === 'error') return { en: 'Sync problem', th: 'ซิงก์มีปัญหา' };
+    return { en: 'This device only', th: 'เฉพาะเครื่องนี้' };
+  }
+
+  function renderCloudBadge() {
+    const host = $('#cloudBadge');
+    if (!host) return;
+    host.innerHTML = '';
+    if (typeof FNCloud === 'undefined' || !FNCloud.configured()) { host.style.display = 'none'; return; }
+    host.style.display = '';
+
+    const st = FNCloud.state;
+    host.className = 'cloud-badge is-' + st.status;
+    host.appendChild(el('span', { class: 'cloud-dot' }));
+    host.appendChild(el('span', { class: 'cloud-text', text: T(cloudLabel(st)) }));
+
+    if (st.signedIn && st.user) {
+      host.title = st.user.email;
+      host.appendChild(el('button', {
+        class: 'cloud-out',
+        title: T({ en: 'Sign out', th: 'ออกจากระบบ' }),
+        onclick: () => FNCloud.signOut(),
+        text: '⏻',
+      }));
+    } else if (st.status === 'signin') {
+      host.appendChild(el('button', {
+        class: 'cloud-out',
+        onclick: () => openSignIn(),
+        text: '→',
+      }));
+    }
+  }
+
+  function openSignIn() {
+    const email = el('input', { type: 'email', autocomplete: 'username', placeholder: 'name@company.com' });
+    const pass = el('input', { type: 'password', autocomplete: 'current-password', placeholder: '••••••••' });
+    const err = el('div', { class: 'modal-error', style: 'display:none' });
+    let busy = false;
+
+    const m = modal({
+      title: { en: 'Sign in to sync', th: 'เข้าสู่ระบบเพื่อซิงก์' },
+      note: { en: 'Your work is already saved on this device. Signing in shares it with the other tablets.',
+              th: 'งานของคุณบันทึกในเครื่องนี้แล้ว การเข้าสู่ระบบจะแชร์ให้แท็บเล็ตเครื่องอื่นด้วย' },
+      body: [
+        err,
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Email', th: 'อีเมล' })]), email]),
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Password', th: 'รหัสผ่าน' })]), pass]),
+      ],
+      confirmLabel: { en: 'Sign in', th: 'เข้าสู่ระบบ' },
+      onConfirm: () => {
+        if (busy) return false;
+        const e = email.value.trim(), p = pass.value;
+        if (!e || !p) {
+          err.style.display = '';
+          err.textContent = T({ en: 'Email and password are both needed.', th: 'ต้องกรอกทั้งอีเมลและรหัสผ่าน' });
+          return false;
+        }
+        busy = true;
+        FNCloud.signIn(e, p)
+          .then(() => { busy = false; m.close(); toast(T({ en: 'Signed in', th: 'เข้าสู่ระบบแล้ว' })); })
+          .catch((ex) => {
+            busy = false;
+            err.style.display = '';
+            err.textContent = /password|credential|user-not-found/i.test(String(ex && ex.code))
+              ? T({ en: 'That email and password do not match.', th: 'อีเมลหรือรหัสผ่านไม่ถูกต้อง' })
+              : T({ en: 'Could not sign in. Check the connection and try again.', th: 'เข้าสู่ระบบไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองใหม่' });
+          });
+        return false;   /* the modal closes only on success */
+      },
+    });
+    [email, pass].forEach((i) => i.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') $('.modal-foot .btn-primary').click();
+    }));
+    setTimeout(() => email.focus(), 60);
+  }
+
+  function startCloud() {
+    if (typeof FNCloud === 'undefined') return;
+    FNCloud.onChange(() => { renderCloudBadge(); });
+    FNCloud.init({
+      getDB: () => db,
+      setDB: (next) => {
+        db = next;
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) { /* full */ }
+      },
+      onData: (n) => {
+        render();
+        toast(lang === 'th' ? `รับข้อมูลจากเครื่องอื่น ${n} รายการ` : `${n} update${n === 1 ? '' : 's'} from other devices`);
+      },
+    }).then(() => renderCloudBadge());
+  }
+
   /* ---------------- Boot ---------------- */
 
   function boot() {
     /* The wordmark is styled markup in index.html — don't overwrite it. */
     applyTheme();
     setupNavDrawer();
+    startCloud();
     readHash();
     render();
 
@@ -5782,6 +6157,7 @@ const UI = {
     reset: () => { db = structuredClone(DEFAULT_DB); saveDB(); render(); },
   };
 })();
+
 </script>
 </body>
 </html>
