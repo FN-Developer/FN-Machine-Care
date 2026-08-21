@@ -881,6 +881,16 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
 }
 .type-card .tc-name { font-weight: 600; font-size: 15.5px; margin-top: 4px; letter-spacing: -.015em; }
 .type-card .tc-name-th { font-size: 13.5px; color: var(--text-dim); margin-top: 3px; line-height: 1.45; }
+/* Plain language under the acronym — nobody should have to guess what
+   FAT or SAT stands for. */
+.type-card .tc-blurb {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--hairline-soft);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
 
 /* ---------------- Tables ---------------- */
 
@@ -1673,7 +1683,7 @@ tbody tr.clickable { cursor: pointer; }
       <div class="seg" id="langSwitch" role="group" aria-label="Language"></div>
 
       <div class="foot-note">
-        Build → PDI → Delivery → Service<br>
+        Build → FAT → SAT → Service<br>
         <span>v1.1 · data stored in this browser</span>
       </div>
     </div>
@@ -1838,9 +1848,13 @@ const FORM_BUILD = {
   type: 'BUILD',
   stage: 'inhouse',
   code: '01',
-  prefix: 'BLD',
+  prefix: 'ASSY',
   name: { en: 'Machine Build Checklist', th: 'เช็คลิสต์การประกอบเครื่อง' },
   short: { en: 'Build', th: 'ประกอบ' },
+  blurb: {
+    en: 'Checked as we assemble it, before it goes for testing.',
+    th: 'ตรวจระหว่างประกอบเครื่อง ก่อนนำไปทดสอบ',
+  },
   icon: 'build',
   accent: '#bf5af3',
   sections: [
@@ -1879,17 +1893,21 @@ const FORM_PDI = {
   type: 'PDI',
   stage: 'inhouse',
   code: '02',
-  prefix: 'PDI',
-  name: { en: 'Pre-Delivery Inspection', th: 'การตรวจสอบก่อนส่งมอบ' },
-  short: { en: 'PDI', th: 'PDI' },
+  prefix: 'FAT',
+  name: { en: 'Factory Acceptance Test', th: 'การทดสอบรับรองที่โรงงานเรา' },
+  short: { en: 'FAT', th: 'FAT' },
+  blurb: {
+    en: 'Proving the machine at our factory — the last gate before it ships.',
+    th: 'ทดสอบรับรองเครื่องที่โรงงานเรา — ด่านสุดท้ายก่อนส่งมอบ',
+  },
   icon: 'pdi',
   accent: '#0a84ff',
   safetyGate: true, // any FAIL in the safety section blocks approval
   sections: [
     machineHeader([
-      { key: 'inspectionDate', label: { en: 'Inspection Date', th: 'วันที่ตรวจสอบ' }, type: 'date', required: true },
+      { key: 'inspectionDate', label: { en: 'Test Date', th: 'วันที่ทดสอบ' }, type: 'date', required: true },
       { key: 'deliveryDate', label: { en: 'Planned Delivery Date', th: 'วันที่ส่งมอบตามแผน' }, type: 'date' },
-      { key: 'inspector', label: { en: 'Inspector', th: 'ผู้ตรวจสอบ' }, type: 'text', required: true },
+      { key: 'inspector', label: { en: 'Tested By', th: 'ผู้ทดสอบ' }, type: 'text', required: true },
       { key: 'projectEngineer', label: { en: 'Project Engineer', th: 'วิศวกรโครงการ' }, type: 'text' },
     ]),
 
@@ -1939,7 +1957,7 @@ const FORM_PDI = {
       ] },
 
     { id: 'safety', title: { en: 'E. Safety Checklist', th: 'E. เช็คลิสต์ความปลอดภัย' },
-      hint: { en: 'If ANY safety item fails, PDI cannot be approved.', th: 'หากรายการความปลอดภัยข้อใดไม่ผ่าน จะไม่สามารถอนุมัติ PDI ได้' },
+      hint: { en: 'If ANY safety item fails, the FAT cannot be approved.', th: 'หากรายการความปลอดภัยข้อใดไม่ผ่าน จะไม่สามารถอนุมัติ FAT ได้' },
       type: 'checklist', critical: true, items: checks(SAFETY_ITEMS) },
 
     { id: 'docs', title: { en: 'F. Documentation & Delivery', th: 'F. เอกสารและการส่งมอบ' }, type: 'documents', items: checks(DOCUMENT_ITEMS) },
@@ -1965,9 +1983,13 @@ const FORM_DELIVERY = {
   type: 'DELIVERY',
   stage: 'onsite',
   code: '03',
-  prefix: 'DLV',
-  name: { en: 'Delivery, Installation & Commissioning', th: 'การส่งมอบ ติดตั้ง และเดินเครื่อง' },
-  short: { en: 'Delivery', th: 'ส่งมอบ' },
+  prefix: 'SAT',
+  name: { en: 'Site Acceptance Test & Commissioning', th: 'การทดสอบรับรองที่หน้างานและเดินเครื่อง' },
+  short: { en: 'SAT', th: 'SAT' },
+  blurb: {
+    en: "Proving it again at the customer's factory, after installation.",
+    th: 'ทดสอบรับรองอีกครั้งที่โรงงานลูกค้า หลังติดตั้งเสร็จ',
+  },
   icon: 'delivery',
   accent: '#ff9f0a',
   sections: [
@@ -2085,6 +2107,10 @@ const FORM_SERVICE = {
   prefix: 'SR',
   name: { en: 'Customer Service Report', th: 'รายงานการเข้าบริการลูกค้า' },
   short: { en: 'Service', th: 'บริการ' },
+  blurb: {
+    en: 'Every call-out once the machine is in production.',
+    th: 'ทุกครั้งที่เข้าบริการหลังเครื่องเริ่มผลิตแล้ว',
+  },
   icon: 'service',
   accent: '#ff453a',
   sections: [
@@ -2308,8 +2334,8 @@ const UI = {
   noRecords: { en: 'No records yet.', th: 'ยังไม่มีเอกสาร' },
   search: { en: 'Search work no, serial, customer…', th: 'ค้นหาเลขที่งาน หมายเลขเครื่อง ลูกค้า…' },
   safetyBlock: {
-    en: 'A safety item has FAILED. This PDI cannot be approved as READY FOR DELIVERY.',
-    th: 'มีรายการความปลอดภัยไม่ผ่าน จึงไม่สามารถอนุมัติ PDI เป็น “พร้อมส่งมอบ” ได้',
+    en: 'A safety item has FAILED. This FAT cannot be approved as READY FOR DELIVERY.',
+    th: 'มีรายการความปลอดภัยไม่ผ่าน จึงไม่สามารถอนุมัติ FAT เป็น “พร้อมส่งมอบ” ได้',
   },
   confirmDelete: { en: 'Delete this record permanently?', th: 'ต้องการลบเอกสารนี้ถาวรหรือไม่?' },
 };
@@ -2324,7 +2350,7 @@ const UI = {
    No build step, no framework, no server. Everything runs in the
    browser and persists to localStorage. Records are keyed by
    WORK NO + MACHINE SERIAL, so one machine's whole life —
-   Build → PDI → Delivery → Service — reads as a single history.
+   Build → FAT → SAT → Service — reads as a single history.
    ============================================================= */
 
 (function () {
@@ -2577,7 +2603,7 @@ const UI = {
     return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  /* Document numbers: PDI-2026-00125 */
+  /* Document numbers: FAT-2026-00125 */
   function nextDocNo(formDef) {
     const year = new Date().getFullYear();
     const key = `${formDef.prefix}-${year}`;
@@ -3399,6 +3425,7 @@ const UI = {
             el('div', { class: 'tc-code', text: def.code + ' · ' + def.prefix }),
             el('div', { class: 'tc-name', text: def.name.en }),
             el('div', { class: 'tc-name-th', text: def.name.th }),
+            def.blurb ? el('div', { class: 'tc-blurb', text: T(def.blurb) }) : null,
           ])
         );
       });
@@ -3426,8 +3453,8 @@ const UI = {
           el('h1', { class: 'page-title' }, [L({ en: 'New Form', th: 'สร้างเอกสารใหม่' })]),
           el('div', { class: 'page-sub' }, [
             L({
-              en: 'Machine lifecycle: Build → PDI → Delivery → Service',
-              th: 'วงจรชีวิตเครื่องจักร: ประกอบ → ตรวจก่อนส่ง → ส่งมอบ → บริการ',
+              en: 'Machine lifecycle: Build → FAT → SAT → Service',
+              th: 'วงจรชีวิตเครื่องจักร: ประกอบ → ทดสอบที่โรงงานเรา → ทดสอบที่หน้างาน → บริการ',
             }),
           ]),
         ]),

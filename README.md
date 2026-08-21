@@ -6,9 +6,12 @@
 A digital form system for automation machine builders. It replaces paper checklists with structured, photographed, signed records — and ties every record to one machine, so a machine's whole life reads as a single history.
 
 ```
-01 MACHINE BUILD  →  02 PRE-DELIVERY  →  03 DELIVERY &      →  04 CUSTOMER
-   CHECKLIST            INSPECTION           COMMISSIONING         SERVICE REPORT
+01 MACHINE BUILD  →  02 FACTORY        →  03 SITE            →  04 CUSTOMER
+   CHECKLIST            ACCEPTANCE TEST      ACCEPTANCE TEST       SERVICE REPORT
+   (ASSY)               (FAT)                (SAT)                 (SR)
 ```
+
+**FAT** and **SAT** are the terms your customers already use. A Factory Acceptance Test proves the machine at *your* factory before it ships; a Site Acceptance Test proves it again at *theirs* after installation. Both appear in purchase agreements and customer quality manuals worldwide, so a report headed `FAT-2026-00125` needs no explanation to a buyer in Nagoya or Stuttgart. Each form also carries a one-line description in the app, in Thai and English.
 
 ---
 
@@ -21,9 +24,9 @@ Every form is keyed by **Work No. + Machine Serial No.**, so opening a machine s
 ```
 X722 — AUTO CHECKER & APPEARANCE MCB MACHINE  (FN-X722-001)
 │
-├── 2026-08-14  BLD-2026-00031   Build checklist          ✔ complete
-├── 2026-08-21  PDI-2026-00125   Pre-delivery inspection  🟢 READY FOR DELIVERY
-├── 2026-08-25  DLV-2026-00044   Delivery & commissioning 🟡 accepted with open items
+├── 2026-08-14  ASSY-2026-00031  Build checklist          ✔ complete
+├── 2026-08-21  FAT-2026-00125   Factory acceptance test  🟢 READY FOR DELIVERY
+├── 2026-08-25  SAT-2026-00044   Site acceptance test     🟡 accepted with open items
 ├── 2026-10-05  SR-2026-00318    PM service               🟢 operating normally
 └── 2027-01-15  SR-2026-00402    Servo problem            🔴 further service required
 ```
@@ -32,11 +35,11 @@ X722 — AUTO CHECKER & APPEARANCE MCB MACHINE  (FN-X722-001)
 
 ## The four forms
 
-### 01 — Machine Build Checklist `BLD`
-Mechanical, electrical and software checks during assembly, plus an outstanding-work list so nothing reaches PDI half-finished.
+### 01 — Machine Build Checklist `ASSY`
+Mechanical, electrical and software checks during assembly, plus an outstanding-work list so nothing reaches the FAT half-finished.
 
-### 02 — Pre-Delivery Inspection `PDI`
-The final gate before a machine leaves the factory.
+### 02 — Factory Acceptance Test `FAT`
+The final gate before a machine leaves your factory. *การทดสอบรับรองที่โรงงานเรา*
 
 | Section | What it captures |
 |---|---|
@@ -52,7 +55,7 @@ The final gate before a machine leaves the factory.
 | G. Photo evidence | 7 required shots + unlimited extras |
 | H. Final approval | 🟢 Ready / 🟡 Ready with minor action / 🔴 Not ready + 4 signatures |
 
-### 03 — Delivery, Installation & Commissioning `DLV`
+### 03 — Site Acceptance Test & Commissioning `SAT`
 Transport damage, on-site installation, commissioning tests, on-site performance, customer training with a trainee register, a punch list for open items, and customer acceptance.
 
 ### 04 — Customer Service Report `SR`
@@ -69,11 +72,11 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 - **Automatic verdicts.** Type an actual value against a target and the app decides PASS or FAIL.
 - **Photos from the tablet camera**, downscaled to 1200 px and stored inside the record.
 - **Finger/stylus signatures** on canvas, saved with the record.
-- **Bilingual — Thai + English**, switchable to either alone. Every check item carries both languages.
+- **Thai or English**, switched in one tap. Every check item, form name and description is written in both.
 - **Light, Dark or Auto appearance.** Auto follows the tablet, so the app dims itself with the rest of the screen in the evening.
-- **Built for the tablet, not shrunk onto it.** Below 900px the menu becomes a toggle drawer opened by ☰ — with room for full bilingual labels, plus appearance and language. Verdict buttons stretch to full width as thumb targets, and every control clears 42–58px on touch.
+- **Built for the tablet, not shrunk onto it.** Below 1280px — which covers tablets in landscape — the menu becomes a toggle drawer opened by ☰, with room for full labels plus appearance and language. Verdict buttons stretch to full width as thumb targets, and every control clears 42–58px on touch.
 - **Print to A4 PDF.** Print CSS strips the interface and prints only the selected answers, so the paper copy looks like a proper form.
-- **Automatic document numbers** — `PDI-2026-00125`, `SR-2026-00321`.
+- **Automatic document numbers** — `FAT-2026-00125`, `SR-2026-00321`.
 - **Machine history timeline**, grouped by Work No. + Serial No.
 - **A dashboard that answers the service manager's questions.** A bar chart of customers — machines installed against service visits — that you tap to drill into that customer's machines. Underneath: what kind of work we were called out to do, what root causes keep recurring, and a machine-by-machine table of each one's usual problem.
 
