@@ -2790,6 +2790,8 @@ const FNCloud = (function () {
   let listeners = [];             // told whenever state or data changes
   let pushTimer = null;
   let applyingRemote = false;     // stops a remote update echoing straight back
+  let watching = false;           // one set of listeners per sign-in, not one per auth event
+  let seeded = false;             // has this session uploaded what was already on the device?
 
   function emit() { listeners.forEach((fn) => { try { fn(state); } catch (e) { console.error(e); } }); }
   function onChange(fn) { listeners.push(fn); return () => { listeners = listeners.filter((f) => f !== fn); }; }
@@ -2841,6 +2843,8 @@ const FNCloud = (function () {
           setStatus('live');
           watch();
         } else {
+          watching = false;
+          seeded = false;
           setStatus('signin');
         }
       });
@@ -2869,6 +2873,8 @@ const FNCloud = (function () {
   /* ---------- data ---------- */
 
   function watch() {
+    if (watching) return;
+    watching = true;
     const { ref, onValue } = api.dbMod;
     onValue(ref(api.db, 'records'), (snap) => {
       const remote = snap.val() || {};
@@ -2896,6 +2902,20 @@ const FNCloud = (function () {
         }
       } finally {
         applyingRemote = false;
+      }
+
+      /* The first snapshot after signing in is the only safe moment to
+         upload what was already sitting on this tablet. Before the merge
+         we might overwrite a newer copy from another device; after it,
+         every local record is at least as new as the shared one, so
+         sending the whole set up can only add.
+
+         Without this, a tablet that had been working offline for a week
+         would download everyone else's records and silently keep its own
+         to itself until somebody happened to edit one. */
+      if (!seeded) {
+        seeded = true;
+        push();
       }
     }, (err) => {
       console.error('[FN cloud] read refused:', err);
