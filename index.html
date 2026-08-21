@@ -39,6 +39,7 @@
   --glass:        rgba(255, 255, 255, .66);
   --glass-raised: rgba(255, 255, 255, .80);
   --glass-bar:    rgba(250, 251, 254, .975);
+  --glass-drawer: rgba(247, 249, 253, .97);
   --glass-sunken: rgba(255, 255, 255, .38);
   --glass-hover:  rgba(255, 255, 255, .88);
 
@@ -71,6 +72,15 @@
   --accent-green:  #30d158;
 
   --brand: var(--accent-blue);
+
+  /* Wordmark: base ink, and the light that travels through it */
+  --scroll-thumb:       rgba(9, 20, 48, .26);
+  --scroll-thumb-hover: rgba(9, 20, 48, .42);
+
+  --wm-base: #101a2e;
+  --wm-hi:   #0a84ff;
+  --wm-hi-2: #bf5af3;
+
   --pass:  #248a3d;
   --fail:  #d70015;
   --na:    #8e8e93;
@@ -82,6 +92,8 @@
   --na-fill:   #8e8e93;
   --pass-ink:  #ffffff;
   --fail-ink:  #b3000c;
+
+  --bar-h: 65px;
 
   --radius-window: 26px;
   --radius-card:   20px;
@@ -110,6 +122,7 @@
   --glass:        rgba(30, 36, 52, .62);
   --glass-raised: rgba(40, 47, 66, .74);
   --glass-bar:    rgba(19, 24, 38, .977);
+  --glass-drawer: rgba(22, 27, 42, .975);
   --glass-sunken: rgba(16, 21, 34, .52);
   --glass-hover:  rgba(52, 60, 82, .78);
 
@@ -129,6 +142,13 @@
 
   --field:       rgba(10, 14, 24, .55);
   --field-focus: rgba(10, 14, 24, .82);
+
+  --scroll-thumb:       rgba(255, 255, 255, .22);
+  --scroll-thumb-hover: rgba(255, 255, 255, .38);
+
+  --wm-base: #eef2fb;
+  --wm-hi:   #6bb8ff;
+  --wm-hi-2: #d59bff;
 
   --pass: #4ee16f;
   --fail: #ff6961;
@@ -169,6 +189,33 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   border-radius: 6px;
 }
 
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------------- Scrollbars ----------------
+   Thin, translucent, and they take the accent when grabbed — the
+   scrollbar is part of the glass, not a system leftover. */
+
+* { scrollbar-width: thin; scrollbar-color: var(--scroll-thumb) transparent; }
+
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scroll-thumb-hover); background-clip: content-box; }
+::-webkit-scrollbar-thumb:active { background: var(--accent-blue); background-clip: content-box; }
+
+.table-wrap::-webkit-scrollbar, .sidebar::-webkit-scrollbar { width: 8px; height: 8px; }
+.table-wrap::-webkit-scrollbar-thumb, .sidebar::-webkit-scrollbar-thumb { border-width: 2px; }
+
 /* ---------------- The environment ---------------- */
 
 .ambient {
@@ -195,8 +242,10 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 /* ---------------- Layout ---------------- */
 
 .app {
+  /* Deliberately no z-index: a stacking context here would trap the
+     drawer beneath the scrim. It already paints above .ambient by
+     DOM order. */
   position: relative;
-  z-index: 1;
   display: flex;
   min-height: 100vh;
   gap: 16px;
@@ -228,12 +277,17 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   display: flex;
   align-items: center;
   gap: 11px;
-  font-weight: 600;
-  font-size: 15.5px;
-  letter-spacing: -.02em;
   white-space: nowrap;
 }
+
+/* ---- The mark ----
+   A tile with a highlight that orbits its rim, and a wordmark that a
+   band of light travels through every few seconds. Both idle slowly:
+   this sits on screen all day next to a technician, so the motion has
+   to be noticeable once and invisible thereafter. */
+
 .brand-logo {
+  position: relative;
   width: 36px; height: 36px;
   flex: 0 0 auto;
   border-radius: 11px;
@@ -242,6 +296,99 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   font-size: 14px; font-weight: 700; color: #fff;
   letter-spacing: -.02em;
   box-shadow: 0 5px 14px rgba(10, 132, 255, .38), inset 0 1px 0 rgba(255,255,255,.45);
+  isolation: isolate;
+}
+.brand-logo span { position: relative; z-index: 2; }
+
+/* Orbiting rim highlight */
+.brand-logo::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from 0deg,
+    transparent 0deg, transparent 250deg,
+    rgba(255,255,255,.95) 300deg,
+    transparent 350deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  animation: mark-orbit 6s linear infinite;
+  z-index: 3;
+}
+/* Breathing halo */
+.brand-logo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 0 rgba(10, 132, 255, .55);
+  animation: mark-pulse 4.5s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes mark-orbit { to { transform: rotate(360deg); } }
+@keyframes mark-pulse {
+  0%, 70%, 100% { box-shadow: 0 0 0 0 rgba(10, 132, 255, .0); }
+  85%           { box-shadow: 0 0 14px 2px rgba(10, 132, 255, .38); }
+}
+
+/* ---- Wordmark ---- */
+
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: .34em;
+  font-size: 15.5px;
+  line-height: 1.1;
+  min-width: 0;
+
+  /* repeat-x matters: with no-repeat, any offset that pushes the
+     gradient box past the text leaves those glyphs unpainted — and
+     background-clip:text renders unpainted glyphs as nothing at all.
+     Both ends of the ramp are --wm-base, so tiling is seamless. */
+  background-image: linear-gradient(100deg,
+    var(--wm-base) 0%,   var(--wm-base) 36%,
+    var(--wm-hi)   46%,  var(--wm-hi-2) 53%,
+    var(--wm-base) 64%,  var(--wm-base) 100%);
+  background-size: 300% 100%;
+  background-position-x: 0%;
+  background-repeat: repeat-x;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: wm-sweep 7.5s ease-in-out infinite;
+}
+/* Heavy, tightly tracked initials against a light, widely tracked name —
+   the contrast is what makes it read as a mark rather than a label. */
+.wm-fn {
+  font-weight: 800;
+  letter-spacing: -.045em;
+  font-size: 1.06em;
+}
+.wm-rest {
+  font-weight: 500;
+  letter-spacing: .015em;
+}
+
+/* If the browser can't clip a gradient to text, show plain ink instead
+   of nothing at all. */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .wordmark {
+    background: none;
+    color: var(--text);
+    -webkit-text-fill-color: currentColor;
+    animation: none;
+  }
+}
+
+/* Idle most of the cycle, then one quick pass of light */
+@keyframes wm-sweep {
+  0%, 55%   { background-position-x: 0%; }
+  90%, 100% { background-position-x: 100%; }
 }
 .brand-sub {
   margin-top: 9px;
@@ -898,30 +1045,157 @@ tbody tr.clickable { cursor: pointer; }
 
 /* ---------------- Responsive ---------------- */
 
+/* ---------------- Small-screen chrome ----------------
+   Hidden on desktop. On tablet and phone this bar owns the menu
+   toggle and the app identity, and the sidebar becomes a drawer. */
+
+.mobile-bar { display: none; }
+.scrim { display: none; }
+
+.menu-toggle {
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-ctl);
+  background: var(--glass-raised);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: var(--lift-1), var(--specular);
+  transition: background .16s ease, transform .16s ease;
+}
+.menu-toggle:hover { background: var(--glass-hover); }
+.menu-toggle:active { transform: scale(.94); }
+
+.mt-bars { position: relative; width: 19px; height: 14px; display: block; }
+.mt-bars span {
+  position: absolute; left: 0;
+  width: 100%; height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform .26s cubic-bezier(.22,1,.36,1), opacity .18s ease;
+}
+.mt-bars span:nth-child(1) { top: 0; }
+.mt-bars span:nth-child(2) { top: 6px; }
+.mt-bars span:nth-child(3) { top: 12px; }
+
+/* The bars fold into a cross while the drawer is open */
+:root.nav-open .mt-bars span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+:root.nav-open .mt-bars span:nth-child(2) { opacity: 0; transform: scaleX(.4); }
+:root.nav-open .mt-bars span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+
+.wordmark-sm { font-size: 16px; }
+
+/* ---- Tablet & phone ------------------------------------------
+   Navigation becomes a toggle drawer:
+
+     bar     [☰]  FN Machine Care
+     drawer  slides in from the left with the full menu,
+             appearance and language — all with real labels,
+             which the cramped icon strip could never show.
+
+   The drawer, not the bar, is where settings live: it has room
+   for bilingual labels, and nothing can be pushed off-screen. */
+
 @media (max-width: 900px) {
   .app { flex-direction: column; padding: 10px; gap: 10px; }
-  .sidebar {
-    position: static; width: auto; height: auto; flex: none;
-    flex-direction: row; align-items: center; gap: 8px;
-    overflow-x: auto; overflow-y: hidden;
-    border-radius: var(--radius-card);
-    padding: 6px;
+
+  /* The bar outranks both the scrim and the drawer, so the toggle
+     stays tappable while the menu is open — otherwise it morphs
+     into a close button nobody can reach. */
+  .mobile-bar {
+    position: sticky;
+    top: 0;
+    z-index: 65;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    height: var(--bar-h);
+    background: var(--glass-bar);
+    -webkit-backdrop-filter: saturate(180%) blur(40px);
+    backdrop-filter: saturate(180%) blur(40px);
+    border-bottom: 1px solid var(--hairline-soft);
   }
-  .brand { border-bottom: none; padding: 8px 12px; }
-  .brand-sub, .foot-note, .seg-label { display: none; }
-  .nav { flex-direction: row; padding: 4px; }
-  .nav button span.nav-text { display: none; }
-  .nav button { padding: 11px 14px; }
-  .sidebar-foot { margin-top: 0; margin-left: auto; padding: 4px 6px; border-top: none; display: flex; gap: 8px; }
-  .seg { margin-bottom: 0; }
-  .seg .seg-text { display: none; }
-  .seg button { padding: 8px 10px; }
+
+  /* Off-canvas drawer, hung below the bar */
+  .sidebar {
+    position: fixed;
+    top: var(--bar-h); left: 0; bottom: 0;
+    z-index: 60;
+    width: min(300px, 84vw);
+    height: calc(100% - var(--bar-h));
+    flex: none;
+    border-radius: 0 var(--radius-window) var(--radius-window) 0;
+    border-left: none;
+    /* Near-opaque: a translucent drawer over a busy dashboard made
+       the menu labels genuinely hard to read. */
+    background: var(--glass-drawer);
+    box-shadow: var(--lift-3), var(--specular);
+    transform: translateX(-102%);
+    transition: transform .34s cubic-bezier(.22,1,.36,1);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    visibility: hidden;
+  }
+  :root.nav-open .sidebar { transform: translateX(0); visibility: visible; }
+
+  /* The bar already carries the identity — no need to repeat it */
+  .brand { display: none; }
+
+  .scrim {
+    display: block;
+    position: fixed;
+    top: var(--bar-h); right: 0; bottom: 0; left: 0;
+    z-index: 55;
+    background: rgba(6, 10, 20, .42);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .3s ease;
+  }
+  :root.nav-open .scrim { opacity: 1; pointer-events: auto; }
+  :root.nav-open { overflow: hidden; }
+
+  /* Inside the drawer everything gets its full label back */
+  .nav { flex-direction: column; padding: 12px; margin-top: 4px; }
+  .nav button { padding: 13px; }
+  .sidebar-foot { margin-top: auto; }
+  .seg-label { display: block; }
+  .seg .seg-text { display: inline; }
+
   .main { padding: 0 2px 80px; }
   .toolbar { top: 4px; }
+  .page-title { font-size: 25px; }
+
   .check-row { grid-template-columns: 1fr; gap: 9px; }
   .perf-row, .measure-row { grid-template-columns: 1fr; }
   .ba-grid { grid-template-columns: 1fr; }
-  .page-title { font-size: 25px; }
+
+  /* Verdict buttons stretch full width — thumb targets, not chips */
+  .pfn { width: 100%; }
+  .pfn button { flex: 1 1 0; min-width: 0; }
+}
+
+@media (max-width: 600px) {
+  .wordmark-sm { font-size: 15px; }
+  .field-grid { grid-template-columns: 1fr; }
+  .sign-grid { grid-template-columns: 1fr; }
+  .photo-grid { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+}
+
+/* Touch devices: every control clears a comfortable tap target */
+@media (pointer: coarse) {
+  .seg button { min-height: 42px; }
+  .nav button { min-height: 48px; }
+  .pfn button { min-height: 48px; font-size: 13.5px; }
+  .btn { min-height: 42px; }
+  .doc-item { min-height: 48px; }
+  .result-row button { min-height: 58px; }
+  .field input, .field select, .field textarea, .cell-input { min-height: 42px; }
 }
 
 /* Glass is expensive on low-end tablets — drop the blur, keep the look */
@@ -952,6 +1226,7 @@ tbody tr.clickable { cursor: pointer; }
     font-size: 10.5pt;
   }
   .ambient, .sidebar, .toolbar, .no-print, .nav, .btn,
+  .mobile-bar, .scrim, .menu-toggle,
   .photo-actions, .sign-foot { display: none !important; }
 
   .app { display: block; padding: 0; }
@@ -1031,13 +1306,28 @@ tbody tr.clickable { cursor: pointer; }
   <span class="orb orb-3"></span>
 </div>
 
+<!-- Small screens only: the bar that owns the menu toggle -->
+<header class="mobile-bar no-print">
+  <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="sidebar">
+    <span class="mt-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    <span class="sr-only">Menu / เมนู</span>
+  </button>
+  <span class="wordmark wordmark-sm" aria-hidden="true">
+    <span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span>
+  </span>
+</header>
+
+<div class="scrim no-print" id="scrim"></div>
+
 <div class="app">
 
-  <aside class="sidebar no-print">
+  <aside class="sidebar no-print" id="sidebar">
     <div class="brand">
       <div class="brand-mark">
-        <div class="brand-logo">FN</div>
-        <span id="appName">FN Machine Care</span>
+        <div class="brand-logo" aria-hidden="true"><span>FN</span></div>
+        <span class="wordmark" id="appName">
+          <span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span>
+        </span>
       </div>
       <div class="brand-sub">
         Machine Inspection &amp; Service Management<br>
@@ -1973,6 +2263,54 @@ const UI = {
     return 'red';
   }
 
+  /* ---------------- Navigation drawer (tablet & phone) ----------------
+     Desktop keeps the sidebar in place; below 900px it becomes an
+     off-canvas drawer opened by the ☰ button. */
+
+  const NAV_BREAKPOINT = 900;
+
+  function navIsDrawer() {
+    return window.innerWidth <= NAV_BREAKPOINT;
+  }
+
+  function setNavOpen(open) {
+    const root = document.documentElement;
+    root.classList.toggle('nav-open', !!open);
+    const btn = $('#menuToggle');
+    if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    /* Keyboard users should not tab into a closed drawer */
+    const sidebar = $('#sidebar');
+    if (sidebar) sidebar.setAttribute('aria-hidden', open || !navIsDrawer() ? 'false' : 'true');
+  }
+
+  function closeNav() {
+    if (document.documentElement.classList.contains('nav-open')) setNavOpen(false);
+  }
+
+  function setupNavDrawer() {
+    const btn = $('#menuToggle');
+    const scrim = $('#scrim');
+
+    if (btn) {
+      btn.addEventListener('click', () => {
+        setNavOpen(!document.documentElement.classList.contains('nav-open'));
+      });
+    }
+    if (scrim) scrim.addEventListener('click', closeNav);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeNav();
+    });
+
+    /* Rotating a tablet back to a wide layout must not leave the
+       page stuck behind a scrim. */
+    window.addEventListener('resize', () => {
+      if (!navIsDrawer()) setNavOpen(false);
+    });
+
+    setNavOpen(false);
+  }
+
   /* ---------------- Router ---------------- */
 
   const state = { view: 'dashboard', recordId: null, machineKey: null, search: '' };
@@ -2010,6 +2348,7 @@ const UI = {
   }
 
   function go(view, opts) {
+    closeNav();
     state.view = view;
     state.recordId = (opts && opts.recordId) || null;
     state.machineKey = (opts && opts.machineKey) || null;
@@ -2040,11 +2379,13 @@ const UI = {
   function renderNav() {
     const nav = $('#nav');
     nav.innerHTML = '';
+    /* Ordered by how often a technician reaches for them:
+       start a form, find a form, find a machine, then overview. */
     const items = [
-      ['dashboard', 'dashboard', UI.nav_dashboard],
-      ['machines', 'machines', UI.nav_machines],
-      ['records', 'records', UI.nav_records],
       ['newform', 'newform', UI.nav_new],
+      ['records', 'records', UI.nav_records],
+      ['machines', 'machines', UI.nav_machines],
+      ['dashboard', 'dashboard', UI.nav_dashboard],
       ['data', 'backup', UI.nav_data],
     ];
     items.forEach(([view, iconName, label]) => {
@@ -3336,8 +3677,9 @@ const UI = {
   /* ---------------- Boot ---------------- */
 
   function boot() {
-    $('#appName').textContent = 'FN Machine Care';
+    /* The wordmark is styled markup in index.html — don't overwrite it. */
     applyTheme();
+    setupNavDrawer();
     readHash();
     render();
 

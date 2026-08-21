@@ -71,6 +71,7 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 - **Finger/stylus signatures** on canvas, saved with the record.
 - **Bilingual — Thai + English**, switchable to either alone. Every check item carries both languages.
 - **Light, Dark or Auto appearance.** Auto follows the tablet, so the app dims itself with the rest of the screen in the evening.
+- **Built for the tablet, not shrunk onto it.** Below 900px the menu becomes a toggle drawer opened by ☰ — with room for full bilingual labels, plus appearance and language. Verdict buttons stretch to full width as thumb targets, and every control clears 42–58px on touch.
 - **Print to A4 PDF.** Print CSS strips the interface and prints only the selected answers, so the paper copy looks like a proper form.
 - **Automatic document numbers** — `PDI-2026-00125`, `SR-2026-00321`.
 - **Machine history timeline**, grouped by Work No. + Serial No.
@@ -141,6 +142,8 @@ Panels, the sidebar and the toolbar are frosted glass floating over an ambient b
 Translucency is lovely and it lowers contrast. A technician under factory lighting, holding a tablet at arm's length, must never squint to tell whether a row passed. So the decoration yields wherever a judgment is being recorded.
 
 Appearance is stored per device (`data-theme` on `<html>`), so it survives a refresh and never collides with the language setting on `<body>`.
+
+The menu is ordered by how often a technician reaches for it — **New Form → Records → Machines → Dashboard → Backup** — so the most common action is the first thing under the thumb.
 
 ### Adding or changing a check item
 
