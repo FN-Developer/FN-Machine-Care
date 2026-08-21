@@ -254,8 +254,8 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 /* The sidebar is a floating window, not a wall */
 .sidebar {
-  width: 244px;
-  flex: 0 0 244px;
+  width: 252px;
+  flex: 0 0 252px;
   position: sticky;
   top: 16px;
   height: calc(100vh - 32px);
@@ -275,8 +275,9 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .brand { padding: 22px 20px 18px; border-bottom: 1px solid var(--hairline-soft); }
 .brand-mark {
   display: flex;
-  align-items: center;
-  gap: 11px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
   white-space: nowrap;
 }
 
@@ -341,9 +342,9 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   display: inline-flex;
   align-items: baseline;
   gap: .34em;
-  font-size: 15.5px;
-  line-height: 1.1;
-  min-width: 0;
+  font-size: 18.5px;
+  line-height: 1.15;
+  white-space: nowrap;
 
   /* repeat-x matters: with no-repeat, any offset that pushes the
      gradient box past the text leaves those glyphs unpainted — and
@@ -586,6 +587,47 @@ body.lang-th .label-th { font-size: inherit; color: inherit; }
   font-variant-numeric: tabular-nums;
 }
 .stat-label { font-size: 12.5px; color: var(--text-dim); margin-top: 5px; }
+
+/* ---------------- New-form stage groups ----------------
+   Two questions, not four cards: is the machine still on our floor,
+   or already at the customer's? */
+
+.stage-stack { display: flex; flex-direction: column; gap: 26px; }
+
+.stage {
+  background: var(--glass-sunken);
+  border: 1px solid var(--hairline-soft);
+  border-radius: var(--radius-window);
+  padding: 18px;
+}
+.stage-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 2px 4px 16px;
+}
+.stage-dot {
+  width: 11px; height: 11px;
+  margin-top: 6px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+.stage-title {
+  font-size: 16.5px;
+  font-weight: 650;
+  letter-spacing: -.02em;
+}
+.stage-title .th { font-size: 13px; color: var(--text-dim); font-weight: 500; letter-spacing: 0; }
+.stage-note {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  line-height: 1.5;
+  max-width: 62ch;
+}
+.stage-note .th { color: var(--text-faint); }
 
 .type-grid {
   display: grid;
@@ -1045,6 +1087,39 @@ tbody tr.clickable { cursor: pointer; }
 
 /* ---------------- Responsive ---------------- */
 
+/* ---------------- Backup lock screen ---------------- */
+
+.lock-wrap { display: flex; justify-content: center; padding-top: 12px; }
+.lock-card {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+  padding: 32px 28px 26px;
+  border-radius: var(--radius-window);
+}
+.lock-icon {
+  font-size: 30px;
+  width: 62px; height: 62px;
+  margin: 0 auto 16px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  background: var(--glass-sunken);
+  border: 1px solid var(--edge);
+  box-shadow: var(--specular);
+}
+.lock-title { margin: 0 0 8px; font-size: 19px; font-weight: 600; letter-spacing: -.02em; }
+.lock-sub { margin: 0 0 20px; font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.lock-card .field { text-align: left; }
+.lock-btn { width: 100%; justify-content: center; }
+.lock-note {
+  margin: 18px 0 0;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-faint);
+  border-top: 1px solid var(--hairline-soft);
+  padding-top: 14px;
+}
+
 /* ---------------- Small-screen chrome ----------------
    Hidden on desktop. On tablet and phone this bar owns the menu
    toggle and the app identity, and the sidebar becomes a drawer. */
@@ -1052,41 +1127,77 @@ tbody tr.clickable { cursor: pointer; }
 .mobile-bar { display: none; }
 .scrim { display: none; }
 
+/* One button, shaped like a visionOS control: a circular pane of glass
+   with a specular rim, that presses in when touched. */
 .menu-toggle {
+  position: relative;
   display: inline-flex;
   align-items: center; justify-content: center;
-  width: 44px; height: 44px;
+  width: 48px; height: 48px;
   flex: 0 0 auto;
   padding: 0;
   border: 1px solid var(--edge);
-  border-radius: var(--radius-ctl);
+  border-radius: 50%;
   background: var(--glass-raised);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   color: var(--text);
   cursor: pointer;
-  box-shadow: var(--lift-1), var(--specular);
-  transition: background .16s ease, transform .16s ease;
+  box-shadow:
+    var(--lift-2),
+    inset 0 1.5px 0 rgba(255, 255, 255, .55),
+    inset 0 -2px 4px rgba(10, 20, 45, .06);
+  transition: transform .2s cubic-bezier(.22,1,.36,1), background .2s ease, box-shadow .2s ease;
 }
-.menu-toggle:hover { background: var(--glass-hover); }
-.menu-toggle:active { transform: scale(.94); }
+.menu-toggle::after {
+  /* the halo that answers a press */
+  content: '';
+  position: absolute; inset: -4px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(10, 132, 255, .34);
+  transition: box-shadow .25s ease;
+  pointer-events: none;
+}
+.menu-toggle:hover { background: var(--glass-hover); transform: scale(1.05); }
+.menu-toggle:hover::after { box-shadow: 0 0 0 5px rgba(10, 132, 255, .16); }
+.menu-toggle:active { transform: scale(.93); }
+:root.nav-open .menu-toggle { background: var(--accent-blue); border-color: transparent; color: #fff; }
+:root.nav-open .menu-toggle::after { box-shadow: 0 0 18px 3px rgba(10, 132, 255, .42); }
 
-.mt-bars { position: relative; width: 19px; height: 14px; display: block; }
-.mt-bars span {
+/* Two bars that fold into a cross — one glyph, one meaning */
+.mt-glyph { position: relative; width: 18px; height: 12px; display: block; }
+.mt-glyph span {
   position: absolute; left: 0;
-  width: 100%; height: 2px;
+  width: 100%; height: 2.2px;
   background: currentColor;
   border-radius: 2px;
-  transition: transform .26s cubic-bezier(.22,1,.36,1), opacity .18s ease;
+  transition: transform .3s cubic-bezier(.22,1,.36,1);
 }
-.mt-bars span:nth-child(1) { top: 0; }
-.mt-bars span:nth-child(2) { top: 6px; }
-.mt-bars span:nth-child(3) { top: 12px; }
+.mt-glyph span:nth-child(1) { top: 1px; }
+.mt-glyph span:nth-child(2) { top: 8.8px; }
 
-/* The bars fold into a cross while the drawer is open */
-:root.nav-open .mt-bars span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
-:root.nav-open .mt-bars span:nth-child(2) { opacity: 0; transform: scaleX(.4); }
-:root.nav-open .mt-bars span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+:root.nav-open .mt-glyph span:nth-child(1) { transform: translateY(3.9px) rotate(45deg); }
+:root.nav-open .mt-glyph span:nth-child(2) { transform: translateY(-3.9px) rotate(-45deg); }
 
-.wordmark-sm { font-size: 16px; }
+/* The wordmark floats on its own pane, shrink-wrapped to the text —
+   width comes from the glyphs, never from the container. */
+.wm-plate {
+  display: inline-flex;
+  align-items: center;
+  width: -moz-fit-content;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px 15px;
+  border-radius: var(--radius-pill);
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--edge);
+  box-shadow: var(--lift-1), var(--specular);
+  transition: transform .22s cubic-bezier(.22,1,.36,1), box-shadow .22s ease;
+}
+.wm-plate:hover { transform: translateY(-1px); box-shadow: var(--lift-2), var(--specular); }
+.wm-plate-sm { padding: 6px 14px; }
 
 /* ---- Tablet & phone ------------------------------------------
    Navigation becomes a toggle drawer:
@@ -1097,9 +1208,12 @@ tbody tr.clickable { cursor: pointer; }
              which the cramped icon strip could never show.
 
    The drawer, not the bar, is where settings live: it has room
-   for bilingual labels, and nothing can be pushed off-screen. */
+   for bilingual labels, and nothing can be pushed off-screen.
 
-@media (max-width: 900px) {
+   The cut is 1280px so tablets in landscape (1024, 1180, 1194)
+   get the drawer, while desktops keep the fixed sidebar. */
+
+@media (max-width: 1280px) {
   .app { flex-direction: column; padding: 10px; gap: 10px; }
 
   /* The bar outranks both the scrim and the drawer, so the toggle
@@ -1309,11 +1423,11 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Small screens only: the bar that owns the menu toggle -->
 <header class="mobile-bar no-print">
   <button class="menu-toggle" id="menuToggle" aria-expanded="false" aria-controls="sidebar">
-    <span class="mt-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+    <span class="mt-glyph" aria-hidden="true"><span></span><span></span></span>
     <span class="sr-only">Menu / เมนู</span>
   </button>
-  <span class="wordmark wordmark-sm" aria-hidden="true">
-    <span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span>
+  <span class="wm-plate wm-plate-sm">
+    <span class="wordmark"><span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span></span>
   </span>
 </header>
 
@@ -1325,8 +1439,8 @@ tbody tr.clickable { cursor: pointer; }
     <div class="brand">
       <div class="brand-mark">
         <div class="brand-logo" aria-hidden="true"><span>FN</span></div>
-        <span class="wordmark" id="appName">
-          <span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span>
+        <span class="wm-plate" id="appName">
+          <span class="wordmark"><span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span></span>
         </span>
       </div>
       <div class="brand-sub">
@@ -1509,6 +1623,7 @@ const SIGNOFF_ROLES_PDI = [
 
 const FORM_BUILD = {
   type: 'BUILD',
+  stage: 'inhouse',
   code: '01',
   prefix: 'BLD',
   name: { en: 'Machine Build Checklist', th: 'เช็คลิสต์การประกอบเครื่อง' },
@@ -1549,6 +1664,7 @@ const FORM_BUILD = {
 
 const FORM_PDI = {
   type: 'PDI',
+  stage: 'inhouse',
   code: '02',
   prefix: 'PDI',
   name: { en: 'Pre-Delivery Inspection', th: 'การตรวจสอบก่อนส่งมอบ' },
@@ -1634,6 +1750,7 @@ const FORM_PDI = {
 
 const FORM_DELIVERY = {
   type: 'DELIVERY',
+  stage: 'onsite',
   code: '03',
   prefix: 'DLV',
   name: { en: 'Delivery, Installation & Commissioning', th: 'การส่งมอบ ติดตั้ง และเดินเครื่อง' },
@@ -1750,6 +1867,7 @@ const FORM_DELIVERY = {
 
 const FORM_SERVICE = {
   type: 'SERVICE',
+  stage: 'onsite',
   code: '04',
   prefix: 'SR',
   name: { en: 'Customer Service Report', th: 'รายงานการเข้าบริการลูกค้า' },
@@ -1900,6 +2018,33 @@ const FORM_SERVICE = {
 
 const FORM_TYPES = [FORM_BUILD, FORM_PDI, FORM_DELIVERY, FORM_SERVICE];
 
+/* ---------- Where the machine is ----------
+   The forms split cleanly at the moment the machine leaves the
+   building, so that is the question the New Form page asks first:
+   is this machine still on our floor, or already at the customer's?
+   Everything else — which checks apply, who signs — follows from it. */
+
+const FORM_STAGES = [
+  {
+    key: 'inhouse',
+    accent: '#0a84ff',
+    title: { en: 'Still in our factory', th: 'ยังอยู่ที่โรงงานของเรา' },
+    note: {
+      en: 'The machine has not left F N Technology yet — building it and proving it before it ships.',
+      th: 'เครื่องยังไม่ออกจาก F N Technology — อยู่ระหว่างประกอบและตรวจสอบก่อนส่งมอบ',
+    },
+  },
+  {
+    key: 'onsite',
+    accent: '#ff9f0a',
+    title: { en: "Already at the customer's factory", th: 'ส่งถึงโรงงานลูกค้าแล้ว' },
+    note: {
+      en: 'The machine has been delivered — installation, commissioning, training or service.',
+      th: 'ส่งมอบเครื่องแล้ว — ติดตั้ง เดินเครื่อง อบรม หรือเข้าบริการ',
+    },
+  },
+];
+
 const FORM_BY_TYPE = FORM_TYPES.reduce((acc, f) => {
   acc[f.type] = f;
   return acc;
@@ -2044,6 +2189,97 @@ const UI = {
     const onSchemeChange = () => { if (theme === 'auto') { applyTheme(); renderNav(); } };
     if (darkQuery.addEventListener) darkQuery.addEventListener('change', onSchemeChange);
     else if (darkQuery.addListener) darkQuery.addListener(onSchemeChange);
+  }
+
+  /* ---------------- Backup access ----------------
+     IMPORTANT, and worth being blunt about: this app runs entirely in
+     the browser. Anyone who opens the page source or DevTools can get
+     past this gate. It exists so a technician cannot wander into
+     "Erase all data" by accident — it is NOT security.
+
+     The password is stored as a salted SHA-256 digest so the literal
+     string never appears in the repository. To change it, hash your
+     new password and replace AUTH.pass below:
+
+         node -e "console.log(require('crypto').createHash('sha256')
+           .update('FN-Machine-Care::v1::' + 'YOUR-NEW-PASSWORD')
+           .digest('hex'))"
+  */
+
+  const AUTH = {
+    salt: 'FN-Machine-Care::v1::',
+    user: '5e409621f1d736107d867b0d53371347855d87bd229b8d07aef73a5e931b4d88',
+    pass: '39518eb18cc07024dd61fd9aa0f4b3b249147433caf90d8646a8189f4af4fb26',
+  };
+
+  /* Self-contained SHA-256. crypto.subtle is unavailable when the page
+     is opened straight off a USB stick (file://), which is exactly how
+     this app is meant to be used on the shop floor. */
+  function sha256(msg) {
+    const K = [
+      0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+      0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+      0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+      0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+      0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+      0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+      0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+      0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    let H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+
+    /* UTF-8 encode */
+    const bytes = [];
+    for (const ch of unescape(encodeURIComponent(msg))) bytes.push(ch.charCodeAt(0));
+
+    const bitLen = bytes.length * 8;
+    bytes.push(0x80);
+    while (bytes.length % 64 !== 56) bytes.push(0);
+    for (let i = 7; i >= 0; i--) bytes.push((bitLen / Math.pow(2, i * 8)) & 0xff);
+
+    const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+
+    for (let i = 0; i < bytes.length; i += 64) {
+      const w = new Array(64);
+      for (let t = 0; t < 16; t++) {
+        w[t] = (bytes[i + t * 4] << 24) | (bytes[i + t * 4 + 1] << 16) |
+               (bytes[i + t * 4 + 2] << 8) | bytes[i + t * 4 + 3];
+      }
+      for (let t = 16; t < 64; t++) {
+        const s0 = rotr(w[t - 15], 7) ^ rotr(w[t - 15], 18) ^ (w[t - 15] >>> 3);
+        const s1 = rotr(w[t - 2], 17) ^ rotr(w[t - 2], 19) ^ (w[t - 2] >>> 10);
+        w[t] = (w[t - 16] + s0 + w[t - 7] + s1) | 0;
+      }
+      let [a, b, c, d, e, f2, g, h] = H;
+      for (let t = 0; t < 64; t++) {
+        const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+        const ch = (e & f2) ^ (~e & g);
+        const t1 = (h + S1 + ch + K[t] + w[t]) | 0;
+        const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+        const maj = (a & b) ^ (a & c) ^ (b & c);
+        const t2 = (S0 + maj) | 0;
+        h = g; g = f2; f2 = e; e = (d + t1) | 0;
+        d = c; c = b; b = a; a = (t1 + t2) | 0;
+      }
+      H = H.map((v, idx) => (v + [a, b, c, d, e, f2, g, h][idx]) | 0);
+    }
+    return H.map((v) => (v >>> 0).toString(16).padStart(8, '0')).join('');
+  }
+
+  /* Unlocked for this tab only — closing the tab re-locks. */
+  let backupUnlocked = false;
+  try { backupUnlocked = sessionStorage.getItem('fn-machine-care.unlocked') === '1'; } catch (e) { /* private mode */ }
+
+  function setUnlocked(v) {
+    backupUnlocked = v;
+    try {
+      if (v) sessionStorage.setItem('fn-machine-care.unlocked', '1');
+      else sessionStorage.removeItem('fn-machine-care.unlocked');
+    } catch (e) { /* private mode */ }
+  }
+
+  function checkCredentials(user, pass) {
+    return sha256(AUTH.salt + user.trim()) === AUTH.user &&
+           sha256(AUTH.salt + pass) === AUTH.pass;
   }
 
   /* ---------------- Small helpers ---------------- */
@@ -2267,10 +2503,12 @@ const UI = {
      Desktop keeps the sidebar in place; below 900px it becomes an
      off-canvas drawer opened by the ☰ button. */
 
-  const NAV_BREAKPOINT = 900;
-
+  /* Ask the stylesheet, don't duplicate its breakpoint here — the two
+     drifted apart the moment the tablet cut moved. The bar is only
+     displayed when the drawer layout is active. */
   function navIsDrawer() {
-    return window.innerWidth <= NAV_BREAKPOINT;
+    const bar = document.querySelector('.mobile-bar');
+    return !!bar && getComputedStyle(bar).display !== 'none';
   }
 
   function setNavOpen(open) {
@@ -2485,19 +2723,48 @@ const UI = {
     root.appendChild(recent.length ? recordTable(recent) : el('div', { class: 'empty' }, [L(UI.noRecords)]));
   }
 
+  /* Grouped by where the machine physically is, because that is the
+     first thing the person filling this in already knows. */
   function typeCards() {
-    const grid = el('div', { class: 'type-grid' });
-    FORM_TYPES.forEach((def) => {
-      grid.appendChild(
-        el('button', { class: 'type-card', style: `--accent:${def.accent}`, onclick: () => createAndOpen(def.type) }, [
-          el('div', { class: 'tc-icon' }, [icon(def.icon, 26)]),
-          el('div', { class: 'tc-code', text: def.code + ' · ' + def.prefix }),
-          el('div', { class: 'tc-name', text: def.name.en }),
-          el('div', { class: 'tc-name-th', text: def.name.th }),
+    const wrap = el('div', { class: 'stage-stack' });
+
+    FORM_STAGES.forEach((stage) => {
+      const forms = FORM_TYPES.filter((d) => d.stage === stage.key);
+      if (!forms.length) return;
+
+      const group = el('section', { class: 'stage', style: `--accent:${stage.accent}` });
+      group.appendChild(
+        el('header', { class: 'stage-head' }, [
+          el('span', { class: 'stage-dot' }),
+          el('div', {}, [
+            el('div', { class: 'stage-title' }, [
+              el('span', { class: 'label-en', text: stage.title.en }),
+              el('span', { class: 'label-th th', text: stage.title.th }),
+            ]),
+            el('div', { class: 'stage-note' }, [
+              el('span', { class: 'label-en', text: stage.note.en }),
+              el('span', { class: 'label-th th', text: stage.note.th }),
+            ]),
+          ]),
         ])
       );
+
+      const grid = el('div', { class: 'type-grid' });
+      forms.forEach((def) => {
+        grid.appendChild(
+          el('button', { class: 'type-card', style: `--accent:${def.accent}`, onclick: () => createAndOpen(def.type) }, [
+            el('div', { class: 'tc-icon' }, [icon(def.icon, 26)]),
+            el('div', { class: 'tc-code', text: def.code + ' · ' + def.prefix }),
+            el('div', { class: 'tc-name', text: def.name.en }),
+            el('div', { class: 'tc-name-th', text: def.name.th }),
+          ])
+        );
+      });
+      group.appendChild(grid);
+      wrap.appendChild(group);
     });
-    return grid;
+
+    return wrap;
   }
 
   function createAndOpen(type, prefill) {
@@ -2736,6 +3003,8 @@ const UI = {
   /* ---------------- View: Backup ---------------- */
 
   function viewData(root) {
+    if (!backupUnlocked) return viewDataLocked(root);
+
     root.appendChild(
       el('div', { class: 'page-head' }, [
         el('div', {}, [
@@ -2765,6 +3034,10 @@ const UI = {
           ]),
         ]),
         el('div', { class: 'btn-row' }, [
+          el('button', {
+            class: 'btn',
+            onclick: () => { setUnlocked(false); toast(lang === 'th' ? 'ล็อกแล้ว' : 'Locked'); render(); },
+          }, [L({ en: '🔒 Lock', th: '🔒 ล็อก' })]),
           el('button', { class: 'btn btn-primary', onclick: exportJSON }, [L({ en: '⬇ Export backup (.json)', th: '⬇ ส่งออกไฟล์สำรอง (.json)' })]),
           el('label', { class: 'btn' }, [
             L({ en: '⬆ Import backup', th: '⬆ นำเข้าไฟล์สำรอง' }),
@@ -2775,6 +3048,86 @@ const UI = {
         ]),
       ])
     );
+  }
+
+  function viewDataLocked(root) {
+    root.appendChild(
+      el('div', { class: 'page-head' }, [
+        el('div', {}, [
+          el('h1', { class: 'page-title' }, [L({ en: 'Backup & Restore', th: 'สำรองและกู้คืนข้อมูล' })]),
+          el('div', { class: 'page-sub' }, [
+            L({ en: 'Sign in to reach export, import and erase.', th: 'เข้าสู่ระบบเพื่อใช้งานส่งออก นำเข้า และลบข้อมูล' }),
+          ]),
+        ]),
+      ])
+    );
+
+    const err = el('div', { class: 'alert-danger', style: 'display:none' });
+    const userInput = el('input', { type: 'text', autocomplete: 'username', placeholder: 'Developer' });
+    const passInput = el('input', { type: 'password', autocomplete: 'current-password', placeholder: '••••••••' });
+
+    let busy = false;
+    function attempt() {
+      if (busy) return;
+      const u = userInput.value || '';
+      const p = passInput.value || '';
+      if (!u || !p) return;
+      busy = true;
+      /* A short pause takes the speed out of guessing by hand */
+      setTimeout(() => {
+        busy = false;
+        if (checkCredentials(u, p)) {
+          setUnlocked(true);
+          toast(lang === 'th' ? 'เข้าสู่ระบบแล้ว' : 'Unlocked');
+          render();
+        } else {
+          err.style.display = '';
+          err.textContent = lang === 'th'
+            ? 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'
+            : 'Wrong user name or password.';
+          passInput.value = '';
+          passInput.focus();
+        }
+      }, 350);
+    }
+
+    [userInput, passInput].forEach((inp) => {
+      inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') attempt(); });
+    });
+
+    root.appendChild(
+      el('div', { class: 'lock-wrap' }, [
+        el('div', { class: 'card lock-card' }, [
+          el('div', { class: 'lock-icon', text: '🔒' }),
+          el('h2', { class: 'lock-title' }, [L({ en: 'Developer access', th: 'สำหรับผู้ดูแลระบบ' })]),
+          el('p', { class: 'lock-sub' }, [
+            L({
+              en: 'Backup and restore can erase every record on this device.',
+              th: 'การสำรองและกู้คืนสามารถลบข้อมูลทั้งหมดในเครื่องนี้ได้',
+            }),
+          ]),
+          err,
+          el('div', { class: 'field', style: 'margin-bottom:12px' }, [
+            el('label', {}, [L({ en: 'User name', th: 'ชื่อผู้ใช้' })]),
+            userInput,
+          ]),
+          el('div', { class: 'field', style: 'margin-bottom:16px' }, [
+            el('label', {}, [L({ en: 'Password', th: 'รหัสผ่าน' })]),
+            passInput,
+          ]),
+          el('button', { class: 'btn btn-primary lock-btn', onclick: attempt }, [
+            L({ en: 'Unlock', th: 'ปลดล็อก' }),
+          ]),
+          el('p', { class: 'lock-note' }, [
+            L({
+              en: 'This gate prevents accidents. It is not security — the app runs entirely on this device.',
+              th: 'ระบบนี้ป้องกันการกดผิดพลาดเท่านั้น ไม่ใช่ระบบความปลอดภัย เพราะแอปทำงานบนเครื่องนี้ทั้งหมด',
+            }),
+          ]),
+        ]),
+      ])
+    );
+    setTimeout(() => userInput.focus(), 40);
   }
 
   function download(filename, content, mime) {

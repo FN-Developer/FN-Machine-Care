@@ -76,7 +76,8 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 - **Automatic document numbers** — `PDI-2026-00125`, `SR-2026-00321`.
 - **Machine history timeline**, grouped by Work No. + Serial No.
 - **Resumes where you left off.** The current form lives in the URL, so a tablet refresh mid-inspection loses nothing.
-- **Backup & restore** as JSON, plus a CSV summary for management.
+- **Backup & restore** as JSON, plus a CSV summary for management — behind a developer sign-in, because that screen can erase everything.
+- **New Form asks where the machine is** — still in our factory, or already at the customer's — and shows only the forms that apply.
 - **Works offline.** No server, no build step, no dependencies.
 
 ---
@@ -100,6 +101,22 @@ Then open `http://<pc-ip>:8080` on the tablets.
 Settings → Pages → Source: `main` / root. The app runs as-is from the published URL.
 
 ---
+
+## The Backup screen is locked
+
+Backup, restore and **Erase all data** sit behind a sign-in (`Developer` + password). This exists because one careless tap on a shared tablet wipes every record on that device.
+
+**Be clear about what this is.** The whole app runs in the browser, so anyone who opens the page source or DevTools can walk straight past the gate. It prevents accidents. It is not security, and it should never guard anything that actually matters.
+
+The password is stored as a salted SHA-256 digest, so the plain string is not in this repository. To change it:
+
+```bash
+node -e "console.log(require('crypto').createHash('sha256').update('FN-Machine-Care::v1::' + 'YOUR-NEW-PASSWORD').digest('hex'))"
+```
+
+Put the result in `AUTH.pass` inside `index.html`. Give this app its **own** password — never reuse one from another system, since a hash committed to a public repo can be attacked offline.
+
+Unlocking lasts for the browser tab only; closing it re-locks, and there's a **Lock** button to end the session early.
 
 ## Data & storage — read this before rolling out
 
