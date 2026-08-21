@@ -78,6 +78,8 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 - **Print to A4 PDF.** Print CSS strips the interface and prints only the selected answers, so the paper copy looks like a proper form.
 - **Automatic document numbers** — `FAT-2026-00125`, `SR-2026-00321`.
 - **Machine history timeline**, grouped by Work No. + Serial No.
+- **Machines page with customer → machine dropdowns.** Every machine's record counts at a glance, and a **service count you can tap** to see the visits behind it — date, type, technician, root cause, outcome — each one opening its full report. Pick a single machine and the page becomes that machine's card.
+- **Icons animate in three states** — a slow idle loop, a purposeful move on hover, a quick recoil on press. Idle loops run only in the menu and on the form cards, never on table badges, so a long list stays still.
 - **A dashboard that answers the service manager's questions.** A bar chart of customers — machines installed against service visits — that you tap to drill into that customer's machines. Underneath: what kind of work we were called out to do, what root causes keep recurring, and a machine-by-machine table of each one's usual problem.
 
   Chart colours were run through a palette validator (lightness band, chroma floor, colour-blind separation, contrast against the actual surface) for each theme, so dark mode uses its own steps rather than a flip of the light ones. Every bar is a real button, and a **Show numbers** toggle reveals the same data as a table.
@@ -123,6 +125,22 @@ node -e "console.log(require('crypto').createHash('sha256').update('FN-Machine-C
 Put the result in `AUTH.pass` inside `index.html`. Give this app its **own** password — never reuse one from another system, since a hash committed to a public repo can be attacked offline.
 
 Unlocking lasts for the browser tab only; closing it re-locks, and there's a **Lock** button to end the session early.
+
+## Example data
+
+`example-data/fn-machine-care-example-data.json` is a realistic fleet you can load to see the dashboard and reports working before you enter anything real:
+
+| Customer | Machines | Service visits |
+|---|---:|---:|
+| Thai Auto Components | 4 | 12 |
+| ABC Manufacturing Co., Ltd. | 3 | 9 |
+| Bangkok Electronics Assembly | 2 | 6 |
+| Siam Precision Parts | 2 | 4 |
+| Nippon Denso (Thailand) | 1 | 2 |
+
+69 records in total — every machine carries its ASSY, FAT and SAT, then a service history with deliberate patterns: Thai Auto Components keeps failing on pneumatics, ABC keeps losing the same sensor, and Nippon Denso only ever sees scheduled PM. That is what makes *What keeps going wrong* worth reading.
+
+Load it from **Backup → Import backup**. Import adds records without touching what is already there, so try it on a spare device rather than the tablet holding your real work.
 
 ## Data & storage — read this before rolling out
 

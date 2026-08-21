@@ -600,6 +600,173 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
 }
 .stat-label { font-size: 13.5px; color: var(--text-dim); margin-top: 6px; line-height: 1.45; }
 
+/* ---------------- Icon motion ----------------
+   Three states, deliberately different in character:
+
+     idle   a slow, small loop — this sits on screen all day, so it
+            has to be noticeable once and invisible afterwards
+     hover  a livelier, purposeful move that says what the icon does
+     press  a quick physical recoil
+
+   Idle loops run only where an icon is a destination the eye rests on
+   (the menu, the form cards, the toolbar). Icons inside table rows
+   stay still — a list of forty animating badges is a mess, and a cost. */
+
+.ico > * {
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+  transition: transform .32s cubic-bezier(.22,1,.36,1), opacity .25s ease;
+}
+
+.nav .ico > *, .tc-icon .ico > *, .tb-ico .ico > * { will-change: transform; }
+
+/* ---- idle ---- */
+
+@keyframes ico-float   { 0%,100% { transform: translateY(0); }      50% { transform: translateY(-1.2px); } }
+@keyframes ico-rock    { 0%,100% { transform: rotate(-7deg); }      50% { transform: rotate(7deg); } }
+@keyframes ico-breathe { 0%,100% { transform: scale(1); }           50% { transform: scale(1.07); } }
+@keyframes ico-dip     { 0%,70%,100% { transform: translateY(0); }  85% { transform: translateY(1.6px); } }
+@keyframes ico-roll    { 0%,100% { transform: translateX(0); }      50% { transform: translateX(1.1px); } }
+@keyframes ico-bar     { 0%,100% { transform: scaleY(1); }          50% { transform: scaleY(.72); } }
+@keyframes ico-blink   { 0%,100% { opacity: 1; }                    50% { opacity: .35; } }
+
+/* 01 Build — the top plate lifts off the stack */
+.nav .ico[data-icon="build"] > :nth-child(1),
+.tc-icon .ico[data-icon="build"] > :nth-child(1) { animation: ico-float 3.4s ease-in-out infinite; }
+
+/* 02 FAT — the seal breathes */
+.nav .ico[data-icon="pdi"] > :nth-child(1),
+.tc-icon .ico[data-icon="pdi"] > :nth-child(1) { animation: ico-breathe 3.6s ease-in-out infinite; }
+
+/* 03 SAT — the truck rolls a little */
+.nav .ico[data-icon="delivery"] > *,
+.tc-icon .ico[data-icon="delivery"] > * { animation: ico-roll 3.2s ease-in-out infinite; }
+
+/* 04 Service — the wrench rocks like it is being turned */
+.nav .ico[data-icon="service"] > :nth-child(1),
+.tc-icon .ico[data-icon="service"] > :nth-child(1) { animation: ico-rock 3.8s ease-in-out infinite; transform-origin: 70% 30%; }
+
+/* Menu glyphs */
+.nav .ico[data-icon="dashboard"] > :nth-child(3) { animation: ico-bar 2.8s ease-in-out infinite;      transform-origin: 50% 100%; }
+.nav .ico[data-icon="dashboard"] > :nth-child(4) { animation: ico-bar 2.8s ease-in-out .18s infinite; transform-origin: 50% 100%; }
+.nav .ico[data-icon="dashboard"] > :nth-child(5) { animation: ico-bar 2.8s ease-in-out .36s infinite; transform-origin: 50% 100%; }
+.nav .ico[data-icon="records"]   > :nth-child(3) { animation: ico-blink 3.4s ease-in-out infinite; }
+.nav .ico[data-icon="newform"]   > :nth-child(1) { animation: ico-breathe 3.4s ease-in-out infinite; }
+.nav .ico[data-icon="backup"]    > :nth-child(1),
+.nav .ico[data-icon="backup"]    > :nth-child(2) { animation: ico-dip 3s ease-in-out infinite; }
+
+/* The active menu item has arrived — it stops fidgeting */
+.nav button.active .ico > * { animation: none !important; }
+
+/* ---- hover: idle stands down, the glyph acts ---- */
+
+.nav button:hover .ico > *,
+.type-card:hover .tc-icon .ico > * { animation-play-state: paused; }
+
+/* Build: the stack pulls apart into an exploded view */
+.nav button:hover .ico[data-icon="build"] > :nth-child(1),
+.type-card:hover .ico[data-icon="build"] > :nth-child(1) { transform: translateY(-2.6px); }
+.nav button:hover .ico[data-icon="build"] > :nth-child(3),
+.type-card:hover .ico[data-icon="build"] > :nth-child(3) { transform: translateY(1.8px); }
+
+/* FAT: the tick redraws itself */
+.ico[data-icon="pdi"] > :nth-child(2) { stroke-dasharray: 1; stroke-dashoffset: 0; }
+@keyframes ico-draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+.nav button:hover .ico[data-icon="pdi"] > :nth-child(2),
+.type-card:hover .ico[data-icon="pdi"] > :nth-child(2) { animation: ico-draw .5s ease-out; }
+.nav button:hover .ico[data-icon="pdi"] > :nth-child(1),
+.type-card:hover .ico[data-icon="pdi"] > :nth-child(1) { transform: scale(1.1); }
+
+/* SAT: it drives off */
+.nav button:hover .ico[data-icon="delivery"] > *,
+.type-card:hover .ico[data-icon="delivery"] > * { transform: translateX(2.2px); }
+
+/* Service: a quarter turn, like tightening */
+.nav button:hover .ico[data-icon="service"] > :nth-child(1),
+.type-card:hover .ico[data-icon="service"] > :nth-child(1) { transform: rotate(-32deg); }
+
+.nav button:hover .ico[data-icon="dashboard"] > :nth-child(3) { transform: scaleY(1.22); transform-origin: 50% 100%; }
+.nav button:hover .ico[data-icon="dashboard"] > :nth-child(4) { transform: scaleY(1.15); transform-origin: 50% 100%; }
+.nav button:hover .ico[data-icon="dashboard"] > :nth-child(5) { transform: scaleY(1.28); transform-origin: 50% 100%; }
+.nav button:hover .ico[data-icon="newform"] > :nth-child(2)   { transform: rotate(90deg); }
+.nav button:hover .ico[data-icon="records"] > :nth-child(3)   { opacity: 1; transform: translateX(1.2px); }
+.nav button:hover .ico[data-icon="backup"]  > :nth-child(1),
+.nav button:hover .ico[data-icon="backup"]  > :nth-child(2)   { transform: translateY(2.4px); }
+.nav button:hover .ico[data-icon="machines"] > :nth-child(3)  { transform: translateY(-1.4px); }
+
+/* ---- press: one quick recoil, same for every glyph ---- */
+
+@keyframes ico-press { 0% { transform: scale(1); } 45% { transform: scale(.8); } 100% { transform: scale(1); } }
+
+.nav button:active .ico > *,
+.type-card:active .tc-icon .ico > * {
+  animation: ico-press .26s cubic-bezier(.3,1.6,.5,1) !important;
+}
+
+/* ---------------- Filter bar ----------------
+   Native selects: on a tablet the OS picker beats any custom
+   dropdown for speed and for gloved thumbs. */
+
+.filter-bar {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  margin: 0 4px 20px;
+  padding: 16px 18px;
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-card);
+  box-shadow: var(--lift-1), var(--specular);
+}
+.filter-field { display: flex; flex-direction: column; gap: 6px; flex: 1 1 240px; min-width: 0; }
+.filter-label { font-size: 12.5px; color: var(--text-dim); font-weight: 500; }
+.filter-select {
+  width: 100%;
+  padding: 10px 13px;
+  background: var(--field);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-ctl);
+  color: var(--text);
+  outline: none;
+  cursor: pointer;
+}
+.filter-select:focus { background: var(--field-focus); border-color: var(--accent-blue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-blue) 20%, transparent); }
+
+/* ---------------- Clickable counts ---------------- */
+
+.count-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--series-2) 34%, transparent);
+  background: color-mix(in srgb, var(--series-2) 13%, transparent);
+  color: var(--series-2);
+  font: inherit;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background .16s ease, transform .16s ease;
+}
+.count-btn:hover { background: color-mix(in srgb, var(--series-2) 22%, transparent); transform: translateY(-1px); }
+.count-btn:active { transform: scale(.95); }
+.count-btn.is-open { background: var(--series-2); color: #fff; border-color: transparent; }
+.count-num { font-size: 14.5px; }
+.count-caret { font-size: 10px; opacity: .8; }
+
+tr.detail-row > td { padding: 0 0 16px; background: var(--glass-sunken); }
+tr.detail-row:hover { background: var(--glass-sunken); }
+
+.service-panel { padding: 16px 16px 4px; }
+.service-panel-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 6px; }
+.service-panel-sub { font-size: 12.5px; color: var(--text-dim); font-family: var(--font-mono); }
+.service-panel-note { font-size: 13.5px; margin-bottom: 13px; }
+
 /* ---------------- Panel ---------------- */
 
 .panel {
@@ -1809,8 +1976,10 @@ const ICONS = {
   newform:   '<circle cx="12" cy="12" r="8.4"/><path d="M12 8.4v7.2M8.4 12h7.2"/>',
   backup:    '<path d="M12 3.6v9.6"/><path d="M8.4 9.8L12 13.4l3.6-3.6"/><path d="M4.6 15v3.4a2 2 0 002 2h10.8a2 2 0 002-2V15"/>',
 
-  build:     '<circle cx="12" cy="12" r="4.2"/><path d="M12 4.3v1.9M12 17.8v1.9M19.7 12h-1.9M6.2 12H4.3M17.4 6.6l-1.3 1.3M7.9 16.1l-1.3 1.3M17.4 17.4l-1.3-1.3M7.9 7.9L6.6 6.6"/>',
-  pdi:       '<circle cx="12" cy="12" r="8.4"/><path d="M8.2 12.2l2.7 2.7 5-5.6"/>',
+  /* Three plates coming together — assembly, not a gear. The old cog
+     read as a sun at 26px, and a cog says "settings" to most people. */
+  build:     '<path d="M12 3.4l8.2 4.3-8.2 4.3-8.2-4.3z"/><path d="M4.2 12.1L12 16.2l7.8-4.1"/><path d="M4.2 16.2L12 20.3l7.8-4.1"/>',
+  pdi:       '<circle cx="12" cy="12" r="8.4"/><path pathLength="1" d="M8.2 12.2l2.7 2.7 5-5.6"/>',
   delivery:  '<path d="M3.2 7h10.3v9.4H3.2z"/><path d="M13.5 10.4h3.7l3 3.1v2.9h-6.7z"/><circle cx="7.2" cy="18.4" r="1.9"/><circle cx="17" cy="18.4" r="1.9"/>',
   service:   '<path d="M15 6.1a4.1 4.1 0 00-5.5 5.5l-5.4 5.4a1.4 1.4 0 000 2l.9.9a1.4 1.4 0 002 0l5.4-5.4a4.1 4.1 0 005.5-5.5l-2.5 2.5-2.4-2.4L15 6.1z"/>',
 };
@@ -2564,6 +2733,7 @@ const UI = {
     svg.setAttribute('stroke-linejoin', 'round');
     svg.setAttribute('aria-hidden', 'true');
     svg.setAttribute('class', 'ico');
+    svg.dataset.icon = name;          /* lets the stylesheet animate each glyph */
     svg.innerHTML = ICONS[name] || '';
     return svg;
   }
@@ -2898,7 +3068,8 @@ const UI = {
 
   /* ---------------- Router ---------------- */
 
-  const state = { view: 'dashboard', recordId: null, machineKey: null, search: '', customer: null };
+  const state = { view: 'dashboard', recordId: null, machineKey: null, search: '', customer: null,
+                  filterCustomer: null, filterMachine: null, openMachine: null };
 
   /* The URL hash carries the current view so a tablet refresh — or a
      browser crash mid-inspection — returns to the same form. */
@@ -3556,65 +3727,241 @@ const UI = {
   /* ---------------- View: Machines ---------------- */
 
   function viewMachines(root) {
-    const machines = machineList();
+    const all = machineList();
+
+    /* Filters are plain selects on purpose: on a tablet a native
+       picker is faster and more reliable than any custom dropdown. */
+    const customers = Array.from(new Set(all.map((m) => m.customer || '—'))).sort();
+    if (state.filterCustomer && !customers.includes(state.filterCustomer)) state.filterCustomer = null;
+
+    const byCustomer = state.filterCustomer
+      ? all.filter((m) => (m.customer || '—') === state.filterCustomer)
+      : all;
+
+    if (state.filterMachine && !byCustomer.some((m) => m.key === state.filterMachine)) state.filterMachine = null;
+
     root.appendChild(
       el('div', { class: 'page-head' }, [
         el('div', {}, [
           el('h1', { class: 'page-title' }, [L({ en: 'Machines', th: 'เครื่องจักร' })]),
           el('div', { class: 'page-sub' }, [
-            L({ en: 'Grouped by Work No. + Serial No.', th: 'จัดกลุ่มตามเลขที่งาน + หมายเลขเครื่อง' }),
+            L({ en: 'Pick a customer, then a machine. Tap any service count to see the visits behind it.',
+                th: 'เลือกลูกค้า แล้วเลือกเครื่องจักร แตะที่จำนวนครั้งบริการเพื่อดูรายละเอียดการเข้าบริการ' }),
           ]),
         ]),
       ])
     );
 
-    if (!machines.length) {
-      root.appendChild(
-        el('div', { class: 'empty' }, [
-          L({ en: 'No machines yet. Create a form and fill in Work No. + Serial No.', th: 'ยังไม่มีเครื่องจักร สร้างเอกสารและกรอกเลขที่งาน + หมายเลขเครื่อง' }),
-        ])
-      );
+    /* ---- filter bar ---- */
+    const bar = el('div', { class: 'filter-bar' });
+
+    const custSel = el('select', {
+      class: 'filter-select',
+      onchange: (e) => { state.filterCustomer = e.target.value || null; state.filterMachine = null; render(); },
+    });
+    custSel.appendChild(el('option', { value: '', text: T({ en: 'All customers', th: 'ลูกค้าทั้งหมด' }) }));
+    customers.forEach((c) => {
+      const count = all.filter((m) => (m.customer || '—') === c).length;
+      const o = el('option', { value: c, text: `${c}  (${count})` });
+      if (state.filterCustomer === c) o.selected = true;
+      custSel.appendChild(o);
+    });
+
+    const machSel = el('select', {
+      class: 'filter-select',
+      onchange: (e) => { state.filterMachine = e.target.value || null; render(); },
+    });
+    machSel.appendChild(el('option', { value: '', text: T({ en: 'All machines', th: 'เครื่องจักรทั้งหมด' }) }));
+    byCustomer.forEach((m) => {
+      const o = el('option', { value: m.key, text: `${m.workNo || '—'} · ${m.machineName || m.serialNo || '—'}` });
+      if (state.filterMachine === m.key) o.selected = true;
+      machSel.appendChild(o);
+    });
+
+    bar.appendChild(el('label', { class: 'filter-field' }, [
+      el('span', { class: 'filter-label' }, [L({ en: 'Customer', th: 'ลูกค้า' })]), custSel,
+    ]));
+    bar.appendChild(el('label', { class: 'filter-field' }, [
+      el('span', { class: 'filter-label' }, [L({ en: 'Machine', th: 'เครื่องจักร' })]), machSel,
+    ]));
+    if (state.filterCustomer || state.filterMachine) {
+      bar.appendChild(el('button', {
+        class: 'btn btn-sm', style: 'align-self:flex-end',
+        onclick: () => { state.filterCustomer = null; state.filterMachine = null; render(); },
+      }, [L({ en: 'Clear', th: 'ล้างตัวกรอง' })]));
+    }
+    root.appendChild(bar);
+
+    const shown = state.filterMachine ? byCustomer.filter((m) => m.key === state.filterMachine) : byCustomer;
+
+    if (!shown.length) {
+      root.appendChild(el('div', { class: 'empty' }, [
+        L({ en: 'No machines match. Fill in Work No. and Serial No. on a form to register one.',
+            th: 'ไม่พบเครื่องจักรที่ตรงกับตัวกรอง กรอกเลขที่งานและหมายเลขเครื่องในเอกสารเพื่อลงทะเบียน' }),
+      ]));
+      return;
+    }
+
+    /* One machine chosen — show it in full rather than as a table row */
+    if (shown.length === 1 && state.filterMachine) {
+      root.appendChild(machineDetailCard(shown[0]));
       return;
     }
 
     const wrap = el('div', { class: 'table-wrap' });
     const table = el('table');
-    table.appendChild(
-      el('thead', {}, el('tr', {}, [
-        el('th', { text: 'Work No.' }),
-        el('th', { text: 'Serial No.' }),
-        el('th', { text: 'Machine' }),
-        el('th', { text: 'Customer' }),
-        el('th', { text: 'Records' }),
-        el('th', { text: 'Last activity' }),
-      ]))
-    );
+    table.appendChild(el('thead', {}, el('tr', {}, [
+      el('th', {}, [L({ en: 'Work No.', th: 'เลขที่งาน' })]),
+      el('th', {}, [L({ en: 'Machine', th: 'เครื่องจักร' })]),
+      el('th', {}, [L({ en: 'Customer', th: 'ลูกค้า' })]),
+      el('th', {}, [L({ en: 'Records', th: 'เอกสาร' })]),
+      el('th', {}, [L({ en: 'Service visits', th: 'ครั้งที่เข้าบริการ' })]),
+    ])));
+
     const tbody = el('tbody');
-    machines.forEach((m) => {
+    shown.forEach((m) => {
       const counts = {};
       m.records.forEach((r) => { counts[r.type] = (counts[r.type] || 0) + 1; });
       const badges = el('div', { style: 'display:flex;gap:5px;flex-wrap:wrap' });
       FORM_TYPES.forEach((def) => {
         if (!counts[def.type]) return;
-        badges.appendChild(el('span', { class: 'type-badge', style: `--accent:${def.accent}` }, [icon(def.icon, 14), el('span', { text: String(counts[def.type]) })]));
+        badges.appendChild(el('span', { class: 'type-badge', style: `--accent:${def.accent}` },
+          [icon(def.icon, 14), el('span', { text: `${def.prefix} ${counts[def.type]}` })]));
       });
-      tbody.appendChild(
-        el('tr', { class: 'clickable', onclick: () => go('machine', { machineKey: m.key }) }, [
-          el('td', { html: `<strong>${escapeHTML(m.workNo || '—')}</strong>` }),
-          el('td', { text: m.serialNo || '—' }),
-          el('td', { text: m.machineName || '—' }),
-          el('td', { text: m.customer || '—' }),
-          el('td', {}, badges),
-          el('td', { text: fmtDate(primaryDate(m.records[0])) }),
-        ])
-      );
+
+      const services = m.records.filter((r) => r.type === 'SERVICE');
+      const open = state.openMachine === m.key;
+
+      const row = el('tr', {}, [
+        el('td', { class: 'clickable', onclick: () => go('machine', { machineKey: m.key }) },
+          el('strong', { text: m.workNo || '—' })),
+        el('td', { class: 'clickable', onclick: () => go('machine', { machineKey: m.key }), html:
+          `${escapeHTML(m.machineName || '—')}<div style="font-size:12.5px;color:var(--text-dim)">${escapeHTML(m.serialNo || '')}</div>` }),
+        el('td', { text: m.customer || '—' }),
+        el('td', {}, badges),
+        el('td', {}, services.length
+          ? el('button', {
+              class: 'count-btn' + (open ? ' is-open' : ''),
+              'aria-expanded': open ? 'true' : 'false',
+              title: T({ en: 'Show these service visits', th: 'ดูรายการเข้าบริการ' }),
+              onclick: () => { state.openMachine = open ? null : m.key; render(); },
+            }, [
+              el('span', { class: 'count-num', text: String(services.length) }),
+              el('span', { class: 'count-caret', text: open ? '▾' : '▸' }),
+            ])
+          : el('span', { style: 'color:var(--text-faint)', text: '0' })),
+      ]);
+      tbody.appendChild(row);
+
+      if (open && services.length) {
+        tbody.appendChild(el('tr', { class: 'detail-row' }, [
+          el('td', { colspan: '5' }, [serviceListFor(m, services)]),
+        ]));
+      }
     });
     table.appendChild(tbody);
     wrap.appendChild(table);
     root.appendChild(wrap);
   }
 
-  /* ---------------- View: One machine's history ---------------- */
+  /* The visits behind a service count — each one opens its report. */
+  function serviceListFor(machine, services) {
+    const box = el('div', { class: 'service-panel' });
+    box.appendChild(el('div', { class: 'service-panel-head' }, [
+      el('strong', { text: machine.machineName || machine.workNo || '—' }),
+      el('span', { class: 'service-panel-sub', text: [machine.workNo, machine.serialNo].filter(Boolean).join(' · ') }),
+    ]));
+
+    const causes = recurringCauses(services);
+    if (causes.length) {
+      box.appendChild(el('div', { class: 'service-panel-note' }, [
+        el('span', { style: 'color:var(--text-dim)' }, [L({ en: 'Usual cause:', th: 'สาเหตุที่พบบ่อย:' })]),
+        el('span', { class: 'cause-chip', style: 'margin-left:8px', text: T(causes[0].label) }),
+        el('span', { style: 'color:var(--text-dim);margin-left:8px', text: `× ${causes[0].count}` }),
+      ]));
+    }
+
+    const tw = el('div', { class: 'table-wrap' });
+    const t = el('table');
+    t.appendChild(el('thead', {}, el('tr', {}, [
+      el('th', {}, [L({ en: 'Date', th: 'วันที่' })]),
+      el('th', { text: 'Doc No.' }),
+      el('th', {}, [L({ en: 'Type', th: 'ประเภท' })]),
+      el('th', {}, [L({ en: 'Technician', th: 'ช่าง' })]),
+      el('th', {}, [L({ en: 'Root cause', th: 'สาเหตุ' })]),
+      el('th', {}, [L({ en: 'Result', th: 'ผล' })]),
+    ])));
+    const tb = el('tbody');
+    services.slice().sort((a, b) => (primaryDate(b) > primaryDate(a) ? 1 : -1)).forEach((r) => {
+      const meta = resultMeta(r);
+      const rc = recurringCauses([r]);
+      tb.appendChild(el('tr', { class: 'clickable', onclick: () => go('form', { recordId: r.id }) }, [
+        el('td', { text: fmtDate(primaryDate(r)) }),
+        el('td', { html: `<strong>${escapeHTML(r.docNo)}</strong>` }),
+        el('td', { text: T(serviceTypeLabelFor(r.fields.serviceType)) }),
+        el('td', { text: r.fields.technician || '—' }),
+        el('td', {}, rc.length
+          ? el('span', { class: 'cause-chip', text: T(rc[0].label) })
+          : el('span', { style: 'color:var(--text-faint)', text: '—' })),
+        el('td', {}, el('span', { class: 'pill ' + pillClassFor(r), text: meta ? T(meta.label) : T(UI.draft) })),
+      ]));
+    });
+    t.appendChild(tb);
+    tw.appendChild(t);
+    box.appendChild(tw);
+    return box;
+  }
+
+  function serviceTypeLabelFor(value) {
+    const o = serviceTypeOptions().find((x) => x.value === value);
+    return o ? o.label : { en: value || '—', th: value || '—' };
+  }
+
+  /* Everything about one machine on a single card. */
+  function machineDetailCard(m) {
+    const services = m.records.filter((r) => r.type === 'SERVICE');
+    const panel = el('section', { class: 'panel' });
+
+    panel.appendChild(el('header', { class: 'panel-head' }, [
+      el('div', {}, [
+        el('h2', { class: 'panel-title', text: m.machineName || m.workNo || '—' }),
+        el('div', { class: 'panel-sub', text: [m.workNo, m.serialNo, m.customer].filter(Boolean).join('  ·  ') }),
+      ]),
+      el('div', { class: 'btn-row' }, [
+        el('button', { class: 'btn btn-sm', onclick: () => go('machine', { machineKey: m.key }) },
+          [L({ en: 'Full history', th: 'ดูประวัติทั้งหมด' })]),
+        el('button', {
+          class: 'btn btn-sm btn-primary',
+          onclick: () => createAndOpen('SERVICE', {
+            workNo: m.workNo, serialNo: m.serialNo, machineName: m.machineName, customer: m.customer,
+          }),
+        }, [L({ en: '+ Service report', th: '+ รายงานบริการ' })]),
+      ]),
+    ]));
+
+    const counts = {};
+    m.records.forEach((r) => { counts[r.type] = (counts[r.type] || 0) + 1; });
+    const grid = el('div', { class: 'stat-grid', style: 'padding:20px 22px 4px;margin-bottom:0' });
+    FORM_TYPES.forEach((def) => {
+      grid.appendChild(el('div', { class: 'stat', style: `--stat-accent:${def.accent}` }, [
+        el('div', { class: 'stat-value', text: String(counts[def.type] || 0) }),
+        el('div', { class: 'stat-label' }, [L(def.name)]),
+      ]));
+    });
+    panel.appendChild(grid);
+
+    const body = el('div', { class: 'panel-body' });
+    body.appendChild(el('h3', { class: 'sub-title' }, [
+      L({ en: 'Service visits', th: 'การเข้าบริการ' }),
+    ]));
+    body.appendChild(services.length
+      ? serviceListFor(m, services)
+      : el('div', { class: 'empty' }, [L({ en: 'No service visits on this machine yet.', th: 'ยังไม่มีการเข้าบริการเครื่องนี้' })]));
+    panel.appendChild(body);
+    return panel;
+  }
+
+  /* ---------------- View: One machine's history ---------------- */  /* ---------------- View: One machine's history ---------------- */
 
   function viewMachine(root) {
     const m = machineList().find((x) => x.key === state.machineKey);
