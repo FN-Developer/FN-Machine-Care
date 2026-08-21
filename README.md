@@ -70,6 +70,7 @@ Time-stamped troubleshooting log · root-cause category + description · parts r
 - **Photos from the tablet camera**, downscaled to 1200 px and stored inside the record.
 - **Finger/stylus signatures** on canvas, saved with the record.
 - **Bilingual — Thai + English**, switchable to either alone. Every check item carries both languages.
+- **Light, Dark or Auto appearance.** Auto follows the tablet, so the app dims itself with the rest of the screen in the evening.
 - **Print to A4 PDF.** Print CSS strips the interface and prints only the selected answers, so the paper copy looks like a proper form.
 - **Automatic document numbers** — `PDI-2026-00125`, `SR-2026-00321`.
 - **Machine history timeline**, grouped by Work No. + Serial No.
@@ -127,9 +128,19 @@ Inside `index.html`, in order:
 
 | Block | What's in it |
 |---|---|
-| `<style>` | Dark shop-floor UI + the A4 print stylesheet |
-| First `<script>` | **Form definitions** — every check item, in Thai and English |
-| Second `<script>` | Rendering, storage, routing, signatures, photos, print |
+| `<style>` | The visionOS theme, both appearances, and the A4 print stylesheet |
+| First `<script>` | **Form definitions** — every check item, in Thai and English — plus the icon set |
+| Second `<script>` | Rendering, storage, routing, theme, signatures, photos, print |
+
+### One design rule
+
+> **Glass for the chrome. Solid for the verdict.**
+
+Panels, the sidebar and the toolbar are frosted glass floating over an ambient background — the visionOS material. But PASS / FAIL / N/A and every safety-carrying status are **fully opaque and saturated**; they deliberately punch through the glass.
+
+Translucency is lovely and it lowers contrast. A technician under factory lighting, holding a tablet at arm's length, must never squint to tell whether a row passed. So the decoration yields wherever a judgment is being recorded.
+
+Appearance is stored per device (`data-theme` on `<html>`), so it survives a refresh and never collides with the language setting on `<body>`.
 
 ### Adding or changing a check item
 
