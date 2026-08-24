@@ -5,7 +5,17 @@
 <!-- initial-scale 1.1 gives phones and tablets the same 110% the desktop
      gets from CSS zoom, using the browser's own scaling instead. See the
      UI scale block in the stylesheet for why WebKit needs it this way. -->
-<meta name="viewport" content="width=device-width, initial-scale=1.1, viewport-fit=cover">
+<!-- initial-scale 1.1 gives phones and tablets the same 110% the desktop
+     gets from CSS zoom, using the browser's own scaling instead. See the
+     UI scale block in the stylesheet for why WebKit needs it this way.
+
+     minimum-scale pins the floor to the same 1.1, so a stray pinch cannot
+     shrink the page below the scale it was designed at. There is no
+     maximum-scale and no user-scalable=no on purpose: zooming OUT breaks
+     the layout, zooming IN is how someone reads a serial number in a dim
+     plant room, and locking that out would be worth far more complaints
+     than it saves. iOS Safari ignores user-scalable=no anyway. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.1, minimum-scale=1.1, viewport-fit=cover">
 <meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Build checklist, pre-delivery inspection, delivery &amp; commissioning, and customer service reports.">
 <meta name="theme-color" content="#e9edf6">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
@@ -2262,6 +2272,22 @@ tbody tr.clickable { cursor: pointer; }
     transition-duration: .001ms !important;
   }
   .orb { animation: none; }
+}
+
+/* iOS zooms the page in whenever a field with a font-size under 16px
+   takes focus — and it does NOT zoom back out when the field is done.
+   Tap one 15px input and the whole app is left at the wrong scale for
+   the rest of the session, which reads exactly like "the scale broke".
+   It judges on the computed CSS size, not what the viewport scaling
+   makes it look like, so 15px still trips it.
+
+   16px on every control a finger can land in. Nothing else changes:
+   the desktop keeps 15px, where no such behaviour exists. */
+@media (pointer: coarse) {
+  input, select, textarea,
+  .cell-input, .filter-select, .search-input, .date-text {
+    font-size: 16px;
+  }
 }
 
 /* ---------------- Print: paper is always light ---------------- */
