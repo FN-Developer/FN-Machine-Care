@@ -2017,6 +2017,73 @@ tbody tr.clickable { cursor: pointer; }
   .pfn button { flex: 1 1 0; min-width: 0; }
 }
 
+/* ---------------- Data tables become cards ----------------
+   Below 900px a wide table stops being a table. Seven columns squeezed
+   into a phone put the date, progress and status off-screen behind a
+   sideways scroll, so each row becomes a self-contained card with its
+   column headings carried along by data-th (stamped in
+   stampTableLabels). 900px catches phones and tablets in portrait;
+   a tablet in landscape has the width for real columns and keeps them. */
+@media (max-width: 900px) {
+  .table-wrap { overflow-x: visible; }
+  .table-wrap table { display: block; width: 100%; border-collapse: separate; }
+  .table-wrap thead { display: none; }
+  .table-wrap tbody { display: block; }
+
+  .table-wrap tbody tr {
+    display: block;
+    margin: 0 0 10px;
+    padding: 13px 15px;
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-ctl);
+    background: var(--glass-soft);
+  }
+  .table-wrap tbody tr:last-child { margin-bottom: 0; }
+  .table-wrap tbody tr.clickable:active { transform: scale(.995); }
+
+  .table-wrap tbody td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 14px;
+    width: auto;
+    padding: 5px 0;
+    border: none;
+    text-align: right;
+  }
+  .table-wrap tbody td::before {
+    content: attr(data-th);
+    flex: 0 0 auto;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    white-space: nowrap;
+  }
+
+  /* The first cell is the card's title — a document number does not
+     need a label above it saying "Doc No." */
+  .table-wrap tbody td[data-first] {
+    display: block;
+    text-align: left;
+    padding: 0 0 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid var(--hairline-soft);
+    font-size: 16px;
+  }
+  .table-wrap tbody td[data-first]::before { content: none; }
+
+  .table-wrap tbody td .td-val {
+    flex: 1 1 auto;
+    min-width: 0;              /* without this a flex item refuses to shrink */
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+  .table-wrap tbody td[data-first] .td-val { text-align: left; }
+}
+
 @media (max-width: 660px) {
   .wordmark-sm { font-size: 15px; }
   .field-grid { grid-template-columns: 1fr; }
@@ -2122,8 +2189,15 @@ tbody tr.clickable { cursor: pointer; }
   .measure-row { grid-template-columns: 1fr 120px 80px !important; }
   .perf-row { grid-template-columns: 1fr 110px 120px 80px !important; }
   .ba-grid { grid-template-columns: 1fr 1fr !important; }
+  /* Paper is 794px wide, which trips the 900px card breakpoint. A
+     printed report needs real columns, not a stack of cards. */
   .table-wrap { overflow: visible !important; }
-  .table-wrap table { table-layout: auto !important; width: 100% !important; }
+  .table-wrap table { display: table !important; table-layout: auto !important; width: 100% !important; }
+  .table-wrap thead { display: table-header-group !important; }
+  .table-wrap tbody { display: table-row-group !important; }
+  .table-wrap tbody tr { display: table-row !important; margin: 0 !important; padding: 0 !important; border: none !important; background: none !important; }
+  .table-wrap tbody td { display: table-cell !important; text-align: left !important; }
+  .table-wrap tbody td::before { content: none !important; }
   .table-wrap td, .table-wrap th { white-space: normal !important; word-break: break-word; }
   .pfn { display: flex !important; }
   .pfn button { width: auto !important; flex: 0 0 auto !important; }
@@ -4252,6 +4326,44 @@ const FNCloud = (function () {
       data: viewData,
     };
     (views[state.view] || viewDashboard)(main);
+    stampTableLabels(main);
+  }
+
+  /* ---- data tables on a narrow screen ----
+     A seven-column table does not fit a 390px phone. It was rendering
+     at 897px inside a 364px box, so a technician saw the document
+     number, a type chip, and then the machine name cut off mid-word —
+     the date, progress and status, which are the reason to open the
+     page at all, sat off-screen behind a sideways scroll nobody thinks
+     to try.
+
+     Below 900px each row becomes a card instead. That needs every cell
+     to carry its column heading, and rather than thread a label through
+     three separate table builders, copy them off the <thead> once here.
+     Any table added later gets the same treatment for free. */
+  function stampTableLabels(root) {
+    root.querySelectorAll('.table-wrap table').forEach((table) => {
+      const heads = [...table.querySelectorAll('thead th')].map((th) => th.innerText.trim());
+      if (!heads.length) return;
+      table.querySelectorAll('tbody tr').forEach((tr) => {
+        [...tr.children].forEach((td, i) => {
+          const label = heads[i];
+          if (label) td.setAttribute('data-th', label);
+          if (i === 0) td.setAttribute('data-first', '');
+          /* Collect the cell's contents into ONE element. As a card the
+             cell is a flex row of [label | value], and a cell holding a
+             machine name AND a customer <div> put two separate items on
+             the value side with nothing able to shrink — long customer
+             names pushed 32px off the right edge of a 390px phone. */
+          if (!td.querySelector(':scope > .td-val')) {
+            const val = document.createElement('span');
+            val.className = 'td-val';
+            while (td.firstChild) val.appendChild(td.firstChild);
+            td.appendChild(val);
+          }
+        });
+      });
+    });
   }
 
   function renderNav() {
