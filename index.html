@@ -3047,15 +3047,51 @@ const FNCloud = (function () {
 
   const DEFAULT_DB = { records: [], meta: { version: 1, counters: {} } };
 
+  /* Firebase does not store empty objects or arrays — it treats them as
+     nothing and drops the key. So a record that has been to the cloud and
+     back comes home without whichever containers happened to be empty:
+     no `photos` if nobody took one, no `measures` on a form that has no
+     measurements. The rendering code then reads record.measures[id] on
+     undefined, throws, and the WHOLE table renders blank — 76 records and
+     an empty screen.
+
+     Every record entering the app goes through here: from localStorage,
+     from the cloud, from an imported backup. Cheap, and it means no
+     reader anywhere has to guess whether a container survived the trip. */
+  const RECORD_CONTAINERS = {
+    fields: 'object', checks: 'object', measures: 'object', perf: 'object',
+    docs: 'object', photos: 'object', tables: 'object', notes: 'object',
+    rootcause: 'object', priority: 'object', signatures: 'object',
+  };
+
+  function normaliseRecord(rec) {
+    if (!rec || typeof rec !== 'object') return null;
+    for (const key in RECORD_CONTAINERS) {
+      if (rec[key] === null || typeof rec[key] !== 'object') rec[key] = {};
+    }
+    const ba = rec.beforeAfter;
+    rec.beforeAfter = {
+      before: Array.isArray(ba && ba.before) ? ba.before : [],
+      after:  Array.isArray(ba && ba.after)  ? ba.after  : [],
+    };
+    if (rec.result === undefined) rec.result = null;
+    return rec;
+  }
+
+  function normaliseDB(db) {
+    db.records = (db.records || []).map(normaliseRecord).filter(Boolean);
+    db.meta = db.meta || { version: 1, counters: {} };
+    db.meta.counters = db.meta.counters || {};
+    return db;
+  }
+
   function loadDB() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return structuredClone(DEFAULT_DB);
       const parsed = JSON.parse(raw);
       if (!parsed || !Array.isArray(parsed.records)) return structuredClone(DEFAULT_DB);
-      parsed.meta = parsed.meta || { version: 1, counters: {} };
-      parsed.meta.counters = parsed.meta.counters || {};
-      return parsed;
+      return normaliseDB(parsed);
     } catch (e) {
       console.error('[FN] Could not read saved data:', e);
       return structuredClone(DEFAULT_DB);
@@ -3575,18 +3611,28 @@ const FNCloud = (function () {
   /* Completion: how many check items have an answer */
   function sectionProgress(record, section) {
     if (section.type !== 'checklist' && section.type !== 'condition') return null;
-    const answers = record.checks[section.id] || {};
+    const answers = (record.checks && record.checks[section.id]) || {};
     const done = section.items.filter((it) => answers[it.code] && answers[it.code].value).length;
     return { done, total: section.items.length };
   }
 
+  /* Belt as well as braces. normaliseRecord should mean this never fires,
+     but a progress number is not worth taking the whole Records table down
+     for — one unreadable record should cost one row's percentage, not the
+     entire screen. */
   function recordProgress(record) {
     const def = FORM_BY_TYPE[record.type];
+    if (!def) return { done: 0, total: 0, pct: 0 };
     let done = 0, total = 0;
-    def.sections.forEach((s) => {
-      const p = sectionProgress(record, s);
-      if (p) { done += p.done; total += p.total; }
-    });
+    try {
+      def.sections.forEach((s) => {
+        const p = sectionProgress(record, s);
+        if (p) { done += p.done; total += p.total; }
+      });
+    } catch (e) {
+      console.error('[FN] Could not measure progress for', record && record.docNo, e);
+      return { done: 0, total: 0, pct: 0 };
+    }
     return { done, total, pct: total ? Math.round((done / total) * 100) : 0 };
   }
 
@@ -5073,7 +5119,10 @@ const FNCloud = (function () {
         const existing = new Set(db.records.map((r) => r.id));
         let added = 0;
         data.records.forEach((r) => {
-          if (!existing.has(r.id)) { db.records.push(r); added++; }
+          /* A backup exported after a cloud round trip is missing the same
+             empty containers Firebase dropped — normalise on the way in. */
+          const rec = normaliseRecord(r);
+          if (rec && !existing.has(rec.id)) { db.records.push(rec); added++; }
         });
         db.meta.peopleSeeded = false;   /* pick up names from the imported records */
         people();
@@ -6143,7 +6192,9 @@ const FNCloud = (function () {
     FNCloud.init({
       getDB: () => db,
       setDB: (next) => {
-        db = next;
+        /* Records arriving from the cloud have had their empty containers
+           stripped by Firebase. Put them back before anything renders. */
+        db = normaliseDB(next);
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) { /* full */ }
       },
       onData: (n) => {
