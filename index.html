@@ -174,10 +174,35 @@
 
 * { box-sizing: border-box; }
 
+/* ---------------- UI scale ----------------
+   The app is drawn 10% larger, so at the browser's own 100% it reads
+   like 110% and nobody has to reach for Ctrl-+ on a plant-floor tablet.
+
+   `zoom` rather than `transform: scale()`: zoom reflows, so text still
+   wraps to the space it actually occupies. A transform would paint a
+   1440px layout at 1584px and hang a scrollbar off the side.
+
+   Four things zoom does NOT scale, each handled below:
+     1. viewport units — 100vh still means the real viewport, so a
+        zoomed 100vh block is 110% of the screen and overflows
+     2. media query widths — they test the real viewport, so every
+        breakpoint has to be widened by the same factor
+     3. the drawer's 84vw cap — same reason as (1)
+     4. print — A4 pagination must not be zoomed at all
+   Change --ui-scale in one place and all four follow. */
+:root { --ui-scale: 1.1; }
+
+html {
+  zoom: var(--ui-scale);
+}
+
 html, body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
+  /* Not 100%: a percentage here resolves against the real viewport and is
+     then painted 10% taller, hanging a scrollbar off a page with nothing
+     to scroll. Divide it back out like every other viewport unit. */
+  min-height: calc(100vh / var(--ui-scale));
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;
@@ -192,6 +217,9 @@ body {
 }
 
 button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+
+/* Print mirrors of field values — built on demand, hidden on screen. */
+.print-value { display: none; }
 
 :focus-visible {
   outline: 2.5px solid var(--accent-blue);
@@ -257,7 +285,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
      DOM order. */
   position: relative;
   display: flex;
-  min-height: 100vh;
+  min-height: calc(100vh / var(--ui-scale));
   gap: 16px;
   padding: 16px;
 }
@@ -268,7 +296,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   flex: 0 0 252px;
   position: sticky;
   top: 16px;
-  height: calc(100vh - 32px);
+  height: calc((100vh / var(--ui-scale)) - 32px);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -846,7 +874,7 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
   box-shadow: var(--lift-3), var(--specular);
   transform: translateY(14px) scale(.98);
   transition: transform .28s cubic-bezier(.22,1,.36,1);
-  max-height: 92vh;
+  max-height: calc(92vh / var(--ui-scale));
   overflow-y: auto;
 }
 .modal-overlay.show .modal-card { transform: none; }
@@ -1813,7 +1841,7 @@ tbody tr.clickable { cursor: pointer; }
    `pointer: coarse` reports the PRIMARY input. A touchscreen laptop
    still says `fine`, so it keeps the sidebar, which is right. */
 
-@media (max-width: 1080px), (max-width: 1400px) and (pointer: coarse) {
+@media (max-width: 1188px), (max-width: 1540px) and (pointer: coarse) {
   .app { flex-direction: column; padding: 10px; gap: 10px; }
 
   /* The bar outranks both the scrim and the drawer, so the toggle
@@ -1839,7 +1867,7 @@ tbody tr.clickable { cursor: pointer; }
     position: fixed;
     top: var(--bar-h); left: 0; bottom: 0;
     z-index: 60;
-    width: min(300px, 84vw);
+    width: min(300px, calc(84vw / var(--ui-scale)));
     height: calc(100% - var(--bar-h));
     flex: none;
     border-radius: 0 var(--radius-window) var(--radius-window) 0;
@@ -1897,7 +1925,7 @@ tbody tr.clickable { cursor: pointer; }
   .pfn button { flex: 1 1 0; min-width: 0; }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 660px) {
   .wordmark-sm { font-size: 15px; }
   .field-grid { grid-template-columns: 1fr; }
   .sign-grid { grid-template-columns: 1fr; }
@@ -1916,7 +1944,7 @@ tbody tr.clickable { cursor: pointer; }
 }
 
 /* Glass is expensive on low-end tablets — drop the blur, keep the look */
-@media (max-width: 560px) {
+@media (max-width: 616px) {
   .sidebar, .section, .card, .stat, .type-card, .toolbar, .table-wrap, .btn, .search-input {
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -1936,6 +1964,10 @@ tbody tr.clickable { cursor: pointer; }
 
 @media print {
   @page { size: A4; margin: 12mm; }
+
+  /* Paper has its own scale. Zooming here would push a full-page form
+     onto two sheets and shrink the margins Chrome reserves for A4. */
+  html { zoom: 1; }
 
   html, body {
     background: #fff !important;
@@ -1959,13 +1991,74 @@ tbody tr.clickable { cursor: pointer; }
     box-shadow: none !important;
     border: 1px solid #999 !important;
     border-radius: 4px !important;
+  }
+
+  /* ---- Pagination ----
+     `break-inside: avoid` on .section was the reason a printed report ran
+     to eight pages with a heading at the top of each and the rest blank.
+     A section taller than the space left on the page cannot be kept whole,
+     so the printer pushed the WHOLE thing to a fresh page and left the
+     remainder empty. On a long checklist that happens over and over.
+
+     Sections must be allowed to flow across a page break. What must stay
+     whole is the small stuff — one check row, one signature, one photo —
+     where a split genuinely loses meaning. */
+  .section, .card { break-inside: auto; page-break-inside: auto; }
+
+  .check-row, .measure-row, .perf-row, .field, .sign-card,
+  .photo-slot, .doc-item, .stat, tr {
     break-inside: avoid;
     page-break-inside: avoid;
   }
+
+  /* Never orphan a heading at the foot of a page */
+  .section > header, .section-title, thead {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* ---- Paper is not a phone ----
+     Print media queries test the PAPER width, and A4 at 96dpi is about
+     794px — narrower than the 1188px tablet cut. So every printed report,
+     from any device, silently inherited the one-column phone layout:
+     each check on four stacked lines, each field full width. That is what
+     made the sections tall enough to trigger the pagination problem above.
+
+     A4 has ~186mm of usable width. Give the paper back its columns. */
+  .field-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)) !important; }
+  .check-row { grid-template-columns: 54px 1fr auto 150px !important; gap: 10px !important; }
+  .measure-row { grid-template-columns: 1fr 120px 80px !important; }
+  .perf-row { grid-template-columns: 1fr 110px 120px 80px !important; }
+  .ba-grid { grid-template-columns: 1fr 1fr !important; }
+  .table-wrap { overflow: visible !important; }
+  .table-wrap table { table-layout: auto !important; width: 100% !important; }
+  .table-wrap td, .table-wrap th { white-space: normal !important; word-break: break-word; }
+  .pfn { display: flex !important; }
+  .pfn button { width: auto !important; flex: 0 0 auto !important; }
   .section { margin-bottom: 5mm; }
   .section > header { background: #eee !important; border-bottom: 1px solid #999 !important; }
   .section-title, .check-label, .field label, .stat-label, .stat-value { color: #000 !important; }
   .label-th, .check-label .th, .section-title .th { color: #444 !important; }
+
+  /* Swap every control for the wrapping span built in buildPrintValues().
+     A control cannot wrap its own value; a span can, so nothing is cut. */
+  .main input:not([type="checkbox"]):not([type="radio"]),
+  .main select,
+  .main textarea { display: none !important; }
+
+  .print-value {
+    display: inline-block !important;
+    width: 100%;
+    min-height: 1.35em;
+    padding: 2px 0 1px;
+    border-bottom: 1px solid #666;
+    color: #000 !important;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+  }
+  .print-value.is-block { min-height: 3.2em; }
+  .print-value.is-blank { min-height: 1.35em; }
 
   .field input, .field select, .field textarea, .cell-input {
     background: #fff !important; color: #000 !important;
@@ -6204,9 +6297,67 @@ const FNCloud = (function () {
     }).then(() => renderCloudBadge());
   }
 
+  /* ---------------- Print ----------------
+
+     A form on screen shows its values inside <input>s, which is fine
+     because a long value can be scrolled or focused. Paper has neither.
+     A machine called "HOUSING INSERTION MACHINE" in a 200px input prints
+     as "HOUSING INSERTION MACH" and the rest is simply gone — the report
+     goes to the customer with the name cut in half.
+
+     No CSS can wrap an input's value, so before printing we mirror each
+     one into a plain <span> that CSS swaps in. Spans wrap, so nothing is
+     lost. Rebuilt on every print so it can never show a stale value. */
+
+  function valueForPrint(el) {
+    if (el.tagName === 'SELECT') {
+      const opt = el.options[el.selectedIndex];
+      return opt ? opt.text : '';
+    }
+    if (el.type === 'date') {
+      /* A date input holds YYYY-MM-DD, which is exactly what fmtDate
+         takes — print it the same DD/MM/YYYY the rest of the app uses
+         rather than the ISO the native picker stores. */
+      return el.value ? fmtDate(el.value) : '';
+    }
+    if (el.type === 'time') return el.value || '';
+    return el.value || '';
+  }
+
+  function buildPrintValues() {
+    const main = $('#main');
+    if (!main) return;
+    main.querySelectorAll('.print-value').forEach((n) => n.remove());
+    main.querySelectorAll('input, select, textarea').forEach((el) => {
+      if (el.type === 'checkbox' || el.type === 'radio' || el.type === 'file') return;
+      if (el.closest('.no-print')) return;
+      const span = document.createElement('span');
+      span.className = 'print-value';
+      const v = valueForPrint(el);
+      span.textContent = v;
+      /* An empty field should still print its underline, or the form
+         looks like it was never laid out. */
+      if (!v) span.classList.add('is-blank');
+      if (el.tagName === 'TEXTAREA') span.classList.add('is-block');
+      el.parentNode.insertBefore(span, el.nextSibling);
+    });
+  }
+
+  function wirePrint() {
+    /* Chrome, Edge and Firefox fire beforeprint. iOS Safari does not —
+       it only flips the print media query — so listen for both. Tablets
+       are exactly where this matters most. */
+    window.addEventListener('beforeprint', buildPrintValues);
+    const mq = window.matchMedia('print');
+    const onMedia = (e) => { if (e.matches) buildPrintValues(); };
+    if (mq.addEventListener) mq.addEventListener('change', onMedia);
+    else if (mq.addListener) mq.addListener(onMedia);
+  }
+
   /* ---------------- Boot ---------------- */
 
   function boot() {
+    wirePrint();
     /* The wordmark is styled markup in index.html — don't overwrite it. */
     applyTheme();
     setupNavDrawer();
