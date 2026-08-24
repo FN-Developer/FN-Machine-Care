@@ -373,7 +373,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
           background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  animation: wm-sweep 7.5s ease-in-out infinite;
+  animation: wm-sweep 4.2s ease-in-out infinite;
 }
 /* Heavy, tightly tracked initials against a light, widely tracked name —
    the contrast is what makes it read as a mark rather than a label. */
@@ -398,10 +398,14 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   }
 }
 
-/* Idle most of the cycle, then one quick pass of light */
+/* A pause, then one pass of light. The percentages carry the whole feel:
+   shortening the cycle alone would just make the light travel faster,
+   which reads as frantic. So the idle hold shrinks and the travel window
+   widens to match — the pass keeps its old ~2s pace, it simply comes
+   round more often. */
 @keyframes wm-sweep {
-  0%, 55%   { background-position-x: 0%; }
-  90%, 100% { background-position-x: 100%; }
+  0%, 48%   { background-position-x: 0%; }
+  96%, 100% { background-position-x: 100%; }
 }
 .brand-sub {
   margin-top: 11px;
@@ -1792,10 +1796,24 @@ tbody tr.clickable { cursor: pointer; }
    The drawer, not the bar, is where settings live: it has room
    for bilingual labels, and nothing can be pushed off-screen.
 
-   The cut is 1280px so tablets in landscape (1024, 1180, 1194)
-   get the drawer, while desktops keep the fixed sidebar. */
+   Width alone is the wrong question. A 1920x1080 PC running Windows
+   at 150% display scaling reports a 1280px viewport at 100% browser
+   zoom — a plain desktop that a width-only cut would hand the tablet
+   layout, hiding the sidebar behind a hamburger for someone holding
+   a mouse. Meanwhile an iPad Pro 12.9 in landscape reports 1366px
+   and genuinely wants the drawer.
 
-@media (max-width: 1280px) {
+   So ask what is driving the screen, not how wide it is:
+
+     under 1080px            always drawer — no room for a sidebar
+     1080–1400 + coarse      drawer — a finger, so a tablet
+     1080–1400 + fine        sidebar — a mouse, so a desktop
+     over 1400px             always sidebar
+
+   `pointer: coarse` reports the PRIMARY input. A touchscreen laptop
+   still says `fine`, so it keeps the sidebar, which is right. */
+
+@media (max-width: 1080px), (max-width: 1400px) and (pointer: coarse) {
   .app { flex-direction: column; padding: 10px; gap: 10px; }
 
   /* The bar outranks both the scrim and the drawer, so the toggle
