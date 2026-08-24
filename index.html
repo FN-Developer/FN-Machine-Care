@@ -221,6 +221,94 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 /* Print mirrors of field values — built on demand, hidden on screen. */
 .print-value { display: none; }
 
+/* ---------------- Date field & calendar ----------------
+   DD/MM/YYYY on every device. A native date input renders in the
+   browser's own locale, so this is our own control instead. */
+
+.datefield { position: relative; display: flex; align-items: center; gap: 6px; }
+.datefield .date-text { flex: 1 1 auto; min-width: 0; font-variant-numeric: tabular-nums; }
+.datefield .date-text.is-bad {
+  border-color: var(--fail) !important;
+  box-shadow: 0 0 0 3px rgba(255, 69, 58, .16);
+}
+
+.date-open {
+  flex: 0 0 auto;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border: 1px solid var(--hairline);
+  border-radius: 9px;
+  background: var(--glass-soft);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color .18s ease, background .18s ease, transform .12s ease;
+}
+.date-open:hover { color: var(--accent-blue); background: var(--field-focus); }
+.date-open:active { transform: scale(.94); }
+
+.datecal {
+  position: fixed;
+  z-index: 90;
+  width: 268px;
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--hairline);
+  /* Near-opaque, like the drawer. A calendar is a thing you read digits
+     off, and through the frosted panel the fields behind it showed
+     through the day grid — 09:00 AM sitting on top of week three. Glass
+     for chrome, solid where something has to be read. */
+  background: var(--glass-drawer);
+  -webkit-backdrop-filter: saturate(180%) blur(30px);
+  backdrop-filter: saturate(180%) blur(30px);
+  box-shadow: var(--lift-3), var(--specular);
+  animation: cal-in .16s cubic-bezier(.22,1,.36,1);
+}
+@keyframes cal-in { from { opacity: 0; transform: translateY(-5px) scale(.985); } }
+
+.datecal-head { display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+.datecal-title {
+  flex: 1; text-align: center; font-weight: 650; font-size: 14px;
+  background: none; border: 0; color: var(--text); cursor: pointer; padding: 5px 4px; border-radius: 8px;
+}
+.datecal-title:hover { background: var(--field-focus); }
+.datecal-nav {
+  width: 30px; height: 30px; flex: 0 0 auto;
+  border: 1px solid var(--hairline); border-radius: 8px;
+  background: var(--glass-soft); color: var(--text-dim);
+  font-size: 17px; line-height: 1; cursor: pointer;
+}
+.datecal-nav:hover { color: var(--accent-blue); background: var(--field-focus); }
+
+.datecal-dow, .datecal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.datecal-dow span {
+  text-align: center; font-size: 10.5px; font-weight: 600;
+  color: var(--text-faint); padding: 3px 0; letter-spacing: .04em;
+}
+.datecal-day {
+  height: 32px; border: 0; border-radius: 9px;
+  background: none; color: var(--text);
+  font-size: 13px; font-variant-numeric: tabular-nums; cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+.datecal-day:hover { background: var(--field-focus); }
+.datecal-pad { height: 32px; }
+
+/* Today is an outline, the chosen day is solid — the same rule the rest
+   of the app follows: glass for context, solid for the verdict. */
+.datecal-day.is-today { box-shadow: inset 0 0 0 1.5px var(--accent-blue); }
+.datecal-day.is-sel {
+  background: var(--accent-blue) !important;
+  color: #fff; font-weight: 700;
+}
+
+.datecal-foot {
+  display: flex; gap: 6px; margin-top: 9px;
+  padding-top: 9px; border-top: 1px solid var(--hairline-soft);
+}
+.datecal-foot .btn { flex: 1; }
+
+@media (max-width: 616px) { .datecal { width: min(268px, 92vw); } }
+
 :focus-visible {
   outline: 2.5px solid var(--accent-blue);
   outline-offset: 2px;
@@ -1132,9 +1220,10 @@ tr.detail-row:hover { background: var(--glass-sunken); }
 }
 
 .chart-tip {
-  position: absolute;
-  bottom: 58px;
-  transform: translateX(-50%) translateY(6px);
+  position: fixed;
+  left: 0; top: 0;
+  z-index: 88;
+  transform: translateY(6px);
   min-width: 158px;
   padding: 10px 13px;
   background: var(--glass-bar);
@@ -1148,7 +1237,10 @@ tr.detail-row:hover { background: var(--glass-sunken); }
   transition: opacity .16s ease, transform .16s ease;
   z-index: 5;
 }
-.chart-tip.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+.chart-tip.show { opacity: 1; transform: translateY(0); }
+/* Measured before it is shown: opacity 0 alone still lays out, but the
+   transform would skew the numbers we clamp against. */
+.chart-tip.measuring { transform: none; }
 .tip-title { font-weight: 650; font-size: 13.5px; margin-bottom: 2px; }
 .tip-sub { font-size: 11.5px; color: var(--text-faint); margin-bottom: 7px; }
 .tip-row { display: flex; align-items: center; gap: 8px; font-size: 13px; margin-top: 4px; }
@@ -2045,6 +2137,8 @@ tbody tr.clickable { cursor: pointer; }
   .main input:not([type="checkbox"]):not([type="radio"]),
   .main select,
   .main textarea { display: none !important; }
+  .date-open, .datecal { display: none !important; }
+  .datefield { display: block !important; }
 
   .print-value {
     display: inline-block !important;
@@ -2279,6 +2373,7 @@ function checks(rows) {
    own colour and cartoon weight, which fights the glass. */
 
 const ICONS = {
+  calendar:  '<rect x="3.6" y="5.2" width="16.8" height="15.2" rx="2.4"/><path d="M3.6 10h16.8"/><path d="M8.4 3.6v3.2M15.6 3.6v3.2"/><path d="M7.6 13.6h2.2M7.6 17h2.2M14.2 13.6h2.2M14.2 17h2.2"/>',
   dashboard: '<path d="M4 20V4"/><path d="M4 20h16"/><rect x="7" y="12.5" width="3" height="4.5" rx="1"/><rect x="12" y="8.5" width="3" height="8.5" rx="1"/><rect x="17" y="5.5" width="3" height="11.5" rx="1"/>',
   machines:  '<path d="M3.5 20h17"/><path d="M5 20v-9l4 2.6V11l4 2.6V11l4 2.6V20"/><path d="M9 20v-2.6M13 20v-2.6M17 20v-2.6"/>',
   records:   '<path d="M6.5 3.5h7l4 4v13h-11z"/><path d="M13.5 3.5v4h4"/><path d="M9 12.5h6M9 16h4"/>',
@@ -4497,7 +4592,7 @@ const FNCloud = (function () {
     }
     plot.appendChild(grid);
 
-    const tip = el('div', { class: 'chart-tip', role: 'status' });
+    const tip = chartTip();
 
     const track = el('div', { class: 'chart-track' });
     rows.forEach((row) => {
@@ -4508,9 +4603,9 @@ const FNCloud = (function () {
         onclick: () => { if (options.onSelect) options.onSelect(row); },
         onmouseenter: (e) => showTip(e, row),
         onmousemove: (e) => showTip(e, row),
-        onmouseleave: () => { tip.classList.remove('show'); },
+        onmouseleave: hideChartTip,
         onfocus: (e) => showTip(e, row),
-        onblur: () => { tip.classList.remove('show'); },
+        onblur: hideChartTip,
       });
 
       const bars = el('div', { class: 'bars' });
@@ -4546,15 +4641,10 @@ const FNCloud = (function () {
           ])
         );
       });
-      const host = plot.getBoundingClientRect();
-      const target = e.currentTarget.getBoundingClientRect();
-      const x = target.left - host.left + target.width / 2;
-      tip.style.left = Math.max(4, Math.min(x, host.width - 4)) + 'px';
-      tip.classList.add('show');
+      placeChartTip(tip, e.currentTarget.getBoundingClientRect());
     }
 
     plot.appendChild(track);
-    plot.appendChild(tip);
     box.appendChild(plot);
 
     /* Table view — the numbers, for anyone who wants them straight */
@@ -5376,6 +5466,17 @@ const FNCloud = (function () {
           input.appendChild(opt);
         });
 
+      } else if (f.type === 'date') {
+        input = dateField({
+          value: rec.fields[f.key] || '',
+          onCommit: (iso) => {
+            rec.fields[f.key] = iso;
+            if (f.identity) autofillIdentity(rec, f.key, iso);
+            touch(rec);
+            markField(wrap, rec, f);
+          },
+        });
+
       } else {
         input = el('input', {
           type: f.type || 'text',
@@ -5522,6 +5623,71 @@ const FNCloud = (function () {
 
   /* Green when satisfied, blinking red when the form has been
      submitted and this one is still empty. */
+  /* ---- placing floating layers ----
+     A popup fixed to the viewport has to reconcile two coordinate
+     systems, and mixing them is silent and wrong.
+
+       getBoundingClientRect()  VISUAL px — zoom already applied
+       offsetWidth / style.left LAYOUT px — inside the zoomed <html>
+
+     At --ui-scale 1.1 a tooltip clamped with innerWidth still painted
+     67px past the right edge of a 1440px screen, because the clamp was
+     done in one space and the write landed in the other. Convert once,
+     here, and every popup in the app inherits the fix. */
+  function uiScale() {
+    const z = parseFloat(getComputedStyle(document.documentElement).zoom);
+    return z && isFinite(z) && z > 0 ? z : 1;
+  }
+
+  function placeFloating(node, anchor, opts) {
+    opts = opts || {};
+    const s = uiScale();
+    const w = node.offsetWidth * s;
+    const h = node.offsetHeight * s;
+    const gap = opts.gap == null ? 10 : opts.gap;
+    const pad = 8;
+
+    let left = opts.align === 'start'
+      ? anchor.left
+      : anchor.left + anchor.width / 2 - w / 2;
+    left = Math.max(pad, Math.min(left, window.innerWidth - w - pad));
+
+    /* Preferred side first, then flip, then clamp — so a popup taller
+       than the space on either side still lands fully on screen. */
+    let top = opts.below ? anchor.bottom + gap : anchor.top - h - gap;
+    if (top < pad) top = anchor.bottom + gap;
+    if (top + h > window.innerHeight - pad) top = anchor.top - h - gap;
+    top = Math.max(pad, Math.min(top, window.innerHeight - h - pad));
+
+    node.style.left = (left / s) + 'px';
+    node.style.top = (top / s) + 'px';
+  }
+
+  /* ---- chart tooltip ----
+     Lives on <body>, not inside the plot. As a child of the panel it was
+     clipped by the panel's own rounded overflow, and the clamp bounded
+     its CENTRE — so half of a 158px tooltip still hung over the edge on
+     the last bar of the chart. Positioned against the viewport instead,
+     measured after it has content, and flipped below the bar when there
+     is no room above. */
+  let chartTipEl = null;
+  function chartTip() {
+    if (!chartTipEl || !chartTipEl.isConnected) {
+      chartTipEl = el('div', { class: 'chart-tip', role: 'status' });
+      document.body.appendChild(chartTipEl);
+    }
+    return chartTipEl;
+  }
+  function hideChartTip() { if (chartTipEl) chartTipEl.classList.remove('show'); }
+  function placeChartTip(tip, anchor) {
+    tip.classList.add('measuring');
+    placeFloating(tip, anchor, { gap: 10 });
+    tip.classList.remove('measuring');
+    tip.classList.add('show');
+  }
+  window.addEventListener('scroll', hideChartTip, true);
+  window.addEventListener('resize', hideChartTip);
+
   function markField(wrap, rec, f) {
     if (!wrap) return;
     const filled = String(rec.fields[f.key] || '').trim() !== '';
@@ -5891,14 +6057,20 @@ const FNCloud = (function () {
       tbody.appendChild(
         el('tr', {}, [
           ...section.columns.map((c) =>
-            el('td', {}, el('input', {
-              class: 'cell-input',
-              type: c.type || 'text',
-              step: c.type === 'number' ? 'any' : null,
-              value: row[c.key] || '',
-              oninput: (e) => { row[c.key] = e.target.value; },
-              onchange: (e) => { row[c.key] = e.target.value; touch(rec); },
-            }))
+            el('td', {}, c.type === 'date'
+              ? dateField({
+                  inputClass: 'cell-input',
+                  value: row[c.key] || '',
+                  onCommit: (iso) => { row[c.key] = iso; touch(rec); },
+                })
+              : el('input', {
+                  class: 'cell-input',
+                  type: c.type || 'text',
+                  step: c.type === 'number' ? 'any' : null,
+                  value: row[c.key] || '',
+                  oninput: (e) => { row[c.key] = e.target.value; },
+                  onchange: (e) => { row[c.key] = e.target.value; touch(rec); },
+                }))
           ),
           el('td', { class: 'no-print' }, el('button', {
             class: 'btn btn-sm btn-danger',
@@ -5952,14 +6124,20 @@ const FNCloud = (function () {
       tbody.appendChild(
         el('tr', {}, [
           ...section.columns.map((c) =>
-            el('td', {}, el('input', {
-              class: 'cell-input',
-              type: c.type || 'text',
-              step: c.type === 'number' ? 'any' : null,
-              value: row[c.key] || '',
-              oninput: (e) => { row[c.key] = e.target.value; recalc(); },
-              onchange: (e) => { row[c.key] = e.target.value; touch(rec); },
-            }))
+            el('td', {}, c.type === 'date'
+              ? dateField({
+                  inputClass: 'cell-input',
+                  value: row[c.key] || '',
+                  onCommit: (iso) => { row[c.key] = iso; recalc(); touch(rec); },
+                })
+              : el('input', {
+                  class: 'cell-input',
+                  type: c.type || 'text',
+                  step: c.type === 'number' ? 'any' : null,
+                  value: row[c.key] || '',
+                  oninput: (e) => { row[c.key] = e.target.value; recalc(); },
+                  onchange: (e) => { row[c.key] = e.target.value; touch(rec); },
+                }))
           ),
           el('td', { 'data-line-total': '1', style: 'text-align:right;color:var(--text-dim)' }),
           el('td', { class: 'no-print' }, el('button', {
@@ -6151,11 +6329,10 @@ const FNCloud = (function () {
             },
             onchange: (e) => { sig.name = e.target.value; touch(rec); },
           }),
-          el('input', {
-            class: 'cell-input',
-            type: 'date',
+          dateField({
+            inputClass: 'cell-input',
             value: sig.date || '',
-            onchange: (e) => { sig.date = e.target.value; touch(rec); },
+            onCommit: (iso) => { sig.date = iso; touch(rec); },
           }),
         ]),
         el('div', { class: 'sign-foot no-print' }, [
@@ -6297,6 +6474,225 @@ const FNCloud = (function () {
     }).then(() => renderCloudBadge());
   }
 
+  /* ---------------- Dates ----------------
+
+     Every date in this app is DD/MM/YYYY, on every device.
+
+     `<input type="date">` cannot do that. It renders in the browser's
+     own locale, so a Chrome set to en-US shows 08/20/2026 while the
+     record beside it prints 20/08/2026 — and no CSS or attribute can
+     change it. On a shop floor where one tablet is Thai, one is English
+     and one came from a US-configured laptop, the same form shows three
+     different formats and 08/09 is genuinely ambiguous.
+
+     So: a text field we control, plus our own small calendar.
+
+     What does NOT change is storage. Records keep the ISO YYYY-MM-DD
+     they always held, because that is what sorts correctly, what the
+     cloud merge compares, and what every record already on a tablet
+     contains. Only the reading and the typing are ours. */
+
+  const MONTH_NAMES = {
+    en: ['January','February','March','April','May','June',
+         'July','August','September','October','November','December'],
+    th: ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+         'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'],
+  };
+  const DOW_NAMES = {
+    en: ['Mo','Tu','We','Th','Fr','Sa','Su'],
+    th: ['จ','อ','พ','พฤ','ศ','ส','อา'],
+  };
+
+  function isoToDMY(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso || ''));
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+  }
+
+  /* Deliberately forgiving. A technician with gloves on types 2482026 or
+     24-8-26; all of it means the same day and none of it should be
+     rejected with an empty field and no explanation. */
+  function dmyToISO(text) {
+    const s = String(text || '').trim();
+    if (!s) return '';
+    let d, mo, y;
+    const parts = s.split(/[^\d]+/).filter(Boolean);
+    if (parts.length === 3) {
+      [d, mo, y] = parts.map(Number);
+    } else {
+      const digits = s.replace(/\D/g, '');
+      if (digits.length === 8)      { d = +digits.slice(0,2); mo = +digits.slice(2,4); y = +digits.slice(4); }
+      else if (digits.length === 6) { d = +digits.slice(0,2); mo = +digits.slice(2,4); y = +digits.slice(4); }
+      else return null;
+    }
+    if (y < 100) y += y < 70 ? 2000 : 1900;
+    /* A Buddhist-era year typed out of habit still means the right day. */
+    if (y > 2400) y -= 543;
+    if (!(d >= 1 && d <= 31 && mo >= 1 && mo <= 12 && y >= 1900 && y <= 2999)) return null;
+    const dt = new Date(y, mo - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+    const p = (n) => String(n).padStart(2, '0');
+    return `${y}-${p(mo)}-${p(d)}`;
+  }
+
+  let openCal = null;
+  function closeCalendar() {
+    if (!openCal) return;
+    openCal.remove();
+    openCal = null;
+    document.removeEventListener('mousedown', onCalOutside, true);
+    window.removeEventListener('resize', closeCalendar);
+    window.removeEventListener('scroll', closeCalendar, true);
+  }
+  function onCalOutside(e) {
+    if (openCal && !openCal.contains(e.target) && !e.target.closest('.date-open')) closeCalendar();
+  }
+
+  function openCalendar(anchor, currentISO, commit) {
+    closeCalendar();
+    let view = currentISO ? new Date(currentISO + 'T00:00:00') : new Date();
+    if (isNaN(view)) view = new Date();
+    view = new Date(view.getFullYear(), view.getMonth(), 1);
+
+    const cal = el('div', { class: 'datecal' });
+    const head = el('div', { class: 'datecal-head' });
+    const title = el('button', { class: 'datecal-title', type: 'button' });
+    const prev = el('button', { class: 'datecal-nav', type: 'button', text: '‹',
+      title: T({ en: 'Previous month', th: 'เดือนก่อน' }) });
+    const next = el('button', { class: 'datecal-nav', type: 'button', text: '›',
+      title: T({ en: 'Next month', th: 'เดือนถัดไป' }) });
+    head.append(prev, title, next);
+
+    const dow = el('div', { class: 'datecal-dow' });
+    DOW_NAMES[lang === 'th' ? 'th' : 'en'].forEach((d) => dow.appendChild(el('span', { text: d })));
+
+    const grid = el('div', { class: 'datecal-grid' });
+    const foot = el('div', { class: 'datecal-foot' });
+    const todayBtn = el('button', { class: 'btn btn-sm', type: 'button',
+      text: T({ en: 'Today', th: 'วันนี้' }) });
+    const clearBtn = el('button', { class: 'btn btn-sm', type: 'button',
+      text: T({ en: 'Clear', th: 'ล้าง' }) });
+    foot.append(todayBtn, clearBtn);
+    cal.append(head, dow, grid, foot);
+
+    function draw() {
+      title.textContent = MONTH_NAMES[lang === 'th' ? 'th' : 'en'][view.getMonth()] + ' ' + view.getFullYear();
+      grid.innerHTML = '';
+      /* Monday-first: the working week as a Thai factory reads it. */
+      const firstDow = (new Date(view.getFullYear(), view.getMonth(), 1).getDay() + 6) % 7;
+      const days = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+      const p = (n) => String(n).padStart(2, '0');
+      const todayStr = todayISO();
+      for (let i = 0; i < firstDow; i++) grid.appendChild(el('span', { class: 'datecal-pad' }));
+      for (let d = 1; d <= days; d++) {
+        const iso = `${view.getFullYear()}-${p(view.getMonth() + 1)}-${p(d)}`;
+        const b = el('button', { class: 'datecal-day', type: 'button', text: String(d) });
+        if (iso === currentISO) b.classList.add('is-sel');
+        if (iso === todayStr) b.classList.add('is-today');
+        b.addEventListener('click', () => { commit(iso); closeCalendar(); });
+        grid.appendChild(b);
+      }
+    }
+    prev.addEventListener('click', () => { view.setMonth(view.getMonth() - 1); draw(); });
+    next.addEventListener('click', () => { view.setMonth(view.getMonth() + 1); draw(); });
+    title.addEventListener('click', () => { view = new Date(); view.setDate(1); draw(); });
+    todayBtn.addEventListener('click', () => { commit(todayISO()); closeCalendar(); });
+    clearBtn.addEventListener('click', () => { commit(''); closeCalendar(); });
+    draw();
+
+    /* Fixed to the viewport, not the field: the calendar must escape the
+       drawer and any scrolling panel that would otherwise clip it. */
+    document.body.appendChild(cal);
+    placeFloating(cal, anchor.getBoundingClientRect(), { align: 'start', below: true, gap: 6 });
+    openCal = cal;
+
+    setTimeout(() => {
+      document.addEventListener('mousedown', onCalOutside, true);
+      window.addEventListener('resize', closeCalendar);
+      window.addEventListener('scroll', closeCalendar, true);
+    }, 0);
+  }
+
+  /* One date control, used by header fields, table cells and signatures.
+     Reads and writes ISO; shows and accepts DD/MM/YYYY. */
+  function dateField(opts) {
+    const wrap = el('div', { class: 'datefield' + (opts.className ? ' ' + opts.className : '') });
+    let iso = opts.value || '';
+
+    const input = el('input', {
+      type: 'text',
+      class: 'date-text' + (opts.inputClass ? ' ' + opts.inputClass : ''),
+      inputmode: 'numeric',
+      autocomplete: 'off',
+      placeholder: 'dd/mm/yyyy',
+      value: isoToDMY(iso),
+    });
+    input.setAttribute('data-iso', iso);
+
+    const btn = el('button', {
+      class: 'date-open', type: 'button',
+      title: T({ en: 'Pick a date', th: 'เลือกวันที่' }),
+    });
+    btn.appendChild(icon('calendar', 16));
+
+    function commit(nextIso) {
+      iso = nextIso || '';
+      input.value = isoToDMY(iso);
+      input.setAttribute('data-iso', iso);
+      input.classList.remove('is-bad');
+      if (opts.onCommit) opts.onCommit(iso);
+    }
+
+    input.addEventListener('input', () => {
+      /* Type bare digits and the slashes appear.
+
+         Only a run of BARE digits. Testing the stripped string instead
+         treated "1/9/2026" as "192026" and rewrote it to 19/20/26 — a
+         single-digit day became impossible to type. Once the field holds
+         separators the technician is formatting it themselves, so we
+         stay out of the way and let `change` parse it. */
+      const raw = input.value;
+      if (/^\d{3,8}$/.test(raw)) {
+        const d = raw;
+        let out = d.slice(0, 2);
+        if (d.length > 2) out += '/' + d.slice(2, 4);
+        if (d.length > 4) out += '/' + d.slice(4);
+        if (out !== raw) {
+          const atEnd = input.selectionStart === raw.length;
+          input.value = out;
+          if (atEnd) input.setSelectionRange(out.length, out.length);
+        }
+      }
+      input.classList.remove('is-bad');
+    });
+
+    input.addEventListener('change', () => {
+      const parsed = dmyToISO(input.value);
+      if (parsed === null) {
+        /* Say so rather than silently discarding what was typed. */
+        input.classList.add('is-bad');
+        return;
+      }
+      commit(parsed);
+    });
+    input.addEventListener('blur', () => {
+      if (input.classList.contains('is-bad')) { commit(iso); }
+    });
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { input.blur(); }
+      if (e.key === 'Escape') { commit(iso); input.blur(); }
+    });
+
+    btn.addEventListener('click', () => {
+      if (openCal) { closeCalendar(); return; }
+      openCalendar(wrap, input.getAttribute('data-iso') || '', commit);
+    });
+
+    wrap.append(input, btn);
+    return wrap;
+  }
+
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeCalendar(); });
+
   /* ---------------- Print ----------------
 
      A form on screen shows its values inside <input>s, which is fine
@@ -6314,12 +6710,10 @@ const FNCloud = (function () {
       const opt = el.options[el.selectedIndex];
       return opt ? opt.text : '';
     }
-    if (el.type === 'date') {
-      /* A date input holds YYYY-MM-DD, which is exactly what fmtDate
-         takes — print it the same DD/MM/YYYY the rest of the app uses
-         rather than the ISO the native picker stores. */
-      return el.value ? fmtDate(el.value) : '';
-    }
+    /* Our own date field is a text input that already reads DD/MM/YYYY,
+       so it needs no translation. type="date" can still appear in an
+       old cached page, so keep handling it. */
+    if (el.type === 'date') return el.value ? fmtDate(el.value) : '';
     if (el.type === 'time') return el.value || '';
     return el.value || '';
   }
