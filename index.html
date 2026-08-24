@@ -2,27 +2,16 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
-<!-- Zoom lock, matching FN-ERP-System:
-       width=device-width, initial-scale=1.0, maximum-scale=1.0,
-       minimum-scale=1.0, user-scalable=no, viewport-fit=cover
-     Same shape here, but pinned to 1.1 rather than 1.0, because this
-     app is drawn at 110% and the browser's own scaling is what
-     delivers that on touch devices (CSS zoom is switched off there —
-     see the UI scale block in the stylesheet).
+<!-- Exactly the FN-ERP-System zoom lock. The 110% is not in here:
+     it comes from `zoom` in the stylesheet, which derives the layout
+     box from the viewport rather than asking the browser to derive
+     the viewport from a scale. Carrying the scale in this tag is what
+     produced the page that panned sideways on an iPhone.
 
-     No `width=device-width`, and that omission is the whole point.
-     Pairing it with initial-scale=1.1 contradicts itself: the page is
-     laid out at the full 390px of the phone while the scale only shows
-     390 / 1.1 = 355px of it, so 35px sits permanently off the edge and
-     the whole app pans sideways. Leave width out and the browser
-     derives it from the scale — layout 354px, visible 354px, and the
-     110% is still there.
-
-     Honest limit: iOS Safari has ignored user-scalable and the scale
-     bounds since iOS 10. On an iPhone or iPad this tag alone does not
-     stop a pinch, which is why blockPinchShrink() in the script cancels
-     a shrinking one as well. The tag does that work on Android. -->
-<meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no, viewport-fit=cover">
+     iOS Safari has ignored user-scalable and the scale bounds since
+     iOS 10, so on an iPhone or iPad this tag does not stop a pinch —
+     the ERP has the same gap. blockPinchShrink() covers iOS. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Build checklist, pre-delivery inspection, delivery &amp; commissioning, and customer service reports.">
 <meta name="theme-color" content="#e9edf6">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
@@ -216,27 +205,24 @@ html {
   zoom: var(--ui-scale);
 }
 
-/* Touch devices do NOT use `zoom`.
+/* One mechanism, every device — and the reason matters, because the
+   alternative was tried and produced the bug it was meant to avoid.
 
-   A form opened on an iPhone rendered its toolbar and then nothing —
-   sections present in the DOM, no JavaScript error, just blank. The
-   same record and the same build are fine in Chromium at the same
-   390px, so it is a WebKit layout problem, and `zoom` on the root with
-   `position: sticky` descendants (the bar and the form toolbar are
-   both sticky) is its best-known trigger. I could not install WebKit
-   here to prove it, so rather than gamble on a workaround, use the
-   mechanism phones already have.
+   Scaling through the viewport tag (initial-scale=1.1) asks the browser
+   to lay out at deviceWidth / 1.1 and paint it larger. It works, but the
+   layout width is then something the browser derives, and getting it
+   wrong by one attribute puts part of the page where nobody can reach
+   it: pairing it with width=device-width laid out 390px of content in a
+   355px window and the whole app panned sideways under the thumb.
 
-   index.html asks for initial-scale=1.1, which makes the browser lay
-   out at deviceWidth / 1.1 and scale the result up — the browser's own
-   zoom path, the one every mobile site has leaned on for a decade, and
-   the same 110% result. Setting --ui-scale to 1 here switches off both
-   the CSS zoom and the viewport-unit division that compensates for it;
-   the breakpoints still line up because the layout viewport has already
-   been divided by the same factor. */
+   CSS zoom does not touch the viewport at all. The layout box is
+   viewport / zoom by construction, so the content cannot be wider than
+   the screen no matter what the tag says. `zoom` is a WebKit-born
+   property; Safari has honoured it far longer than Chrome has.
+
+   That leaves the viewport tag free to be exactly what FN-ERP-System
+   uses — a plain 1.0 lock — rather than carrying the scale as well. */
 @media (pointer: coarse) {
-  :root { --ui-scale: 1; }
-  html { zoom: 1; }
   /* Drops double-tap-to-zoom, the other way a scale gets stuck.
      Pinch is handled in blockPinchShrink() so magnifying still works. */
   body { touch-action: manipulation; }
@@ -7079,7 +7065,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260824-040730';
+  const BUILD_ID = '20260824-041623';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
