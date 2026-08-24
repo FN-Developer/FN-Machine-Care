@@ -2,7 +2,10 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- initial-scale 1.1 gives phones and tablets the same 110% the desktop
+     gets from CSS zoom, using the browser's own scaling instead. See the
+     UI scale block in the stylesheet for why WebKit needs it this way. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.1, viewport-fit=cover">
 <meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Build checklist, pre-delivery inspection, delivery &amp; commissioning, and customer service reports.">
 <meta name="theme-color" content="#e9edf6">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
@@ -196,6 +199,29 @@ html {
   zoom: var(--ui-scale);
 }
 
+/* Touch devices do NOT use `zoom`.
+
+   A form opened on an iPhone rendered its toolbar and then nothing —
+   sections present in the DOM, no JavaScript error, just blank. The
+   same record and the same build are fine in Chromium at the same
+   390px, so it is a WebKit layout problem, and `zoom` on the root with
+   `position: sticky` descendants (the bar and the form toolbar are
+   both sticky) is its best-known trigger. I could not install WebKit
+   here to prove it, so rather than gamble on a workaround, use the
+   mechanism phones already have.
+
+   index.html asks for initial-scale=1.1, which makes the browser lay
+   out at deviceWidth / 1.1 and scale the result up — the browser's own
+   zoom path, the one every mobile site has leaned on for a decade, and
+   the same 110% result. Setting --ui-scale to 1 here switches off both
+   the CSS zoom and the viewport-unit division that compensates for it;
+   the breakpoints still line up because the layout viewport has already
+   been divided by the same factor. */
+@media (pointer: coarse) {
+  :root { --ui-scale: 1; }
+  html { zoom: 1; }
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -306,6 +332,24 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   padding-top: 9px; border-top: 1px solid var(--hairline-soft);
 }
 .datecal-foot .btn { flex: 1; }
+
+/* A screen that could not be drawn says so, rather than going blank. */
+.fail-card { max-width: 620px; margin: 20px auto; }
+.fail-card h2 { margin: 0 0 8px; font-size: 19px; }
+.fail-card p { margin: 0 0 14px; color: var(--text-dim); }
+.fail-detail {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--field);
+  border: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--text-dim);
+}
 
 @media (max-width: 616px) { .datecal { width: min(268px, 92vw); } }
 
@@ -4325,8 +4369,45 @@ const FNCloud = (function () {
       machine: viewMachine,
       data: viewData,
     };
-    (views[state.view] || viewDashboard)(main);
-    stampTableLabels(main);
+    /* A blank screen tells a technician nothing and tells me less.
+       Twice now a single bad record has taken a whole page down — once
+       the Records table, once a form on a phone I could not reproduce.
+       If rendering throws, say so on screen, name the document, and
+       leave the toolbar's Back button reachable. */
+    try {
+      (views[state.view] || viewDashboard)(main);
+      stampTableLabels(main);
+    } catch (err) {
+      console.error('[FN] Could not draw this screen:', err);
+      renderFailureCard(main, err);
+    }
+  }
+
+  function renderFailureCard(main, err) {
+    const rec = state.recordId && db.records.find((r) => r.id === state.recordId);
+    const card = el('div', { class: 'card fail-card' }, [
+      el('h2', {}, [L({ en: 'This screen could not be drawn',
+                        th: 'ไม่สามารถแสดงหน้านี้ได้' })]),
+      el('p', {}, [L({
+        en: 'Your work is safe — nothing has been deleted. Please show this message to the developer.',
+        th: 'ข้อมูลของคุณยังอยู่ครบ ไม่มีอะไรถูกลบ กรุณาแจ้งข้อความนี้กับผู้พัฒนา',
+      })]),
+      el('pre', { class: 'fail-detail', text:
+        (rec ? rec.docNo + '  (' + rec.type + ')\n' : '') +
+        (state.view || '?') + '\n' +
+        String((err && err.message) || err) + '\n' +
+        String((err && err.stack) || '').split('\n').slice(1, 4).join('\n') }),
+      el('div', { class: 'btn-row' }, [
+        el('button', { class: 'btn', onclick: () => go('records') },
+           [L({ en: 'Back to records', th: 'กลับไปหน้าเอกสาร' })]),
+        el('button', { class: 'btn', onclick: () => {
+            const t = (rec ? rec.docNo + ' ' : '') + (state.view || '') + ' ' + String((err && err.stack) || err);
+            navigator.clipboard && navigator.clipboard.writeText(t);
+            toast(T({ en: 'Copied', th: 'คัดลอกแล้ว' }));
+          } }, [L({ en: 'Copy details', th: 'คัดลอกรายละเอียด' })]),
+      ]),
+    ]);
+    main.appendChild(card);
   }
 
   /* ---- data tables on a narrow screen ----
