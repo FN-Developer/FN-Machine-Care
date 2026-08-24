@@ -1793,6 +1793,107 @@ tbody tr.clickable { cursor: pointer; }
 }
 .search-input:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-blue) 18%, transparent); }
 
+/* ---------------- Records filter bar ----------------
+   Customer, then their machines, then the kind of document, then the
+   order. Each dropdown offers only what the other three still allow,
+   with a count beside every option, so a choice can never lead to an
+   empty screen. */
+
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 0 4px 18px;
+  padding: 15px 17px;
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  border: 1px solid var(--edge);
+  border-radius: var(--radius-window);
+  box-shadow: var(--lift-1), var(--specular);
+}
+
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 190px;
+  min-width: 0;
+}
+
+.filter-label {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: .075em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+  padding-left: 2px;
+  transition: color .18s ease;
+}
+/* A set filter says so without shouting — the label picks up the accent
+   rather than the control changing shape and shifting the row. */
+.filter-field.is-set .filter-label { color: var(--accent-blue); }
+
+.filter-select {
+  width: 100%;
+  padding: 10px 34px 10px 13px;
+  background: var(--field);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-ctl);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  /* Chevron drawn in the box so it inherits the theme instead of the OS */
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: right 16px center, right 11px center;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  transition: border-color .18s ease, box-shadow .18s ease, background-color .18s ease;
+}
+.filter-select:hover { background-color: var(--field-focus); }
+.filter-select:focus {
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent-blue) 16%, transparent);
+}
+.filter-field.is-set .filter-select { border-color: color-mix(in srgb, var(--accent-blue) 45%, var(--hairline)); }
+
+.filter-clear {
+  flex: 0 0 auto;
+  padding: 10px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-ctl);
+  background: var(--glass-soft);
+  color: var(--text-dim);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+.filter-clear:hover { color: var(--fail); border-color: color-mix(in srgb, var(--fail) 45%, var(--hairline)); }
+.filter-clear:active { transform: scale(.97); }
+
+.filter-count {
+  margin: 0 6px 10px;
+  font-size: 12.5px;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One filter per row on a phone: four half-width dropdowns side by side
+   are unreadable and the labels wrap to two lines. */
+@media (max-width: 660px) {
+  .filter-bar { gap: 11px; padding: 13px 14px; }
+  .filter-field { flex: 1 1 100%; }
+  .filter-clear { width: 100%; }
+}
+
+@media print { .filter-bar, .filter-count { display: none !important; } }
+
 .empty {
   padding: 52px 22px;
   text-align: center;
@@ -4945,6 +5046,35 @@ const FNCloud = (function () {
 
   /* ---------------- View: Records ---------------- */
 
+  /* Records filter. Kept outside the view so drilling into a record and
+     coming back does not throw away what you narrowed down to. */
+  const recFilter = { customer: '', machine: '', type: '', sort: 'date-desc' };
+
+  const SORTS = [
+    { key: 'date-desc',  label: { en: 'Date — newest first', th: 'วันที่ — ใหม่สุดก่อน' } },
+    { key: 'date-asc',   label: { en: 'Date — oldest first', th: 'วันที่ — เก่าสุดก่อน' } },
+    { key: 'doc-asc',    label: { en: 'Document no. — A to Z', th: 'เลขที่เอกสาร — ก-ฮ' } },
+    { key: 'doc-desc',   label: { en: 'Document no. — Z to A', th: 'เลขที่เอกสาร — ฮ-ก' } },
+    { key: 'machine-asc',label: { en: 'Machine name — A to Z', th: 'ชื่อเครื่องจักร — ก-ฮ' } },
+    { key: 'customer-asc',label:{ en: 'Customer — A to Z', th: 'ลูกค้า — ก-ฮ' } },
+  ];
+
+  function sortRecords(list, key) {
+    const by = (f) => (a, b) => {
+      const x = String(f(a) || '').toLowerCase(), y = String(f(b) || '').toLowerCase();
+      return x < y ? -1 : x > y ? 1 : 0;
+    };
+    const copy = list.slice();
+    switch (key) {
+      case 'date-asc':    return copy.sort(by((r) => primaryDate(r)));
+      case 'doc-asc':     return copy.sort(by((r) => r.docNo));
+      case 'doc-desc':    return copy.sort(by((r) => r.docNo)).reverse();
+      case 'machine-asc': return copy.sort(by((r) => r.fields.machineName || 'zzz'));
+      case 'customer-asc':return copy.sort(by((r) => r.fields.customer || 'zzz'));
+      default:            return copy.sort(by((r) => primaryDate(r))).reverse();
+    }
+  }
+
   function viewRecords(root) {
     root.appendChild(
       el('div', { class: 'page-head' }, [
@@ -4956,30 +5086,173 @@ const FNCloud = (function () {
           class: 'search-input',
           placeholder: T(UI.search),
           value: state.search,
-          oninput: (e) => {
-            state.search = e.target.value;
-            const holder = $('#recordsHolder');
-            holder.innerHTML = '';
-            holder.appendChild(filteredTable());
-          },
+          oninput: (e) => { state.search = e.target.value; refresh(); },
         }),
       ])
     );
+
+    const bar = el('div', { class: 'filter-bar', id: 'recFilterBar' });
+    root.appendChild(bar);
     const holder = el('div', { id: 'recordsHolder' });
-    holder.appendChild(filteredTable());
     root.appendChild(holder);
 
-    function filteredTable() {
+    drawBar();
+    drawList();
+
+    /* The search box is a live input — rebuilding it under the cursor
+       would drop focus mid-word, so only the list is redrawn there. */
+    function refresh() { drawList(); }
+    function refreshAll() { drawBar(); drawList(); }
+
+    /* ---- which options each dropdown should offer ----
+       A cascade, and strictly in that order: customer, then their
+       machines, then the documents that exist for that machine. Each
+       level narrows the one below it and nothing narrows the level
+       above.
+
+       The first version filtered every dropdown by every OTHER filter,
+       which reads as symmetrical and sounds tidier. It was a trap:
+       choosing a machine cut the customer list down to that machine's
+       one owner, so there was no way to switch customer again without
+       clearing everything. Its own test could not reach the third
+       customer and timed out. */
+    function optionsFor(field) {
+      const seen = new Map();
+      db.records.forEach((r) => {
+        if (field !== 'customer' && recFilter.customer && r.fields.customer !== recFilter.customer) return;
+        if (field === 'type' && recFilter.machine && r.fields.machineName !== recFilter.machine) return;
+        const v = field === 'customer' ? r.fields.customer
+                : field === 'machine'  ? r.fields.machineName
+                : r.type;
+        if (!v) return;
+        seen.set(v, (seen.get(v) || 0) + 1);
+      });
+      return [...seen.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1));
+    }
+
+    function passes(r) {
+      if (recFilter.customer && r.fields.customer !== recFilter.customer) return false;
+      if (recFilter.machine  && r.fields.machineName !== recFilter.machine) return false;
+      if (recFilter.type     && r.type !== recFilter.type) return false;
+      return true;
+    }
+
+    function select(field, labelText, placeholder, opts, render) {
+      const sel = el('select', { class: 'filter-select' });
+      sel.appendChild(el('option', { value: '', text: T(placeholder) }));
+      opts.forEach(([value, count]) => {
+        const o = el('option', { value, text: render(value) + '  (' + count + ')' });
+        if (recFilter[field] === value) o.selected = true;
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change', () => {
+        recFilter[field] = sel.value;
+        /* Moving up the cascade can strand what was chosen below it —
+           another customer's machine, or a document type that machine
+           has none of. Drop the stranded choice rather than leaving the
+           technician staring at an empty list they cannot explain. */
+        if (field === 'customer' && recFilter.machine) {
+          const still = db.records.some((r) =>
+            r.fields.machineName === recFilter.machine &&
+            (!recFilter.customer || r.fields.customer === recFilter.customer));
+          if (!still) recFilter.machine = '';
+        }
+        if ((field === 'customer' || field === 'machine') && recFilter.type) {
+          if (!db.records.some((r) => r.type === recFilter.type
+              && (!recFilter.customer || r.fields.customer === recFilter.customer)
+              && (!recFilter.machine  || r.fields.machineName === recFilter.machine))) {
+            recFilter.type = '';
+          }
+        }
+        refreshAll();
+      });
+      return el('label', { class: 'filter-field' + (recFilter[field] ? ' is-set' : '') }, [
+        el('span', { class: 'filter-label' }, [L(labelText)]),
+        sel,
+      ]);
+    }
+
+    function drawBar() {
+      bar.innerHTML = '';
+
+      bar.appendChild(select('customer',
+        { en: 'Customer', th: 'ลูกค้า' },
+        { en: 'All customers', th: 'ลูกค้าทั้งหมด' },
+        optionsFor('customer'), (v) => v));
+
+      bar.appendChild(select('machine',
+        { en: 'Machine', th: 'เครื่องจักร' },
+        { en: 'All machines', th: 'เครื่องจักรทั้งหมด' },
+        optionsFor('machine'), (v) => v));
+
+      bar.appendChild(select('type',
+        { en: 'Document', th: 'ประเภทเอกสาร' },
+        { en: 'All documents', th: 'เอกสารทุกประเภท' },
+        optionsFor('type'),
+        (v) => FORM_BY_TYPE[v] ? FORM_BY_TYPE[v].prefix + ' · ' + T(FORM_BY_TYPE[v].name) : v));
+
+      const sortSel = el('select', { class: 'filter-select' });
+      SORTS.forEach((s) => {
+        const o = el('option', { value: s.key, text: T(s.label) });
+        if (recFilter.sort === s.key) o.selected = true;
+        sortSel.appendChild(o);
+      });
+      sortSel.addEventListener('change', () => { recFilter.sort = sortSel.value; drawList(); });
+      bar.appendChild(el('label', { class: 'filter-field' }, [
+        el('span', { class: 'filter-label' }, [L({ en: 'Sort by', th: 'เรียงตาม' })]),
+        sortSel,
+      ]));
+
+      const active = !!(recFilter.customer || recFilter.machine || recFilter.type || state.search.trim());
+      if (active) {
+        bar.appendChild(el('button', {
+          class: 'filter-clear',
+          onclick: () => {
+            recFilter.customer = recFilter.machine = recFilter.type = '';
+            state.search = '';
+            render();
+          },
+        }, [L({ en: 'Clear', th: 'ล้างตัวกรอง' })]));
+      }
+    }
+
+    function currentList() {
       const q = state.search.trim().toLowerCase();
-      let list = db.records.slice().sort((a, b) => (b.updatedAt > a.updatedAt ? 1 : -1));
+      let list = db.records.filter(passes);
       if (q) {
         list = list.filter((r) => {
-          const hay = [r.docNo, r.fields.workNo, r.fields.serialNo, r.fields.customer, r.fields.machineName, T(FORM_BY_TYPE[r.type].name)]
+          const hay = [r.docNo, r.fields.workNo, r.fields.serialNo, r.fields.customer,
+                       r.fields.machineName, T(FORM_BY_TYPE[r.type] ? FORM_BY_TYPE[r.type].name : {})]
             .join(' ').toLowerCase();
           return hay.includes(q);
         });
       }
-      return list.length ? recordTable(list) : el('div', { class: 'empty' }, [L(UI.noRecords)]);
+      return sortRecords(list, recFilter.sort);
+    }
+
+    function drawList() {
+      const list = currentList();
+      holder.innerHTML = '';
+
+      const count = el('div', { class: 'filter-count' });
+      if (list.length === db.records.length) {
+        count.appendChild(L({ en: `Showing all ${list.length}`, th: `แสดงทั้งหมด ${list.length} รายการ` }));
+      } else {
+        count.appendChild(L({
+          en: `Showing ${list.length} of ${db.records.length}`,
+          th: `แสดง ${list.length} จาก ${db.records.length} รายการ`,
+        }));
+      }
+      holder.appendChild(count);
+
+      if (!list.length) {
+        holder.appendChild(el('div', { class: 'empty' }, [
+          L({ en: 'Nothing matches these filters.', th: 'ไม่พบเอกสารตามตัวกรองนี้' }),
+        ]));
+      } else {
+        holder.appendChild(recordTable(list));
+      }
+      stampTableLabels(holder);
     }
   }
 
