@@ -2,20 +2,19 @@
 <html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8">
-<!-- initial-scale 1.1 gives phones and tablets the same 110% the desktop
-     gets from CSS zoom, using the browser's own scaling instead. See the
-     UI scale block in the stylesheet for why WebKit needs it this way. -->
-<!-- initial-scale 1.1 gives phones and tablets the same 110% the desktop
-     gets from CSS zoom, using the browser's own scaling instead. See the
-     UI scale block in the stylesheet for why WebKit needs it this way.
+<!-- Zoom lock, matching FN-ERP-System:
+       width=device-width, initial-scale=1.0, maximum-scale=1.0,
+       minimum-scale=1.0, user-scalable=no, viewport-fit=cover
+     Same shape here, but pinned to 1.1 rather than 1.0, because this
+     app is drawn at 110% and the browser's own scaling is what
+     delivers that on touch devices (CSS zoom is switched off there —
+     see the UI scale block in the stylesheet).
 
-     minimum-scale pins the floor to the same 1.1, so a stray pinch cannot
-     shrink the page below the scale it was designed at. There is no
-     maximum-scale and no user-scalable=no on purpose: zooming OUT breaks
-     the layout, zooming IN is how someone reads a serial number in a dim
-     plant room, and locking that out would be worth far more complaints
-     than it saves. iOS Safari ignores user-scalable=no anyway. -->
-<meta name="viewport" content="width=device-width, initial-scale=1.1, minimum-scale=1.1, viewport-fit=cover">
+     Honest limit: iOS Safari has ignored user-scalable and the scale
+     bounds since iOS 10. On an iPhone or iPad this tag alone changes
+     nothing, which is why blockPinchShrink() in the script cancels a
+     shrinking pinch as well. The tag does the work on Android. -->
+<meta name="viewport" content="width=device-width, initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no, viewport-fit=cover">
 <meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Build checklist, pre-delivery inspection, delivery &amp; commissioning, and customer service reports.">
 <meta name="theme-color" content="#e9edf6">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
@@ -230,6 +229,9 @@ html {
 @media (pointer: coarse) {
   :root { --ui-scale: 1; }
   html { zoom: 1; }
+  /* Drops double-tap-to-zoom, the other way a scale gets stuck.
+     Pinch is handled in blockPinchShrink() so magnifying still works. */
+  body { touch-action: manipulation; }
 }
 
 html, body {
@@ -342,6 +344,46 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   padding-top: 9px; border-top: 1px solid var(--hairline-soft);
 }
 .datecal-foot .btn { flex: 1; }
+
+/* Quiet by design: present on every screen, never competing with the
+   document in front of the technician. */
+.foot-note .credit {
+  display: block;
+  margin-top: 5px;
+  font-size: 10.5px;
+  letter-spacing: .015em;
+  color: var(--text-faint);
+  opacity: .85;
+}
+
+/* Says a newer build exists rather than letting a phone sit on a stale
+   copy that looks identical to a broken one. Bottom of the screen, out
+   of the way of the sticky bar at the top. */
+.update-banner {
+  position: fixed;
+  left: 50%; bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 92;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 24px);
+  padding: 11px 13px 11px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--edge);
+  background: var(--glass-drawer);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow: var(--lift-3), var(--specular);
+  font-size: 13.5px;
+  animation: cal-in .22s cubic-bezier(.22,1,.36,1);
+}
+.update-banner span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 616px) {
+  .update-banner { left: 12px; right: 12px; transform: none; max-width: none; padding-left: 15px; }
+  .update-banner span { white-space: normal; }
+}
+@media print { .update-banner { display: none !important; } }
 
 /* A screen that could not be drawn says so, rather than going blank. */
 .fail-card { max-width: 620px; margin: 20px auto; }
@@ -2500,6 +2542,9 @@ tbody tr.clickable { cursor: pointer; }
       <div class="foot-note">
         Build → FAT → SAT → Service<br>
         <span>v1.2 · saved on this device, shared once signed in</span>
+        <!-- stampBuild() rewrites the version span above; the credit is a
+             separate node so it is never touched by that. -->
+        <span class="credit">Developed by Mr. Norawid Khao-Ubon</span>
       </div>
     </div>
   </aside>
@@ -6948,6 +6993,11 @@ const FNCloud = (function () {
              th: 'ไม่มีการเชื่อมต่อ งานถูกเก็บไว้ในเครื่องนี้และจะซิงก์เมื่อสัญญาณกลับมา' };
   }
 
+  function stampBuild() {
+    const note = document.querySelector('.foot-note span');
+    if (note) note.textContent = note.textContent.replace(/^v[\d.]+/, 'v1.2 · ' + BUILD_ID);
+  }
+
   function startCloud() {
     if (typeof FNCloud === 'undefined') return;
     FNCloud.onChange(() => { renderCloudBadge(); });
@@ -6964,6 +7014,100 @@ const FNCloud = (function () {
         toast(lang === 'th' ? `รับข้อมูลจากเครื่องอื่น ${n} รายการ` : `${n} update${n === 1 ? '' : 's'} from other devices`);
       },
     }).then(() => renderCloudBadge());
+  }
+
+  /* ---------------- Pinch-to-shrink ----------------
+
+     minimum-scale=1.1 in the viewport tag holds on Android. iOS Safari
+     ignores viewport zoom limits entirely — Apple stopped honouring
+     user-scalable, maximum-scale and minimum-scale in iOS 10 because
+     sites were using them to trap people — so on an iPad a two-finger
+     pinch still shrinks the page below the scale it is drawn at and the
+     layout comes apart.
+
+     The only lever left on iOS is the gesture events, and they are used
+     narrowly here: a pinch that SHRINKS is cancelled, a pinch that
+     MAGNIFIES is left alone. Reading a worn serial number off a
+     nameplate in a dim plant room is exactly what zoom is for, and
+     taking that away would cost more than the layout it protects.
+
+     touch-action: manipulation on the body drops the double-tap-to-zoom
+     gesture as well, which is the other way a scale gets stuck. */
+
+  function blockPinchShrink() {
+    let opening = 1;
+    const shrinking = (e) => typeof e.scale === 'number' && e.scale < 0.995;
+
+    /* gesture* are WebKit-only, which is precisely where this is needed. */
+    document.addEventListener('gesturestart', (e) => { opening = e.scale || 1; }, { passive: false });
+    document.addEventListener('gesturechange', (e) => { if (shrinking(e)) e.preventDefault(); }, { passive: false });
+    document.addEventListener('gestureend',   (e) => { if (shrinking(e)) e.preventDefault(); }, { passive: false });
+
+    /* Chromium on a touch screen honours minimum-scale, so nothing more
+       is needed there; this is the belt for engines that do neither.
+       Two fingers moving closer together, and only that, is cancelled —
+       one finger still scrolls and two fingers spreading still zoom. */
+    let start = null;
+    const span = (t) => Math.hypot(t[0].clientX - t[1].clientX, t[0].clientY - t[1].clientY);
+    document.addEventListener('touchstart', (e) => {
+      start = e.touches.length === 2 ? span(e.touches) : null;
+    }, { passive: true });
+    document.addEventListener('touchmove', (e) => {
+      if (e.touches.length !== 2 || start === null) return;
+      if (span(e.touches) < start - 8 && e.cancelable) e.preventDefault();
+    }, { passive: false });
+    document.addEventListener('touchend', () => { start = null; }, { passive: true });
+  }
+
+  /* ---------------- Build stamp & update check ----------------
+
+     GitHub Pages serves this page with Cache-Control: max-age=600, and
+     phones hold onto that far longer than ten minutes — a tablet can sit
+     on yesterday's build for a whole shift. Three separate bug reports
+     turned out to be a device looking at an old copy, and neither of us
+     could tell, because a stale app looks exactly like a broken one.
+
+     So the app checks its own source for a newer stamp and says so.
+     Cheap: one small request, ignored entirely when offline, and
+     throttled so switching tabs does not hammer it. */
+
+  const BUILD_ID = '20260824-035543';
+  let lastUpdateCheck = 0;
+
+  async function checkForUpdate() {
+    if (location.protocol === 'file:') return;          /* offline copy */
+    if (Date.now() - lastUpdateCheck < 5 * 60 * 1000) return;
+    lastUpdateCheck = Date.now();
+    try {
+      const res = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const text = await res.text();
+      const m = text.match(/BUILD_ID\s*=\s*'([^']+)'/);
+      if (m && m[1] && m[1] !== BUILD_ID) showUpdateBanner();
+    } catch (e) { /* no signal — say nothing */ }
+  }
+
+  function showUpdateBanner() {
+    if ($('#updateBanner')) return;
+    const bar = el('div', { class: 'update-banner', id: 'updateBanner' }, [
+      el('span', {}, [L({ en: 'A newer version is available.',
+                          th: 'มีเวอร์ชันใหม่พร้อมใช้งาน' })]),
+      el('button', {
+        class: 'btn btn-primary btn-sm',
+        onclick: () => {
+          /* Cache-busting the URL is what actually gets a phone off a
+             stale copy; a plain reload can be served from cache again. */
+          const u = new URL(location.href);
+          u.searchParams.set('v', Date.now());
+          location.replace(u.toString());
+        },
+      }, [L({ en: 'Update now', th: 'อัปเดตเลย' })]),
+      el('button', {
+        class: 'btn btn-sm',
+        onclick: () => bar.remove(),
+      }, [L({ en: 'Later', th: 'ภายหลัง' })]),
+    ]);
+    document.body.appendChild(bar);
   }
 
   /* ---------------- Dates ----------------
@@ -7243,7 +7387,13 @@ const FNCloud = (function () {
   /* ---------------- Boot ---------------- */
 
   function boot() {
+    stampBuild();
+    blockPinchShrink();
     wirePrint();
+    checkForUpdate();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) checkForUpdate();
+    });
     /* The wordmark is styled markup in index.html — don't overwrite it. */
     applyTheme();
     setupNavDrawer();
