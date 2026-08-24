@@ -10,11 +10,19 @@
      delivers that on touch devices (CSS zoom is switched off there —
      see the UI scale block in the stylesheet).
 
+     No `width=device-width`, and that omission is the whole point.
+     Pairing it with initial-scale=1.1 contradicts itself: the page is
+     laid out at the full 390px of the phone while the scale only shows
+     390 / 1.1 = 355px of it, so 35px sits permanently off the edge and
+     the whole app pans sideways. Leave width out and the browser
+     derives it from the scale — layout 354px, visible 354px, and the
+     110% is still there.
+
      Honest limit: iOS Safari has ignored user-scalable and the scale
-     bounds since iOS 10. On an iPhone or iPad this tag alone changes
-     nothing, which is why blockPinchShrink() in the script cancels a
-     shrinking pinch as well. The tag does the work on Android. -->
-<meta name="viewport" content="width=device-width, initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no, viewport-fit=cover">
+     bounds since iOS 10. On an iPhone or iPad this tag alone does not
+     stop a pinch, which is why blockPinchShrink() in the script cancels
+     a shrinking one as well. The tag does that work on Android. -->
+<meta name="viewport" content="initial-scale=1.1, maximum-scale=1.1, minimum-scale=1.1, user-scalable=no, viewport-fit=cover">
 <meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Build checklist, pre-delivery inspection, delivery &amp; commissioning, and customer service reports.">
 <meta name="theme-color" content="#e9edf6">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
@@ -7071,7 +7079,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260824-035543';
+  const BUILD_ID = '20260824-040730';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
