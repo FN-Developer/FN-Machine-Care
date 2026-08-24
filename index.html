@@ -2751,7 +2751,7 @@ const FORM_BUILD = {
     { id: 'elec', title: { en: 'B. Electrical Check', th: 'B. ตรวจสอบไฟฟ้า' }, type: 'checklist', items: checks(ELECTRICAL_ITEMS) },
     { id: 'soft', title: { en: 'C. Software Check', th: 'C. ตรวจสอบซอฟต์แวร์' }, type: 'checklist', items: checks(SOFTWARE_ITEMS) },
     { id: 'buildNotes', title: { en: 'D. Outstanding Work', th: 'D. งานที่ยังค้าง' }, type: 'notes',
-      placeholder: { en: 'List anything still to be finished before PDI…', th: 'ระบุงานที่ต้องทำให้เสร็จก่อนตรวจ PDI…' } },
+      placeholder: { en: 'List anything still to be finished before FAT…', th: 'ระบุงานที่ต้องทำให้เสร็จก่อนตรวจ FAT…' } },
     { id: 'buildPhotos', title: { en: 'E. Build Photos', th: 'E. รูปถ่ายการประกอบ' }, type: 'photos', items: [], allowFree: true },
     { id: 'signoff', title: { en: 'F. Sign-off', th: 'F. ลงนาม' }, type: 'signoff',
       roles: [
@@ -2762,8 +2762,13 @@ const FORM_BUILD = {
 };
 
 /* =============================================================
-   FORM 02 — PRE-DELIVERY INSPECTION (PDI)
+   FORM 02 — FACTORY ACCEPTANCE TEST (FAT)
    The final gate before the machine leaves F N Technology.
+
+   `type` stays 'PDI'. It is the key stored inside every record
+   already on the tablets and in Firebase, not something anyone
+   reads — renaming it would orphan every FAT ever filled in.
+   What people see comes from `prefix`, `name` and `short`.
    ============================================================= */
 
 const FORM_PDI = {
@@ -7128,7 +7133,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260824-080318';
+  const BUILD_ID = '20260824-084436';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
