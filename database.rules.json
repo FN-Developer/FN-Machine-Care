@@ -14,7 +14,14 @@
 
       "$recordId": {
         ".write": "auth != null",
-        ".validate": "newData.hasChildren(['id', 'type', 'docNo'])",
+
+        // A record may only move FORWARD in time. Even if a tablet
+        // holding an old copy tries to write it back, the database
+        // refuses rather than quietly undoing someone's work. Equal is
+        // allowed so an unchanged re-send is harmless, and a delete
+        // (newData does not exist) is left to the .write rule above.
+        ".validate": "newData.hasChildren(['id', 'type', 'docNo']) && (!data.exists() || !data.hasChild('updatedAt') || newData.child('updatedAt').val() >= data.child('updatedAt').val())",
+
         "id": { ".validate": "newData.val() === $recordId" }
       }
     },

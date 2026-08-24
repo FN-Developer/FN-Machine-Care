@@ -12,7 +12,7 @@
      iOS 10, so on an iPhone or iPad this tag does not stop a pinch —
      the ERP has the same gap. blockPinchShrink() covers iOS. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Build checklist, pre-delivery inspection, delivery &amp; commissioning, and customer service reports.">
+<meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Machine build checklist (ASSY), factory acceptance test (FAT), site acceptance test (SAT), and customer service reports (SR).">
 <meta name="theme-color" content="#e9edf6">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%230a84ff'/><text y='68' x='50' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>FN</text></svg>">
@@ -3289,6 +3289,10 @@ const FNCloud = (function () {
   let pushTimer = null;
   let applyingRemote = false;     // stops a remote update echoing straight back
   let watching = false;           // one set of listeners per sign-in, not one per auth event
+  /* What this device has already put on the server, id -> updatedAt.
+     Without it, every save re-uploaded all 78 records. */
+  const pushed = new Map();
+  let pushedPeople = null;
   let seeded = false;             // has this session uploaded what was already on the device?
 
   function emit() { listeners.forEach((fn) => { try { fn(state); } catch (e) { console.error(e); } }); }
@@ -3343,6 +3347,8 @@ const FNCloud = (function () {
         } else {
           watching = false;
           seeded = false;
+          pushed.clear();
+          pushedPeople = null;
           /* Nobody types anything. The tablet asks Firebase for a guest
              identity and the rules accept it — the same arrangement the
              ERP uses. Anonymous accounts are cleaned up after 30 days,
@@ -3405,9 +3411,26 @@ const FNCloud = (function () {
           const mine = byId.get(r.id);
           /* Last write wins, decided by the record's own timestamp
              rather than by who happened to sync last. */
-          if (!mine || (r.updatedAt || '') > (mine.updatedAt || '')) {
+          if (!mine) {
             byId.set(r.id, r);
             changed++;
+          } else if ((r.updatedAt || '') > (mine.updatedAt || '')) {
+            /* Fill the EXISTING object rather than swapping in the new
+               one. An open form closed over its record when it was
+               drawn; replacing the object in the array leaves every
+               field handler writing into an orphan that is no longer
+               in db.records, so the technician types, the value looks
+               accepted, and the next save serialises the replacement
+               instead. That is the edit vanishing "back to the
+               database". Same object, new contents, handles intact. */
+            Object.keys(mine).forEach((k) => { if (!(k in r)) delete mine[k]; });
+            Object.assign(mine, r);
+            changed++;
+          }
+          if (r.id) {
+            /* Remember it as already-sent so the seed push does not
+               immediately write back what we just received. */
+            pushed.set(r.id, r.updatedAt || '');
           }
         });
 
@@ -3468,16 +3491,43 @@ const FNCloud = (function () {
   }
 
   async function doPush() {
-    try {
-      const { ref, update } = api.dbMod;
-      const local = api.getDB();
-      const payload = {};
-      local.records.forEach((r) => { payload['records/' + r.id] = r; });
-      payload['people'] = (local.meta && local.meta.people) || [];
-      await update(ref(api.db), payload);
-    } catch (err) {
-      console.error('[FN cloud] write refused:', err);
-      setStatus('error', 'Could not save to the shared database. Your work is still safe on this device.');
+    const { ref, set } = api.dbMod;
+    const local = api.getDB();
+
+    /* Send only the records whose timestamp has moved.
+
+       The old code wrote EVERY record on EVERY save, which is how an
+       edit made on one tablet came back undone. Tablet B saves an
+       unrelated form; that save also re-uploads B's copy of the record
+       A just edited; if B had not received A's version yet, the server
+       silently goes backwards. The more tablets in use, the more often
+       it happens — and it looks exactly like the app reloading over
+       your work. */
+    const dirty = local.records.filter((r) => r && r.id && pushed.get(r.id) !== (r.updatedAt || ''));
+
+    /* One write per record, not one atomic multi-path update: a
+       rejected stale record must not take a good save down with it. */
+    for (const r of dirty) {
+      try {
+        await set(ref(api.db, 'records/' + r.id), r);
+        pushed.set(r.id, r.updatedAt || '');
+      } catch (err) {
+        /* The rules refuse a write older than what is stored, so this
+           is usually another device having got there first. Leave it
+           out of `pushed` and let the incoming snapshot settle it. */
+        console.warn('[FN cloud] record not written:', r.docNo, err && err.message);
+      }
+    }
+
+    const people = (local.meta && local.meta.people) || [];
+    const peopleKey = JSON.stringify(people);
+    if (peopleKey !== pushedPeople) {
+      try {
+        await set(ref(api.db, 'people'), people);
+        pushedPeople = peopleKey;
+      } catch (err) {
+        console.error('[FN cloud] people not written:', err);
+      }
     }
   }
 
@@ -7004,6 +7054,19 @@ const FNCloud = (function () {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) { /* full */ }
       },
       onData: (n) => {
+        /* Never rebuild a form that someone is filling in. render()
+           replaces the whole screen, so an arriving update from another
+           tablet would wipe the half-typed value under the technician's
+           finger and drop the caret — indistinguishable from the app
+           throwing their work away. The record objects are already
+           updated in place, so nothing is lost by waiting; every other
+           view is safe to redraw. */
+        if (state.view === 'form') {
+          toast(lang === 'th'
+            ? `มีการแก้ไขจากเครื่องอื่น ${n} รายการ — จะแสดงเมื่อออกจากฟอร์มนี้`
+            : `${n} update${n === 1 ? '' : 's'} from another device — shown when you leave this form`);
+          return;
+        }
         render();
         toast(lang === 'th' ? `รับข้อมูลจากเครื่องอื่น ${n} รายการ` : `${n} update${n === 1 ? '' : 's'} from other devices`);
       },
@@ -7065,7 +7128,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260824-041623';
+  const BUILD_ID = '20260824-080318';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
