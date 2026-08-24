@@ -3299,6 +3299,7 @@ const FNCloud = (function () {
   const pushed = new Map();
   let pushedPeople = null;
   let seeded = false;             // has this session uploaded what was already on the device?
+  let needsReassert = false;      // we hold a record the server has wrongly lost
 
   function emit() { listeners.forEach((fn) => { try { fn(state); } catch (e) { console.error(e); } }); }
   function onChange(fn) { listeners.push(fn); return () => { listeners = listeners.filter((f) => f !== fn); }; }
@@ -3408,11 +3409,52 @@ const FNCloud = (function () {
       applyingRemote = true;
       try {
         const local = api.getDB();
+        local.meta = local.meta || {};
+        const tombs = local.meta.tombstones = local.meta.tombstones || {};
         const byId = new Map(local.records.map((r) => [r.id, r]));
         let changed = 0;
+        let reassert = false;   // we hold something the server needs back
 
         Object.values(remote).forEach((r) => {
           if (!r || !r.id) return;
+
+          /* A delete marker from another device. */
+          if (r.deleted) {
+            const held = byId.get(r.id);
+            if (held && (held.updatedAt || '') > (r.updatedAt || '')) {
+              /* This tablet edited the document AFTER someone else
+                 deleted it. The edit is newer, so it stands — throwing
+                 away a technician's work without a word is the worse of
+                 the two surprises.
+
+                 Forget that we ever sent this record, and ask for a
+                 push. Both halves matter: without the first, the record
+                 still looks already-uploaded and is skipped; without the
+                 second, nothing would send it until the next unrelated
+                 save, so it would live on this screen and nowhere else. */
+              pushed.delete(r.id);
+              reassert = true;
+              return;
+            }
+            const t = tombs[r.id];
+            if (!t || (t.updatedAt || '') < (r.updatedAt || '')) {
+              tombs[r.id] = { type: r.type, docNo: r.docNo, updatedAt: r.updatedAt || '' };
+              changed++;
+            }
+            if (byId.has(r.id)) { byId.delete(r.id); changed++; }
+            pushed.set(r.id, r.updatedAt || '');
+            return;
+          }
+
+          /* A live record that we believe was deleted. Settled by the
+             same last-write-wins rule as any other conflict. */
+          const t = tombs[r.id];
+          if (t) {
+            if ((t.updatedAt || '') >= (r.updatedAt || '')) return;  // the delete is newer — it stays deleted
+            delete tombs[r.id];                                      // edited after the delete — it lives again
+            changed++;
+          }
+
           const mine = byId.get(r.id);
           /* Last write wins, decided by the record's own timestamp
              rather than by who happened to sync last. */
@@ -3444,8 +3486,17 @@ const FNCloud = (function () {
           api.setDB(local);
           if (api.onData) api.onData(changed);
         }
+        needsReassert = needsReassert || reassert;
       } finally {
         applyingRemote = false;
+      }
+
+      /* Outside the applyingRemote guard on purpose — push() refuses to
+         run while a remote update is being applied, which is exactly
+         what stops an incoming change from echoing straight back. */
+      if (needsReassert) {
+        needsReassert = false;
+        push();
       }
 
       /* The first snapshot after signing in is the only safe moment to
@@ -3524,6 +3575,29 @@ const FNCloud = (function () {
       }
     }
 
+    /* Deletions travel the same way — a stub in the record's own slot
+       saying it is gone, rather than an empty space that says nothing.
+       id, type and docNo are there because the database rules insist
+       on them; the fallbacks stop a half-formed marker from being
+       permanently unwritable and so permanently unsyncable. */
+    const tombs = (local.meta && local.meta.tombstones) || {};
+    for (const id of Object.keys(tombs)) {
+      const t = tombs[id] || {};
+      if (pushed.get(id) === (t.updatedAt || '')) continue;
+      try {
+        await set(ref(api.db, 'records/' + id), {
+          id,
+          type: t.type || 'SERVICE',
+          docNo: t.docNo || id,
+          updatedAt: t.updatedAt || '',
+          deleted: true,
+        });
+        pushed.set(id, t.updatedAt || '');
+      } catch (err) {
+        console.warn('[FN cloud] delete not written:', t.docNo || id, err && err.message);
+      }
+    }
+
     const people = (local.meta && local.meta.people) || [];
     const peopleKey = JSON.stringify(people);
     if (peopleKey !== pushedPeople) {
@@ -3536,15 +3610,14 @@ const FNCloud = (function () {
     }
   }
 
-  async function removeRecord(id) {
-    if (!state.enabled || !state.ready || !state.signedIn) return;
-    try {
-      const { ref, remove } = api.dbMod;
-      await remove(ref(api.db, 'records/' + id));
-    } catch (err) {
-      console.error('[FN cloud] delete refused:', err);
-    }
-  }
+  /* Deleting used to mean remove(records/<id>) — which is why a deleted
+     document reappeared. A hole in the shared database is indistinguishable
+     from a record that was never there, so no other tablet could tell it
+     had lost something, and the first one to reconnect uploaded its copy
+     back. Deletion now goes through the ordinary push as a marker; see
+     doPush(). This is kept only so an old cached build calling it does
+     not throw. */
+  async function removeRecord() { /* superseded by tombstones */ }
 
   return {
     init, push, removeRecord, onChange, configured,
@@ -3572,7 +3645,7 @@ const FNCloud = (function () {
 
   const STORAGE_KEY = 'fn-machine-care.v1';
 
-  const DEFAULT_DB = { records: [], meta: { version: 1, counters: {} } };
+  const DEFAULT_DB = { records: [], meta: { version: 1, counters: {}, tombstones: {} } };
 
   /* Firebase does not store empty objects or arrays — it treats them as
      nothing and drops the key. So a record that has been to the cloud and
@@ -3609,6 +3682,13 @@ const FNCloud = (function () {
     db.records = (db.records || []).map(normaliseRecord).filter(Boolean);
     db.meta = db.meta || { version: 1, counters: {} };
     db.meta.counters = db.meta.counters || {};
+    /* id -> { type, docNo, updatedAt } for documents that have been
+       deleted. See deleteRecord() for why a deletion has to leave
+       something behind rather than just a hole. */
+    db.meta.tombstones = db.meta.tombstones || {};
+    /* Belt and braces: a delete marker must never be mistaken for a
+       document, whichever route it arrived by. */
+    db.records = db.records.filter((r) => !r.deleted);
     return db;
   }
 
@@ -5891,7 +5971,18 @@ const FNCloud = (function () {
           /* A backup exported after a cloud round trip is missing the same
              empty containers Firebase dropped — normalise on the way in. */
           const rec = normaliseRecord(r);
-          if (rec && !existing.has(rec.id)) { db.records.push(rec); added++; }
+          if (rec && !existing.has(rec.id)) {
+            /* Restoring a backup is a deliberate act, so it outranks an
+               earlier deletion. Without clearing the marker the record
+               would appear, sync, and be deleted again a second later —
+               which would look like the import silently failing. */
+            if (db.meta.tombstones && db.meta.tombstones[rec.id]) {
+              delete db.meta.tombstones[rec.id];
+              rec.updatedAt = new Date().toISOString();
+            }
+            db.records.push(rec);
+            added++;
+          }
         });
         db.meta.peopleSeeded = false;   /* pick up names from the imported records */
         people();
@@ -5972,9 +6063,27 @@ const FNCloud = (function () {
 
   function deleteRecord(rec) {
     if (!confirm(T(UI.confirmDelete))) return;
+    /* Leave a marker, not a hole.
+
+       Simply removing the record from the shared database tells the
+       other tablets nothing: they are holding a copy that nothing ever
+       contradicts, so it stays on their screen — and the next time one
+       of them reconnects it uploads that copy again and the document
+       comes back from the dead. A tablet that was switched off during
+       the delete can only ever learn about it from something that is
+       still there when it wakes up.
+
+       So a deletion is a small record of its own — id, type, docNo and
+       the moment it happened — which travels like any other change and
+       is settled by the same last-write-wins rule. saveDB() pushes it. */
+    db.meta.tombstones = db.meta.tombstones || {};
+    db.meta.tombstones[rec.id] = {
+      type: rec.type,
+      docNo: rec.docNo,
+      updatedAt: new Date().toISOString(),
+    };
     db.records = db.records.filter((r) => r.id !== rec.id);
     saveDB();
-    if (typeof FNCloud !== 'undefined') FNCloud.removeRecord(rec.id);
     go('records');
   }
 
@@ -7133,7 +7242,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260824-084436';
+  const BUILD_ID = '20260824-095036';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
@@ -7478,6 +7587,10 @@ const FNCloud = (function () {
   window.FNMachineCare = {
     get db() { return db; },
     save: saveDB,
+    /* Exposed so the delete path can be exercised end to end from a
+       test rather than by reaching in and splicing the array, which
+       would skip the very tombstone the test is meant to check. */
+    deleteRecord,
     reset: () => { db = structuredClone(DEFAULT_DB); saveDB(); render(); },
   };
 })();
