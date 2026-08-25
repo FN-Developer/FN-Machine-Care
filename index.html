@@ -548,7 +548,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   background-size: 100% 100%, 100% 340%, 100% 100%;
   background-position: 0 0, 0 -240%, 0 0;
   animation: mark-run 4s linear infinite;
-  display: grid; place-items: center;
+  display: flex; align-items: center; justify-content: center;
   font-size: 14px; font-weight: 700; color: #fff;
   letter-spacing: -.02em;
   box-shadow: 0 12px 30px rgba(9, 6, 215, .48), inset 0 1.5px 0 rgba(255, 255, 255, .5);
@@ -561,9 +561,38 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   100% { background-position: 0 0, 0 100%, 0 0; }
 }
 .brand-logo span { position: relative; z-index: 2; }
-/* Match the ERP wordmark inside the tile: F in white, N in brand green. */
-.brand-logo .lf { color: #fff; }
-.brand-logo .ln { color: var(--erp-green); }
+/* Match the ERP mark inside the tile: F white, N green, sitting side by
+   side on one baseline. Each letter runs the ERP's glitch loop — a quick
+   chromatic-aberration flicker (cyan/magenta split, a skew and a couple of
+   clip-path slices) that fires in the first heartbeat of the cycle and
+   then rests, so it catches the eye once and settles. steps(1) keeps the
+   flicker hard-edged rather than smoothly tweened. */
+.brand-logo .lf,
+.brand-logo .ln {
+  display: inline-block;
+  position: relative;
+  z-index: 2;
+  transform-origin: center center;
+  backface-visibility: hidden;
+  will-change: transform, clip-path;
+}
+.brand-logo .lf { color: #fff; animation: glitchF 5s steps(1) infinite; }
+.brand-logo .ln { color: var(--erp-green); animation: glitchN 6.5s steps(1) 1.6s infinite; }
+
+@keyframes glitchF {
+  0%, 4%, 100% { transform: translate(0, 0); text-shadow: none; clip-path: none; opacity: 1; }
+  0.6% { transform: translate(-3px, 1px) skewX(-8deg); text-shadow: #00eaff -3px 0, #ff2bd6 3px 0; clip-path: inset(0 0 62%); }
+  1.4% { transform: translate(3px, -1px);              text-shadow: #00eaff 3px 0, #ff2bd6 -3px 0; clip-path: inset(58% 0 8%); }
+  2.2% { transform: translate(-2px, 0) skewX(6deg);    text-shadow: #00eaff -2px 0, #ff2bd6 2px 0; clip-path: inset(28% 0 40%); opacity: .85; }
+  3.2% { transform: translate(2px, 1px);               text-shadow: #00eaff 2px 0, #ff2bd6 -2px 0; clip-path: none; }
+}
+@keyframes glitchN {
+  0%, 4%, 100% { transform: translate(0, 0); text-shadow: none; clip-path: none; opacity: 1; }
+  0.6% { transform: translate(3px, 1px) skewX(8deg);   text-shadow: #00eaff 3px 0, #ff2bd6 -3px 0; clip-path: inset(0 0 60%); }
+  1.4% { transform: translate(-3px, -1px);             text-shadow: #00eaff -3px 0, #ff2bd6 3px 0; clip-path: inset(55% 0 10%); opacity: .82; }
+  2.2% { transform: translate(2px, 0) skewX(-6deg);    text-shadow: #00eaff 2px 0, #ff2bd6 -2px 0; clip-path: inset(30% 0 38%); }
+  3.2% { transform: translate(-1px, 1px);              text-shadow: #00eaff -1px 0, #ff2bd6 1px 0; clip-path: none; }
+}
 .brand-logo { border-radius: 20px; font-size: 24px; }
 
 /* Orbiting rim highlight */
@@ -700,7 +729,9 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 }
 /* Respect a reduced-motion preference: keep the colours, stop the run. */
 @media (prefers-reduced-motion: reduce) {
-  .brand-logo { animation: none; }
+  .brand-logo,
+  .brand-logo .lf,
+  .brand-logo .ln,
   .brand-sub strong { animation: none; }
 }
 
@@ -2650,7 +2681,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260825-084509"></script>
+<script src="firebase-bundle.js?v=20260825-085535"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -7634,7 +7665,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-084509';
+  const BUILD_ID = '20260825-085535';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
