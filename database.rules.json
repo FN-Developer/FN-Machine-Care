@@ -15,12 +15,20 @@
       "$recordId": {
         ".write": "auth != null",
 
-        // A record may only move FORWARD in time. Even if a tablet
-        // holding an old copy tries to write it back, the database
-        // refuses rather than quietly undoing someone's work. Equal is
-        // allowed so an unchanged re-send is harmless, and a delete
-        // (newData does not exist) is left to the .write rule above.
-        ".validate": "newData.hasChildren(['id', 'type', 'docNo']) && (!data.exists() || !data.hasChild('updatedAt') || newData.child('updatedAt').val() >= data.child('updatedAt').val())",
+        // A record must carry its own identity. That is all the server
+        // checks — it is deliberately NOT the place to decide which of
+        // two edits is newer.
+        //
+        // An earlier version also refused any write whose updatedAt was
+        // older than the stored one. It read well ("a record may only
+        // move forward in time") but it depended on every tablet's CLOCK
+        // agreeing. A tablet running even a little slow would have its
+        // saves rejected — silently, with the sync badge still green —
+        // and the technician saw "saved" while nothing reached the
+        // database. Which edit wins is now settled only on the devices,
+        // by updatedAt, where a wrong answer costs one overwrite rather
+        // than a tablet that can never save at all.
+        ".validate": "newData.hasChildren(['id', 'type', 'docNo'])",
 
         "id": { ".validate": "newData.val() === $recordId" }
       }
