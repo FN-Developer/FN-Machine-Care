@@ -991,6 +991,7 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
 .cloud-badge {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 12px;
   padding: 8px 11px;
@@ -999,6 +1000,15 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
   background: var(--glass-sunken);
   border: 1px solid var(--hairline-soft);
   color: var(--text-dim);
+}
+/* The full reason a save was refused, wrapped onto its own lines under
+   the badge — legible on a tablet that has no tooltip. */
+.cloud-err {
+  flex: 1 0 100%;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--fail-fill);
+  word-break: break-word;
 }
 .cloud-dot {
   width: 8px; height: 8px;
@@ -3600,6 +3610,12 @@ const FNCloud = (function () {
        your work. */
     const dirty = local.records.filter((r) => r && r.id && pushed.get(r.id) !== (r.updatedAt || ''));
 
+    /* Remember what happened, so a save that fails is not invisible.
+       A rejected write used to leave nothing but a console line no one on
+       a tablet can see; state.lastError now carries the reason to the
+       screen. */
+    let failures = 0, lastErr = '';
+
     /* One write per record, not one atomic multi-path update: a
        rejected stale record must not take a good save down with it. */
     for (const r of dirty) {
@@ -3607,10 +3623,8 @@ const FNCloud = (function () {
         await set(ref(api.db, 'records/' + r.id), r);
         pushed.set(r.id, r.updatedAt || '');
       } catch (err) {
-        /* The rules refuse a write older than what is stored, so this
-           is usually another device having got there first. Leave it
-           out of `pushed` and let the incoming snapshot settle it. */
-        console.warn('[FN cloud] record not written:', r.docNo, err && err.message);
+        failures++; lastErr = (err && err.message) || String(err);
+        console.warn('[FN cloud] record not written:', r.docNo, lastErr);
       }
     }
 
@@ -3633,7 +3647,8 @@ const FNCloud = (function () {
         });
         pushed.set(id, t.updatedAt || '');
       } catch (err) {
-        console.warn('[FN cloud] delete not written:', t.docNo || id, err && err.message);
+        failures++; lastErr = (err && err.message) || String(err);
+        console.warn('[FN cloud] delete not written:', t.docNo || id, lastErr);
       }
     }
 
@@ -3644,8 +3659,20 @@ const FNCloud = (function () {
         await set(ref(api.db, 'people'), people);
         pushedPeople = peopleKey;
       } catch (err) {
-        console.error('[FN cloud] people not written:', err);
+        failures++; lastErr = (err && err.message) || String(err);
+        console.error('[FN cloud] people not written:', lastErr);
       }
+    }
+
+    /* Surface the outcome. If the server refused something while we are
+       genuinely connected, the technician needs to know their "saved"
+       did not actually leave the device — silence here is what made this
+       so hard to see. */
+    state.lastError = failures ? lastErr : '';
+    if (failures && connected) {
+      setStatus('error', 'A save was refused by the database: ' + lastErr);
+    } else if (connected && state.signedIn) {
+      setStatus('live');
     }
   }
 
@@ -7180,6 +7207,15 @@ const FNCloud = (function () {
     host.appendChild(el('span', { class: 'cloud-dot' }));
     host.appendChild(el('span', { class: 'cloud-text', text: T(cloudLabel(st)) }));
 
+    /* A tablet has no hover, so a problem the badge only carries in its
+       tooltip is a problem nobody sees. When the database has actually
+       refused a save, show the reason in full, on screen, under the
+       badge — that is the difference between "it just doesn't sync" and
+       a message we can act on. */
+    if (st.status === 'error' && st.message) {
+      host.appendChild(el('span', { class: 'cloud-err', text: st.message }));
+    }
+
     /* Sign-in is automatic, so the badge is a status light, not a
        control. Nothing here for a technician to press or get wrong. */
     host.title = T(cloudTitle(st));
@@ -7351,7 +7387,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-024308';
+  const BUILD_ID = '20260825-025357';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
