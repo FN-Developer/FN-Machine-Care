@@ -3361,7 +3361,31 @@ const FNCloud = (function () {
       }
       const app = F.initializeApp(FIREBASE_CONFIG);
       api.F = F;
-      api.db = F.getFirestore(app);
+
+      /* Force long-polling instead of Firestore's default streaming
+         transport.
+         ───────────────────────────────────────────────────────────
+         The factory network was letting the app RECEIVE changes but
+         not SEND them: edits made on a tablet never reached the shared
+         database, while changes from other devices still arrived. That
+         one-way pattern is the signature of a proxy that passes
+         Firestore's server→client stream but stalls its client→server
+         write channel — so writes queue on the device forever and never
+         land.
+
+         Long-polling replaces that streaming channel with plain HTTPS
+         POST requests the proxy treats like any other web traffic, in
+         BOTH directions. It is a touch chattier on a good network, but
+         on this network it is the difference between saving and not
+         saving — the same reason it is a standard fix for Firestore
+         behind corporate/factory proxies. initializeFirestore must run
+         before anything reads the database, which is why it is here at
+         start-up. Older bundles without it fall back to the default. */
+      if (typeof F.initializeFirestore === 'function') {
+        api.db = F.initializeFirestore(app, { experimentalForceLongPolling: true });
+      } else {
+        api.db = F.getFirestore(app);
+      }
       state.ready = true;
 
       watch();
@@ -7311,7 +7335,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-064303';
+  const BUILD_ID = '20260825-065833';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
