@@ -1019,6 +1019,10 @@ body.lang-th .label-th { font-size: inherit; color: inherit; line-height: inheri
 .cloud-badge.is-live  .cloud-dot { background: var(--pass-fill); box-shadow: 0 0 0 3px color-mix(in srgb, var(--pass-fill) 22%, transparent); }
 .cloud-badge.is-signin .cloud-dot { background: var(--accent-yellow); }
 .cloud-badge.is-error .cloud-dot { background: var(--fail-fill); }
+/* Saved here but not confirmed uploaded — amber and pulsing so a
+   technician notices it is still working, not done. */
+.cloud-badge.is-unsent .cloud-dot { background: var(--accent-yellow); animation: field-alarm 1.4s ease-in-out infinite; }
+.cloud-badge.is-unsent .cloud-err { color: var(--accent-yellow); }
 .cloud-badge.is-connecting .cloud-dot { animation: field-alarm 1.4s ease-in-out infinite; background: var(--accent-blue); }
 .cloud-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cloud-out {
@@ -2562,7 +2566,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260825-070119"></script>
+<script src="firebase-bundle.js?v=20260825-073017"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -3309,9 +3313,10 @@ const FNCloud = (function () {
     ready: false,
     signedIn: true,    // no auth; kept true so push gating reads simply
     user: null,
-    status: 'off',     // off | connecting | offline | live | error
+    status: 'off',     // off | connecting | offline | live | error | unsent
     message: '',
     lastError: '',
+    pending: 0,        // records saved here but not yet confirmed uploaded
   };
 
   let api = null;                 // { db, F, getDB, setDB, onData }
@@ -3544,6 +3549,25 @@ const FNCloud = (function () {
     pushTimer = setTimeout(doPush, 900);
   }
 
+  /* How long to wait for the server to CONFIRM a write before we treat it
+     as not-yet-uploaded. Firestore's setDoc promise resolves only once the
+     server has acknowledged the write; if the network lets reads through
+     but stalls writes (a proxy that passes the incoming stream but buffers
+     the outgoing one), that promise simply never resolves — no error, it
+     just hangs. Waiting on it forever is exactly how a save looked
+     "done" (badge still green) while nothing had actually left the tablet.
+     So we race every write against this timeout and, on a stall, say so. */
+  const WRITE_CONFIRM_MS = 8000;
+
+  function confirmWrite(p) {
+    /* → 'ok' if the server acknowledged, 'stalled' if it took too long.
+       A rejection propagates (caught by the caller as a real refusal). */
+    return Promise.race([
+      Promise.resolve(p).then(() => 'ok'),
+      new Promise((res) => setTimeout(() => res('stalled'), WRITE_CONFIRM_MS)),
+    ]);
+  }
+
   async function doPush() {
     const { doc, setDoc } = api.F;
     const local = api.getDB();
@@ -3560,64 +3584,82 @@ const FNCloud = (function () {
         && !/^__.*__$/.test(id);
     }
 
-    /* Only records whose timestamp moved — never re-upload everything,
-       which is how one tablet's stale copy used to undo another's edit. */
-    const dirty = local.records.filter((r) => r && validId(r.id) && pushed.get(r.id) !== (r.updatedAt || ''));
+    /* Build the list of writes this push needs to make. Records whose
+       timestamp moved (never re-upload everything — that is how one
+       tablet's stale copy used to undo another's edit), plus tombstones
+       and the people list. Each job carries a commit() that records the
+       success once the server acknowledges it. */
+    const jobs = [];
 
-    let failures = 0, lastErr = '';
+    local.records.forEach((r) => {
+      if (!r || !validId(r.id) || pushed.get(r.id) === (r.updatedAt || '')) return;
+      jobs.push({
+        label: r.docNo || r.id,
+        make: () => setDoc(doc(api.db, 'records', r.id), {
+          id: r.id, updatedAt: r.updatedAt || '', deleted: false, json: JSON.stringify(r),
+        }),
+        commit: () => pushed.set(r.id, r.updatedAt || ''),
+      });
+    });
 
-    for (const r of dirty) {
-      try {
-        await setDoc(doc(api.db, 'records', r.id), {
-          id: r.id,
-          updatedAt: r.updatedAt || '',
-          deleted: false,
-          json: JSON.stringify(r),
-        });
-        pushed.set(r.id, r.updatedAt || '');
-      } catch (err) {
-        failures++; lastErr = (err && err.message) || String(err);
-        console.warn('[FN cloud] record not written:', r.docNo, lastErr);
-      }
-    }
-
-    /* Deletions travel as tombstone docs — a marker, not a hole. */
     const tombs = (local.meta && local.meta.tombstones) || {};
-    for (const id of Object.keys(tombs)) {
-      if (!validId(id)) continue;   // a reserved/invalid id can't be a Firestore doc
+    Object.keys(tombs).forEach((id) => {
+      if (!validId(id)) return;                 // reserved/invalid id can't be a doc
       const t = tombs[id] || {};
-      if (pushed.get(id) === (t.updatedAt || '')) continue;
-      try {
-        await setDoc(doc(api.db, 'records', id), {
-          id,
-          type: t.type || 'SERVICE',
-          docNo: t.docNo || id,
-          updatedAt: t.updatedAt || '',
-          deleted: true,
-        });
-        pushed.set(id, t.updatedAt || '');
-      } catch (err) {
-        failures++; lastErr = (err && err.message) || String(err);
-        console.warn('[FN cloud] delete not written:', t.docNo || id, lastErr);
-      }
-    }
+      if (pushed.get(id) === (t.updatedAt || '')) return;
+      jobs.push({
+        label: t.docNo || id,
+        make: () => setDoc(doc(api.db, 'records', id), {
+          id, type: t.type || 'SERVICE', docNo: t.docNo || id, updatedAt: t.updatedAt || '', deleted: true,
+        }),
+        commit: () => pushed.set(id, t.updatedAt || ''),
+      });
+    });
 
     const people = (local.meta && local.meta.people) || [];
     const peopleKey = JSON.stringify(people);
     if (peopleKey !== pushedPeople) {
-      try {
-        await setDoc(doc(api.db, 'meta', 'people'), { json: peopleKey });
-        pushedPeople = peopleKey;
-      } catch (err) {
-        failures++; lastErr = (err && err.message) || String(err);
-        console.error('[FN cloud] people not written:', lastErr);
-      }
+      jobs.push({
+        label: 'people',
+        make: () => setDoc(doc(api.db, 'meta', 'people'), { json: peopleKey }),
+        commit: () => { pushedPeople = peopleKey; },
+      });
     }
 
-    /* Surface a refusal so a failed save is never silent. */
+    if (!jobs.length) { if (connected) setStatus('live'); return; }
+
+    /* Fire every write AT ONCE and race the whole batch against a single
+       confirmation window — not one-at-a-time, or a stalled write would
+       hold up the ones behind it and the badge would take N×the timeout
+       to tell the truth. Now, however many changes are queued, the badge
+       reflects reality within one window. */
+    let failures = 0, lastErr = '', stalled = 0;
+    await Promise.all(jobs.map((job) => {
+      let p;
+      try { p = job.make(); } catch (err) { failures++; lastErr = (err && err.message) || String(err); return Promise.resolve(); }
+      return confirmWrite(p).then((res) => {
+        if (res === 'ok') job.commit(); else stalled++;
+      }).catch((err) => {
+        failures++; lastErr = (err && err.message) || String(err);
+        console.warn('[FN cloud] not written:', job.label, lastErr);
+      });
+    }));
+
+    /* Say the truth about whether the work actually left this tablet.
+       - refused        -> a real error from the database (rules, etc.)
+       - stalled        -> saved here, but the server has not confirmed it;
+                           keep trying on a timer so it lands the moment the
+                           write path clears.
+       - all acknowledged-> live, everything is up. */
     state.lastError = failures ? lastErr : '';
+    state.pending = stalled;
     if (failures && connected) {
       setStatus('error', 'A save was refused by the database: ' + lastErr);
+    } else if (stalled && connected) {
+      setStatus('unsent', stalled + ' change' + (stalled === 1 ? '' : 's')
+        + ' saved on this tablet but NOT yet uploaded — still trying.');
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(doPush, 5000);   // retry until it lands
     } else if (connected) {
       setStatus('live');
     }
@@ -7139,6 +7181,7 @@ const FNCloud = (function () {
     if (st.status === 'live') return { en: 'Synced', th: 'ซิงก์แล้ว' };
     if (st.status === 'connecting') return { en: 'Connecting…', th: 'กำลังเชื่อมต่อ…' };
     if (st.status === 'offline') return { en: 'This device only', th: 'เฉพาะเครื่องนี้' };
+    if (st.status === 'unsent') return { en: 'Not uploaded yet', th: 'ยังไม่ได้อัปโหลด' };
     if (st.status === 'error') return { en: 'Sync problem', th: 'ซิงก์มีปัญหา' };
     return { en: 'This device only', th: 'เฉพาะเครื่องนี้' };
   }
@@ -7160,7 +7203,7 @@ const FNCloud = (function () {
        refused a save, show the reason in full, on screen, under the
        badge — that is the difference between "it just doesn't sync" and
        a message we can act on. */
-    if (st.status === 'error' && st.message) {
+    if ((st.status === 'error' || st.status === 'unsent') && st.message) {
       host.appendChild(el('span', { class: 'cloud-err', text: st.message }));
     }
 
@@ -7176,6 +7219,10 @@ const FNCloud = (function () {
     }
     if (st.status === 'connecting') {
       return { en: 'Connecting to the shared database…', th: 'กำลังเชื่อมต่อฐานข้อมูลกลาง…' };
+    }
+    if (st.status === 'unsent') {
+      return { en: 'Saved on this tablet, but not uploaded to the shared database yet. Still trying — keep this open until it turns green.',
+               th: 'บันทึกในเครื่องนี้แล้ว แต่ยังไม่ได้อัปโหลดขึ้นฐานข้อมูลกลาง กำลังพยายามอยู่ — เปิดหน้านี้ไว้จนกว่าจะเป็นสีเขียว' };
     }
     if (st.status === 'error') {
       return { en: st.message || 'The shared database refused this tablet.',
@@ -7335,7 +7382,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-070119';
+  const BUILD_ID = '20260825-073017';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
