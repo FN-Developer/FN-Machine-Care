@@ -3675,6 +3675,11 @@ const FNCloud = (function () {
       after:  Array.isArray(ba && ba.after)  ? ba.after  : [],
     };
     if (rec.result === undefined) rec.result = null;
+    /* Every record must carry the timestamps the rest of the app reads
+       without checking. A record missing one (a partial write, an older
+       backup) is repaired here rather than left to crash a screen. */
+    if (!rec.updatedAt) rec.updatedAt = rec.createdAt || '';
+    if (!rec.createdAt) rec.createdAt = rec.updatedAt || '';
     return rec;
   }
 
@@ -5497,7 +5502,13 @@ const FNCloud = (function () {
   }
 
   function primaryDate(r) {
-    return r.fields.inspectionDate || r.fields.serviceDate || r.fields.commissionDate || r.fields.buildDate || r.createdAt.slice(0, 10);
+    const f = r.fields || {};
+    /* createdAt has always been a string in practice, but a record that
+       arrives missing it (a partial write, an older export, a stub that
+       slipped through) must not take the whole Records page down over a
+       date. Fall back to updatedAt, then to nothing. */
+    return f.inspectionDate || f.serviceDate || f.commissionDate || f.buildDate
+      || String(r.createdAt || r.updatedAt || '').slice(0, 10);
   }
 
   function escapeHTML(s) {
@@ -7301,7 +7312,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-020020';
+  const BUILD_ID = '20260825-023012';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
