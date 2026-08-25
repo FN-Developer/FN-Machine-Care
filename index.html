@@ -2566,7 +2566,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260825-075326"></script>
+<script src="firebase-bundle.js?v=20260825-082023"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -6072,8 +6072,8 @@ const FNCloud = (function () {
           el('h2', { class: 'lock-title' }, [L({ en: 'Developer access', th: 'สำหรับผู้ดูแลระบบ' })]),
           el('p', { class: 'lock-sub' }, [
             L({
-              en: 'Backup and restore can erase every record on this device.',
-              th: 'การสำรองและกู้คืนสามารถลบข้อมูลทั้งหมดในเครื่องนี้ได้',
+              en: 'Backup, restore and erase act on the shared database — every tablet.',
+              th: 'สำรอง กู้คืน และลบข้อมูล มีผลกับฐานข้อมูลกลาง — ทุกเครื่อง',
             }),
           ]),
           err,
@@ -6090,8 +6090,8 @@ const FNCloud = (function () {
           ]),
           el('p', { class: 'lock-note' }, [
             L({
-              en: 'This gate prevents accidents. It is not security — the app runs entirely on this device.',
-              th: 'ระบบนี้ป้องกันการกดผิดพลาดเท่านั้น ไม่ใช่ระบบความปลอดภัย เพราะแอปทำงานบนเครื่องนี้ทั้งหมด',
+              en: 'This gate prevents accidents. It is not security — anyone who can open the app can unlock it.',
+              th: 'ระบบนี้ป้องกันการกดผิดพลาดเท่านั้น ไม่ใช่ระบบความปลอดภัย ใครที่เปิดแอปได้ก็ปลดล็อกได้',
             }),
           ]),
         ]),
@@ -6210,12 +6210,32 @@ const FNCloud = (function () {
 
   function wipeAll() {
     const msg = lang === 'th'
-      ? 'ลบข้อมูลทั้งหมดถาวร? ควรส่งออกไฟล์สำรองก่อน'
-      : 'Permanently erase all data? Export a backup first.';
+      ? 'ลบข้อมูลทั้งหมดออกจากทุกเครื่องอย่างถาวร? ควรส่งออกไฟล์สำรองก่อน'
+      : 'Permanently erase ALL data on EVERY device? Export a backup first.';
     if (!confirm(msg)) return;
-    if (!confirm(lang === 'th' ? 'ยืนยันอีกครั้ง — ข้อมูลจะหายถาวร' : 'Confirm again — this cannot be undone.')) return;
-    db = structuredClone(DEFAULT_DB);
-    saveDB();
+    if (!confirm(lang === 'th'
+      ? 'ยืนยันอีกครั้ง — ข้อมูลจะถูกลบจากทุกเครื่องและกู้คืนไม่ได้ (ยกเว้นมีไฟล์สำรอง)'
+      : 'Confirm again — this erases every record on all tablets and cannot be undone (unless you have a backup file).')) return;
+
+    /* An erase has to travel like a delete, or it does nothing and worse:
+       clearing the records here leaves the shared database untouched, and
+       the next snapshot pours every record straight back — the erase
+       undoes itself, on this tablet too. So erase leaves a tombstone for
+       EVERY record (the same marker a single delete makes), which is what
+       carries the erase to every device and keeps the records from
+       reappearing. A backup file is the only way back, which is why the
+       confirmations push toward exporting one first. */
+    const stamp = new Date().toISOString();
+    db.meta = db.meta || { version: 1, counters: {} };
+    db.meta.tombstones = db.meta.tombstones || {};
+    db.records.forEach((r) => {
+      if (r && r.id) db.meta.tombstones[r.id] = { type: r.type, docNo: r.docNo, updatedAt: stamp };
+    });
+    db.records = [];
+    db.meta.people = [];
+    db.meta.peopleSeeded = false;
+    saveDB();   // pushes every tombstone up; other tablets drop their records
+    toast(lang === 'th' ? 'ลบข้อมูลทั้งหมดแล้ว' : 'All data erased');
     go('dashboard');
   }
 
@@ -7530,7 +7550,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-075326';
+  const BUILD_ID = '20260825-082023';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
