@@ -2562,7 +2562,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js"></script>
+<script src="firebase-bundle.js?v=20260825-070119"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -7335,7 +7335,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-065833';
+  const BUILD_ID = '20260825-070119';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
