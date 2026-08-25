@@ -4063,60 +4063,50 @@ const FNCloud = (function () {
 
     try {
       /* The SDK is already here — no network fetch. FNFirebase is the
-         bundle inlined ahead of this script. The app and auth/database
-         functions all come from that one object; the code below still
-         speaks in appMod/authMod/dbMod so the rest of the file is
-         unchanged. */
+         bundle inlined ahead of this script; app and database functions
+         both come from that one object. */
       const F = (typeof window !== 'undefined' && window.FNFirebase) || (typeof FNFirebase !== 'undefined' ? FNFirebase : null);
       if (!F || typeof F.initializeApp !== 'function') {
         throw new Error('Firebase bundle missing (firebase-bundle.js did not load)');
       }
-      const appMod  = F;
-      const authMod = F;
-      const dbMod   = F;
+      const appMod = F;
+      const dbMod  = F;
 
       const app = appMod.initializeApp(FIREBASE_CONFIG);
-      api.auth = authMod.getAuth(app);
       api.db = dbMod.getDatabase(app);
-      api.authMod = authMod;
       api.dbMod = dbMod;
       state.ready = true;
 
+      /* NO SIGN-IN.
+
+         The app used to sign in anonymously before it could touch the
+         database. That meant a second network call — to Google's auth
+         server (identitytoolkit.googleapis.com) — on top of the database
+         connection. On networks that block Google's servers (the same
+         ones that blocked the SDK download), that call failed with
+         "auth/network-request-failed", and because the rules required a
+         signed-in user, nothing could read or write: the app was stuck
+         on a green badge that never actually synced.
+
+         The database rules now allow access without a signed-in user, so
+         the app connects straight to the database and needs nothing from
+         Google's auth server. The sign-in that the ERP does was never
+         real security — any device with the address already had full
+         access — so removing it changes what is protected not at all,
+         and it makes the app work on networks that only allow the
+         database connection.
+
+         state.signedIn is kept true purely so the rest of the code, which
+         gates pushes on it, keeps working unchanged. */
+      state.signedIn = true;
+      state.user = null;
+
       /* The truth about the connection, straight from the database.
          .info/connected is true only while this device actually has a
-         live socket to the server — it goes false the moment the network
-         drops, and back to true when it returns. Being *signed in* does
-         not mean *connected*: Firebase restores a saved login from local
-         storage with no network at all, and the records on screen come
-         from this device's own cache. For weeks the badge said "Synced"
-         off the sign-in alone, so a tablet that could not reach the
-         database looked exactly like one that could. Now the badge
-         follows this, so "Synced" means the shared database is genuinely
-         reachable and a save will actually leave the device. */
+         live socket to the server. "Synced" now means exactly that. */
       watchConnection();
-
-      authMod.onAuthStateChanged(api.auth, (user) => {
-        state.signedIn = !!user;
-        state.user = user ? { email: user.email, uid: user.uid } : null;
-        if (user) {
-          /* Only claim "live" once the connection signal agrees. If we
-             are signed in but not actually connected, this stays
-             "connecting" until the socket comes up. */
-          setStatus(connected ? 'live' : 'connecting');
-          watch();
-        } else {
-          watching = false;
-          seeded = false;
-          pushed.clear();
-          pushedPeople = null;
-          /* Nobody types anything. The tablet asks Firebase for a guest
-             identity and the rules accept it — the same arrangement the
-             ERP uses. Anonymous accounts are cleaned up after 30 days,
-             so this also runs when an old one expires; the records live
-             under /records, not under the account, so nothing is lost. */
-          signInGuest();
-        }
-      });
+      watch();
+      setStatus(connected ? 'live' : 'connecting');
 
       return true;
     } catch (err) {
@@ -4124,31 +4114,6 @@ const FNCloud = (function () {
       state.ready = false;
       setStatus('offline', 'Could not reach Firebase — working on this device only.');
       return false;
-    }
-  }
-
-  /* ---------- sign in ---------- */
-
-  let guestTries = 0;
-
-  async function signInGuest() {
-    if (!state.ready) return;
-    setStatus('connecting');
-    try {
-      await api.authMod.signInAnonymously(api.auth);
-      guestTries = 0;
-    } catch (err) {
-      console.error('[FN cloud] guest sign-in refused:', err);
-      /* Almost always the tablet being off the network. Back off and try
-         again rather than sitting there dead — but never block the app,
-         which is still perfectly usable on its own storage. */
-      if (guestTries < 5) {
-        guestTries++;
-        setTimeout(signInGuest, Math.min(30000, 2000 * Math.pow(2, guestTries)));
-        setStatus('connecting');
-      } else {
-        setStatus('offline', 'Could not reach the shared database — working on this device only.');
-      }
     }
   }
 
@@ -8092,7 +8057,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-030550';
+  const BUILD_ID = '20260825-035500';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
