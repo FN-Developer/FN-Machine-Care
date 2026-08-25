@@ -4235,7 +4235,7 @@ const FNCloud = (function () {
   /* Safety gate — a failed safety item blocks a READY result */
   function hasSafetyFail(record) {
     const def = FORM_BY_TYPE[record.type];
-    if (!def.safetyGate) return false;
+    if (!def || !def.safetyGate) return false;
     return def.sections.some((s) => {
       if (s.type !== 'checklist' || !s.critical) return false;
       const answers = record.checks[s.id] || {};
@@ -4246,6 +4246,7 @@ const FNCloud = (function () {
   function failedItems(record) {
     const def = FORM_BY_TYPE[record.type];
     const out = [];
+    if (!def) return out;
     def.sections.forEach((s) => {
       if (s.type !== 'checklist' && s.type !== 'condition') return;
       const answers = record.checks[s.id] || {};
@@ -4261,6 +4262,7 @@ const FNCloud = (function () {
 
   function resultMeta(record) {
     const def = FORM_BY_TYPE[record.type];
+    if (!def) return null;
     const section = def.sections.find((s) => s.type === 'result');
     if (!section || !record.result) return null;
     return section.options.find((o) => o.value === record.result) || null;
@@ -5462,6 +5464,7 @@ const FNCloud = (function () {
     const tbody = el('tbody');
     list.forEach((r) => {
       const def = FORM_BY_TYPE[r.type];
+      if (!def) return;
       const p = recordProgress(r);
       const meta = resultMeta(r);
       tbody.appendChild(
@@ -5768,6 +5771,7 @@ const FNCloud = (function () {
     const tl = el('div', { class: 'timeline' });
     m.records.forEach((r) => {
       const def = FORM_BY_TYPE[r.type];
+      if (!def) return;
       const meta = resultMeta(r);
       const fails = failedItems(r);
       tl.appendChild(
@@ -5941,9 +5945,11 @@ const FNCloud = (function () {
   function exportCSV() {
     const rows = [['Doc No', 'Type', 'Work No', 'Serial No', 'Machine', 'Customer', 'Date', 'Status', 'Result', 'Failed items']];
     db.records.forEach((r) => {
+      const def = FORM_BY_TYPE[r.type];
+      if (!def) return;
       const meta = resultMeta(r);
       rows.push([
-        r.docNo, FORM_BY_TYPE[r.type].prefix, r.fields.workNo || '', r.fields.serialNo || '',
+        r.docNo, def.prefix, r.fields.workNo || '', r.fields.serialNo || '',
         r.fields.machineName || '', r.fields.customer || '', primaryDate(r), r.status,
         meta ? meta.label.en : '', failedItems(r).map((f) => f.item.code).join(' '),
       ]);
@@ -7305,7 +7311,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-063005';
+  const BUILD_ID = '20260825-064303';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
