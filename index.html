@@ -3300,9 +3300,32 @@ const FNCloud = (function () {
   let pushedPeople = null;
   let seeded = false;             // has this session uploaded what was already on the device?
   let needsReassert = false;      // we hold a record the server has wrongly lost
+  let connected = false;          // real socket to the server (.info/connected)
+  let connWatched = false;
 
   function emit() { listeners.forEach((fn) => { try { fn(state); } catch (e) { console.error(e); } }); }
   function onChange(fn) { listeners.push(fn); return () => { listeners = listeners.filter((f) => f !== fn); }; }
+
+  /* Follow the real connection. .info/connected is a local mirror the
+     SDK maintains; reading it never touches the network and is not
+     governed by the security rules. */
+  function watchConnection() {
+    if (connWatched) return;
+    connWatched = true;
+    const { ref, onValue } = api.dbMod;
+    onValue(ref(api.db, '.info/connected'), (snap) => {
+      connected = snap.val() === true;
+      if (!state.signedIn) return;              // auth state drives the rest
+      if (connected) {
+        setStatus('live');
+        /* A save made while offline is still sitting in local storage;
+           now that the socket is back, send it. */
+        push();
+      } else {
+        setStatus('connecting', 'Reaching the shared database…');
+      }
+    });
+  }
 
   function setStatus(status, message) {
     state.status = status;
@@ -3344,11 +3367,27 @@ const FNCloud = (function () {
       api.dbMod = dbMod;
       state.ready = true;
 
+      /* The truth about the connection, straight from the database.
+         .info/connected is true only while this device actually has a
+         live socket to the server — it goes false the moment the network
+         drops, and back to true when it returns. Being *signed in* does
+         not mean *connected*: Firebase restores a saved login from local
+         storage with no network at all, and the records on screen come
+         from this device's own cache. For weeks the badge said "Synced"
+         off the sign-in alone, so a tablet that could not reach the
+         database looked exactly like one that could. Now the badge
+         follows this, so "Synced" means the shared database is genuinely
+         reachable and a save will actually leave the device. */
+      watchConnection();
+
       authMod.onAuthStateChanged(api.auth, (user) => {
         state.signedIn = !!user;
         state.user = user ? { email: user.email, uid: user.uid } : null;
         if (user) {
-          setStatus('live');
+          /* Only claim "live" once the connection signal agrees. If we
+             are signed in but not actually connected, this stays
+             "connecting" until the socket comes up. */
+          setStatus(connected ? 'live' : 'connecting');
           watch();
         } else {
           watching = false;
@@ -7312,7 +7351,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-023012';
+  const BUILD_ID = '20260825-024308';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
