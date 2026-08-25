@@ -7156,6 +7156,40 @@ const FNCloud = (function () {
     if (note) note.textContent = note.textContent.replace(/^v[\d.]+/, 'v1.2 · ' + BUILD_ID);
   }
 
+  /* An update arrived while someone was typing, and is waiting to be
+     shown. Held here rather than dropped — the record objects already
+     carry the new values, only the screen is behind. */
+  let pendingRemote = false;
+
+  function isTypingInForm() {
+    const a = document.activeElement;
+    if (!a || !a.closest) return false;
+    if (!a.closest('.form-shell')) return false;
+    return /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+  }
+
+  /* A form can be a long page, and a technician half-way down a
+     checklist should not be thrown back to the top just because another
+     tablet saved something. */
+  function redrawKeepingPlace() {
+    const y = window.scrollY;
+    render();
+    window.scrollTo(0, y);
+  }
+
+  /* The moment they leave the field, catch the screen up. */
+  document.addEventListener('focusout', () => {
+    if (!pendingRemote) return;
+    setTimeout(() => {
+      /* A blur that just moves to the next box is not "finished" — only
+         act once focus has genuinely left the form. */
+      if (!pendingRemote || isTypingInForm()) return;
+      pendingRemote = false;
+      if (state.view === 'form') redrawKeepingPlace(); else render();
+      toast(lang === 'th' ? 'แสดงการแก้ไขจากเครื่องอื่นแล้ว' : 'Updates from other devices are now shown');
+    }, 150);
+  }, true);
+
   function startCloud() {
     if (typeof FNCloud === 'undefined') return;
     FNCloud.onChange(() => { renderCloudBadge(); });
@@ -7168,21 +7202,46 @@ const FNCloud = (function () {
         try { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); } catch (e) { /* full */ }
       },
       onData: (n) => {
-        /* Never rebuild a form that someone is filling in. render()
-           replaces the whole screen, so an arriving update from another
-           tablet would wipe the half-typed value under the technician's
-           finger and drop the caret — indistinguishable from the app
-           throwing their work away. The record objects are already
-           updated in place, so nothing is lost by waiting; every other
-           view is safe to redraw. */
+        /* An update has arrived from another device. The only thing that
+           must never happen is rebuilding a form under a technician's
+           finger: render() replaces the whole screen, so a half-typed
+           value and the caret would go with it.
+
+           But that is a narrow case, and holding the whole screen back
+           for it was far too blunt. Waiting also means the screen keeps
+           showing values that are no longer true, which reads exactly
+           like the app having failed to sync. So wait only when there is
+           something to lose:
+
+             - a change to a document we are not looking at  -> draw it
+             - the open document, nobody typing              -> draw it
+             - the open document while a field has focus     -> hold,
+               and draw it the moment they finish with that field. */
+        const say = () => toast(lang === 'th'
+          ? `รับข้อมูลจากเครื่องอื่น ${n} รายการ`
+          : `${n} update${n === 1 ? '' : 's'} from other devices`);
+
         if (state.view === 'form') {
-          toast(lang === 'th'
-            ? `มีการแก้ไขจากเครื่องอื่น ${n} รายการ — จะแสดงเมื่อออกจากฟอร์มนี้`
-            : `${n} update${n === 1 ? '' : 's'} from another device — shown when you leave this form`);
+          /* Whether the change is to THIS document or another one makes
+             no difference here: render() rebuilds the entire screen, so
+             any redraw takes the box being typed in with it. The only
+             question that matters is whether a field has focus. (A first
+             attempt keyed this on which record changed, and the
+             mid-typing test caught it destroying the box for an
+             unrelated update.) */
+          if (isTypingInForm()) {
+            pendingRemote = true;
+            toast(lang === 'th'
+              ? `มีการแก้ไขจากเครื่องอื่น ${n} รายการ — จะแสดงเมื่อพิมพ์เสร็จ`
+              : `${n} update${n === 1 ? '' : 's'} from another device — shown when you finish typing`);
+            return;
+          }
+          redrawKeepingPlace();
+          say();
           return;
         }
         render();
-        toast(lang === 'th' ? `รับข้อมูลจากเครื่องอื่น ${n} รายการ` : `${n} update${n === 1 ? '' : 's'} from other devices`);
+        say();
       },
     }).then(() => renderCloudBadge());
   }
@@ -7242,7 +7301,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260824-095036';
+  const BUILD_ID = '20260825-020020';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
