@@ -3524,9 +3524,21 @@ const FNCloud = (function () {
     const { doc, setDoc } = api.F;
     const local = api.getDB();
 
+    /* A Firestore document id may not contain '/', be '.' or '..', or
+       start and end with double underscores (those are reserved). Real
+       record ids never look like that, but a stray one — an old test
+       marker like __ruletest__ left in a tombstone list — must be
+       skipped, not thrown at Firestore, or its rejection turns the whole
+       sync red and stops every good save behind it. */
+    function validId(id) {
+      return typeof id === 'string' && id.length > 0 && id.length < 1400
+        && id.indexOf('/') < 0 && id !== '.' && id !== '..'
+        && !/^__.*__$/.test(id);
+    }
+
     /* Only records whose timestamp moved — never re-upload everything,
        which is how one tablet's stale copy used to undo another's edit. */
-    const dirty = local.records.filter((r) => r && r.id && pushed.get(r.id) !== (r.updatedAt || ''));
+    const dirty = local.records.filter((r) => r && validId(r.id) && pushed.get(r.id) !== (r.updatedAt || ''));
 
     let failures = 0, lastErr = '';
 
@@ -3548,6 +3560,7 @@ const FNCloud = (function () {
     /* Deletions travel as tombstone docs — a marker, not a hole. */
     const tombs = (local.meta && local.meta.tombstones) || {};
     for (const id of Object.keys(tombs)) {
+      if (!validId(id)) continue;   // a reserved/invalid id can't be a Firestore doc
       const t = tombs[id] || {};
       if (pushed.get(id) === (t.updatedAt || '')) continue;
       try {
@@ -7292,7 +7305,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-060929';
+  const BUILD_ID = '20260825-063005';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
