@@ -15,7 +15,7 @@
 <meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Machine build checklist (ASSY), factory acceptance test (FAT), site acceptance test (SAT), and customer service reports (SR).">
 <meta name="theme-color" content="#e9edf6">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%230a84ff'/><text y='68' x='50' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>FN</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%230906d7'/><text y='68' x='50' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>FN</text></svg>">
 <style>
 /* =============================================================
    FN MACHINE CARE — visionOS theme
@@ -94,8 +94,24 @@
   --scroll-thumb-hover: rgba(9, 20, 48, .42);
 
   --wm-base: #101a2e;
-  --wm-hi:   #0a84ff;
-  --wm-hi-2: #bf5af3;
+  --wm-hi:   #1560ff;
+  --wm-hi-2: #2fa34a;
+
+  /* FN-ERP-System brand tone — its logo is a blue→indigo tile with a
+     cyan→green light band running through it. Machine Care borrows the
+     same colours so the two apps read as one family. */
+  --erp-blue:   #0906d7;
+  --erp-indigo: #4b49ff;
+  --erp-cyan:   #00eaff;
+  --erp-green:  #77e947;
+
+  /* "F N Technology" runs a colour band through the letters. On a light
+     surface the vivid cyan/green would wash out, so the ramp is deepened
+     here; dark mode swaps in the bright ERP version below. */
+  --ft-1: #0906d7;
+  --ft-2: #4b49ff;
+  --ft-3: #0093b0;
+  --ft-4: #2f8f3a;
 
   --pass:  #248a3d;
   --fail:  #d70015;
@@ -166,8 +182,14 @@
   --scroll-thumb-hover: rgba(255, 255, 255, .38);
 
   --wm-base: #eef2fb;
-  --wm-hi:   #6bb8ff;
-  --wm-hi-2: #d59bff;
+  --wm-hi:   #00eaff;
+  --wm-hi-2: #77e947;
+
+  /* Dark surface: the vivid ERP colours pop, so run them at full strength. */
+  --ft-1: #6f8bff;
+  --ft-2: #00eaff;
+  --ft-3: #77e947;
+  --ft-4: #a9b8ff;
 
   --pass: #4ee16f;
   --fail: #ff6961;
@@ -509,14 +531,39 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   width: 66px; height: 66px;
   flex: 0 0 auto;
   border-radius: 11px;
-  background: linear-gradient(140deg, var(--accent-blue), var(--accent-violet));
+  /* ERP tone: a blue→indigo tile with a cyan→green light band that RUNS
+     vertically through it. Three background layers — the base gradient,
+     the moving band (340% tall, slid by mark-run), and a solid fallback
+     underneath so the tile is never bare mid-slide. */
+  background:
+    linear-gradient(145deg, var(--erp-blue), var(--erp-indigo)),
+    linear-gradient(0deg,
+      transparent 28%,
+      rgba(0, 234, 255, .5) 38%,
+      var(--erp-cyan) 46%,
+      var(--erp-green) 54%,
+      rgba(119, 233, 71, .5) 62%,
+      transparent 72%),
+    linear-gradient(var(--erp-blue), var(--erp-blue));
+  background-size: 100% 100%, 100% 340%, 100% 100%;
+  background-position: 0 0, 0 -240%, 0 0;
+  animation: mark-run 4s linear infinite;
   display: grid; place-items: center;
   font-size: 14px; font-weight: 700; color: #fff;
   letter-spacing: -.02em;
-  box-shadow: 0 8px 22px rgba(10, 132, 255, .40), inset 0 1.5px 0 rgba(255,255,255,.5);
+  box-shadow: 0 12px 30px rgba(9, 6, 215, .48), inset 0 1.5px 0 rgba(255, 255, 255, .5);
   isolation: isolate;
 }
+/* The band slides from above the tile to below it, so the cyan→green light
+   sweeps down through the mark on a loop — the ERP's signature motion. */
+@keyframes mark-run {
+  0%   { background-position: 0 0, 0 -240%, 0 0; }
+  100% { background-position: 0 0, 0 100%, 0 0; }
+}
 .brand-logo span { position: relative; z-index: 2; }
+/* Match the ERP wordmark inside the tile: F in white, N in brand green. */
+.brand-logo .lf { color: #fff; }
+.brand-logo .ln { color: var(--erp-green); }
 .brand-logo { border-radius: 20px; font-size: 24px; }
 
 /* Orbiting rim highlight */
@@ -543,15 +590,15 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: 0 0 0 0 rgba(10, 132, 255, .55);
+  box-shadow: 0 0 0 0 rgba(9, 6, 215, .55);
   animation: mark-pulse 4.5s ease-in-out infinite;
   z-index: 1;
 }
 
 @keyframes mark-orbit { to { transform: rotate(360deg); } }
 @keyframes mark-pulse {
-  0%, 70%, 100% { box-shadow: 0 0 0 0 rgba(10, 132, 255, .0); }
-  85%           { box-shadow: 0 0 14px 2px rgba(10, 132, 255, .38); }
+  0%, 70%, 100% { box-shadow: 0 0 0 0 rgba(9, 6, 215, .0); }
+  85%           { box-shadow: 0 0 16px 3px rgba(0, 234, 255, .40); }
 }
 
 /* ---- Wordmark ---- */
@@ -618,6 +665,43 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   font-size: 12.5px;
   color: var(--text-dim);
   line-height: 1.62;
+}
+/* "F N Technology" — the colour RUNS through the letters: a flowing ERP
+   ramp (blue → indigo → cyan → green → blue) clipped to the text and slid
+   sideways forever. The ramp colours come from --ft-* which are deepened
+   for a light surface and vivid for a dark one, so it stays legible in
+   both themes. Ends on the same colour it starts, so the loop is seamless. */
+.brand-sub strong {
+  font-weight: 800;
+  letter-spacing: .05em;
+  background-image: linear-gradient(100deg,
+    var(--ft-1) 0%, var(--ft-2) 25%, var(--ft-3) 50%, var(--ft-4) 75%, var(--ft-1) 100%);
+  background-size: 300% 100%;
+  background-repeat: repeat-x;
+  background-position-x: 0%;
+  -webkit-background-clip: text;
+          background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: ft-run 5s linear infinite;
+}
+@keyframes ft-run {
+  from { background-position-x: 0%; }
+  to   { background-position-x: 100%; }
+}
+/* No gradient-text support → plain readable ink, no animation. */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .brand-sub strong {
+    background: none;
+    color: var(--text);
+    -webkit-text-fill-color: currentColor;
+    animation: none;
+  }
+}
+/* Respect a reduced-motion preference: keep the colours, stop the run. */
+@media (prefers-reduced-motion: reduce) {
+  .brand-logo { animation: none; }
+  .brand-sub strong { animation: none; }
 }
 
 .nav { padding: 12px; display: flex; flex-direction: column; gap: 3px; }
@@ -2524,7 +2608,7 @@ tbody tr.clickable { cursor: pointer; }
   <aside class="sidebar no-print" id="sidebar">
     <div class="brand">
       <div class="brand-mark">
-        <div class="brand-logo" aria-hidden="true"><span>FN</span></div>
+        <div class="brand-logo" aria-hidden="true"><span class="lf">F</span><span class="ln">N</span></div>
         <span class="wm-plate" id="appName">
           <span class="wordmark"><span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span></span>
         </span>
@@ -2566,7 +2650,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260825-082023"></script>
+<script src="firebase-bundle.js?v=20260825-084509"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -7550,7 +7634,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-082023';
+  const BUILD_ID = '20260825-084509';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
