@@ -2566,7 +2566,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260825-074232"></script>
+<script src="firebase-bundle.js?v=20260825-075326"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -5911,6 +5911,113 @@ const FNCloud = (function () {
         ]),
       ])
     );
+
+    root.appendChild(recordManager());
+  }
+
+  /* ---------------- Record manager (Developer) ----------------
+     Direct control over the shared database from one place: see every
+     record, open one to edit it, or delete any of them — including a
+     stray record no normal screen will show. A delete here is the same
+     tombstone the record menu makes, so it travels to every device. */
+  let manageQuery = '';
+
+  function recordManager() {
+    const card = el('div', { class: 'card', style: 'margin-top:16px' });
+
+    card.appendChild(el('h2', { style: 'font-size:16px;margin:0 0 4px' }, [
+      L({ en: 'Manage records', th: 'จัดการข้อมูล' }),
+    ]));
+    card.appendChild(el('div', { class: 'page-sub', style: 'margin-bottom:14px' }, [
+      L({
+        en: 'Open any record to edit it, or delete it here. Deletes sync to every device.',
+        th: 'เปิดเพื่อแก้ไข หรือลบได้ที่นี่ การลบจะซิงก์ไปทุกเครื่อง',
+      }),
+    ]));
+
+    const search = el('input', {
+      type: 'text',
+      class: 'search-input',
+      placeholder: T({ en: 'Search doc no, machine, customer…', th: 'ค้นหาเลขที่เอกสาร เครื่องจักร ลูกค้า…' }),
+      value: manageQuery,
+      style: 'width:100%;margin-bottom:12px',
+    });
+    search.addEventListener('input', () => {
+      manageQuery = search.value;
+      const body = card.querySelector('.manage-body');
+      if (body) { body.innerHTML = ''; body.appendChild(manageList()); }
+    });
+    card.appendChild(search);
+
+    const body = el('div', { class: 'manage-body' });
+    body.appendChild(manageList());
+    card.appendChild(body);
+    return card;
+  }
+
+  function manageList() {
+    const q = manageQuery.trim().toLowerCase();
+    const all = db.records.slice().sort((a, b) => (primaryDate(b) > primaryDate(a) ? 1 : -1));
+    const list = q ? all.filter((r) => {
+      const def = FORM_BY_TYPE[r.type];
+      const hay = [r.docNo, r.fields && r.fields.workNo, r.fields && r.fields.serialNo,
+                   r.fields && r.fields.customer, r.fields && r.fields.machineName,
+                   def ? T(def.name) : r.type].join(' ').toLowerCase();
+      return hay.includes(q);
+    }) : all;
+
+    const wrap = el('div', {});
+    wrap.appendChild(el('div', { class: 'filter-count', style: 'margin-bottom:8px' }, [
+      L({ en: `${list.length} of ${all.length} records`, th: `${list.length} จาก ${all.length} รายการ` }),
+    ]));
+
+    if (!list.length) {
+      wrap.appendChild(el('div', { class: 'empty' }, [L({ en: 'No records match.', th: 'ไม่พบรายการ' })]));
+      return wrap;
+    }
+
+    const table = el('table');
+    table.appendChild(el('thead', {}, el('tr', {}, [
+      el('th', { text: T({ en: 'Doc No.', th: 'เลขที่' }) }),
+      el('th', { text: T({ en: 'Machine / Customer', th: 'เครื่องจักร / ลูกค้า' }) }),
+      el('th', { text: T({ en: 'Updated', th: 'แก้ไขล่าสุด' }) }),
+      el('th', { text: '' }),
+    ])));
+    const tb = el('tbody');
+    list.forEach((r) => {
+      const def = FORM_BY_TYPE[r.type];
+      /* Show a record even if its type is unknown — this panel is exactly
+         where a stray record should be reachable so it can be removed. */
+      const typeLabel = def ? def.prefix : (r.type || '?');
+      const f = r.fields || {};
+      const openBtn = el('button', { class: 'btn btn-sm', onclick: () => go('form', { recordId: r.id }) },
+        [L({ en: 'Open', th: 'เปิด' })]);
+      const delBtn = el('button', { class: 'btn btn-sm btn-danger', onclick: () => manageDelete(r) },
+        [L({ en: 'Delete', th: 'ลบ' })]);
+      tb.appendChild(el('tr', {}, [
+        el('td', { html: `<strong>${escapeHTML(r.docNo || r.id)}</strong>`
+          + `<div style="font-size:11px;color:var(--text-dim)">${escapeHTML(typeLabel)}</div>` }),
+        el('td', {
+          html: escapeHTML(f.machineName || '—')
+            + `<div style="font-size:12px;color:var(--text-dim)">${escapeHTML(f.customer || '')}</div>`,
+        }),
+        el('td', { text: fmtDate(primaryDate(r)) }),
+        el('td', {}, el('div', { style: 'display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap' }, [openBtn, delBtn])),
+      ]));
+    });
+    table.appendChild(tb);
+    wrap.appendChild(el('div', { class: 'table-wrap' }, [table]));
+    return wrap;
+  }
+
+  function manageDelete(rec) {
+    const msg = lang === 'th'
+      ? ('ลบ ' + (rec.docNo || rec.id) + ' ออกจากทุกเครื่อง? การลบจะซิงก์ไปยังฐานข้อมูลกลาง')
+      : ('Delete ' + (rec.docNo || rec.id) + ' from every device? This delete syncs to the shared database.');
+    if (!confirm(msg)) return;
+    tombstoneRecord(rec);
+    toast((lang === 'th' ? 'ลบแล้ว ' : 'Deleted ') + (rec.docNo || rec.id));
+    render();
   }
 
   function viewDataLocked(root) {
@@ -6165,21 +6272,20 @@ const FNCloud = (function () {
     saveDB();
   }
 
-  function deleteRecord(rec) {
-    if (!confirm(T(UI.confirmDelete))) return;
-    /* Leave a marker, not a hole.
+  /* Leave a marker, not a hole.
 
-       Simply removing the record from the shared database tells the
-       other tablets nothing: they are holding a copy that nothing ever
-       contradicts, so it stays on their screen — and the next time one
-       of them reconnects it uploads that copy again and the document
-       comes back from the dead. A tablet that was switched off during
-       the delete can only ever learn about it from something that is
-       still there when it wakes up.
+     Simply removing the record from the shared database tells the other
+     tablets nothing: they are holding a copy that nothing ever
+     contradicts, so it stays on their screen — and the next time one of
+     them reconnects it uploads that copy again and the document comes
+     back from the dead. A tablet that was switched off during the delete
+     can only ever learn about it from something that is still there when
+     it wakes up.
 
-       So a deletion is a small record of its own — id, type, docNo and
-       the moment it happened — which travels like any other change and
-       is settled by the same last-write-wins rule. saveDB() pushes it. */
+     So a deletion is a small record of its own — id, type, docNo and the
+     moment it happened — which travels like any other change and is
+     settled by the same last-write-wins rule. saveDB() pushes it. */
+  function tombstoneRecord(rec) {
     db.meta.tombstones = db.meta.tombstones || {};
     db.meta.tombstones[rec.id] = {
       type: rec.type,
@@ -6188,6 +6294,11 @@ const FNCloud = (function () {
     };
     db.records = db.records.filter((r) => r.id !== rec.id);
     saveDB();
+  }
+
+  function deleteRecord(rec) {
+    if (!confirm(T(UI.confirmDelete))) return;
+    tombstoneRecord(rec);
     go('records');
   }
 
@@ -7419,7 +7530,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260825-074232';
+  const BUILD_ID = '20260825-075326';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
