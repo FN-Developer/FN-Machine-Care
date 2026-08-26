@@ -1202,14 +1202,54 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .viz-big { display: flex; flex-direction: column; }
 .viz-big-num { font-size: 30px; font-weight: 750; line-height: 1; color: var(--accent, var(--erp-indigo)); }
 .viz-big-lab { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
-/* Column (pillar) chart — machines per company. */
-.viz-pillars { display: flex; align-items: flex-end; gap: 8px; padding-top: 3px; min-width: 190px; }
+/* Column (pillar) chart — machines per company, styled to read as a piece
+   of instrumentation: faint gridlines behind, glossy neon bars, and a
+   bright band that runs up each bar on a loop. */
+.viz-pillars {
+  display: flex; align-items: flex-end; gap: 8px;
+  padding: 10px 6px 4px; min-width: 200px;
+  border-radius: 10px;
+  background-image: repeating-linear-gradient(0deg,
+    color-mix(in srgb, var(--text-faint) 15%, transparent) 0 1px,
+    transparent 1px 16px);
+  background-position: left bottom;
+}
 .viz-pcol { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
-.viz-pval { font-size: 10.5px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
-.viz-pbar { width: 74%; max-width: 28px; border-radius: 5px 5px 2px 2px; transform-origin: bottom center; }
+.viz-pval { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; font-weight: 700; color: var(--text); margin-bottom: 3px; letter-spacing: -.02em; }
+.viz-pbar {
+  --bar: var(--erp-indigo);
+  width: 74%; max-width: 26px;
+  border-radius: 4px 4px 2px 2px;
+  position: relative;
+  overflow: hidden;
+  transform-origin: bottom center;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--bar) 24%, #fff) 0%,
+    color-mix(in srgb, var(--bar) 88%, #fff) 26%,
+    var(--bar) 62%,
+    color-mix(in srgb, var(--bar) 72%, #000) 100%);
+  box-shadow:
+    0 0 9px -1px color-mix(in srgb, var(--bar) 75%, transparent),
+    0 0 2px color-mix(in srgb, var(--bar) 85%, transparent),
+    inset 0 1.5px 0 rgba(255, 255, 255, .5);
+}
+/* The running gradient — a bright band travels up the bar forever. */
+.viz-pbar::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg,
+    transparent 0 6%,
+    rgba(255, 255, 255, .6) 12%,
+    color-mix(in srgb, var(--bar) 55%, #fff) 16%,
+    transparent 24%);
+  background-size: 100% 300%;
+  mix-blend-mode: screen;
+  animation: pbar-run 2.2s linear infinite;
+}
+@keyframes pbar-run { from { background-position: 0 130%; } to { background-position: 0 -170%; } }
 .home-card:hover .viz-pbar { animation: viz-rise .5s cubic-bezier(.3,1,.4,1) both; }
 @keyframes viz-rise { from { transform: scaleY(0); } to { transform: scaleY(1); } }
 .viz-plab { font-size: 9.5px; color: var(--text-dim); margin-top: 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .viz-pbar::after { animation: none; opacity: .35; } }
 
 /* ---- Topic-based hover decoration: each icon animates to its subject ---- */
 .home-card.t-newform:hover .hc-icon { animation: t-create .6s ease; }
@@ -1928,13 +1968,45 @@ tr.detail-row:hover { background: var(--glass-sunken); }
   align-items: center;
 }
 .bar {
+  --bar: var(--series-1);
+  position: relative;
   display: block;
   width: 100%;
   min-height: 2px;
   border-radius: 4px 4px 0 0;   /* rounded data-end, square on the baseline */
+  overflow: hidden;
   transition: filter .16s ease;
+  /* Glossy vertical fill — bright crown, saturated body, deepened foot. */
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bar) 22%, #fff) 0%,
+      color-mix(in srgb, var(--bar) 85%, #fff) 22%,
+      var(--bar) 58%,
+      color-mix(in srgb, var(--bar) 74%, #000) 100%);
+  box-shadow:
+    0 0 10px -1px color-mix(in srgb, var(--bar) 70%, transparent),
+    0 0 2px color-mix(in srgb, var(--bar) 85%, transparent),
+    inset 0 1.5px 0 rgba(255,255,255,.5);
 }
+/* Slow running sheen that travels up the bar — the "technology" idle. */
+.bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    transparent 0 6%,
+    rgba(255,255,255,.55) 12%,
+    color-mix(in srgb, var(--bar) 55%, #fff) 16%,
+    transparent 24%);
+  background-size: 100% 300%;
+  mix-blend-mode: screen;
+  animation: bar-run 5s linear infinite;
+}
+@keyframes bar-run { from { background-position: 0 130%; } to { background-position: 0 -170%; } }
 .bar-group:hover .bar { filter: brightness(1.08); }
+@media (prefers-reduced-motion: reduce) {
+  .bar::after { animation: none; }
+}
 .bar-value {
   font-size: 12px;
   font-weight: 600;
@@ -3223,7 +3295,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260826-055749"></script>
+<script src="firebase-bundle.js?v=20260826-061509"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -5606,7 +5678,7 @@ const FNCloud = (function () {
       return el('div', { class: 'viz-pillars' }, items.map((i, idx) =>
         el('div', { class: 'viz-pcol' }, [
           el('span', { class: 'viz-pval', text: String(i.value) }),
-          el('span', { class: 'viz-pbar', style: `height:${Math.max(8, Math.round(i.value / max * 66))}px;background:${palette[idx % palette.length]}` }),
+          el('span', { class: 'viz-pbar', style: `height:${Math.max(8, Math.round(i.value / max * 66))}px;--bar:${palette[idx % palette.length]}` }),
           el('span', { class: 'viz-plab', title: i.label, text: shortCo(i.label) }),
         ])));
     };
@@ -5991,7 +6063,7 @@ const FNCloud = (function () {
             el('span', { class: 'bar-value', text: v ? String(v) : '' }),
             el('span', {
               class: 'bar',
-              style: `height:${h}%;background:var(${sr.varName})`,
+              style: `height:${h}%;--bar:var(${sr.varName})`,
             }),
           ])
         );
@@ -8382,7 +8454,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260826-055749';
+  const BUILD_ID = '20260826-061509';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
