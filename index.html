@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <!-- Exactly the FN-ERP-System zoom lock. The 110% is not in here:
@@ -13,7 +13,7 @@
      the ERP has the same gap. blockPinchShrink() covers iOS. -->
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="description" content="FN Machine Care — Machine Inspection & Service Management System for F N Technology. Machine build checklist (ASSY), factory acceptance test (FAT), site acceptance test (SAT), and customer service reports (SR).">
-<meta name="theme-color" content="#e9edf6">
+<meta name="theme-color" content="#0a0d16">
 <title>FN Machine Care — Machine Inspection &amp; Service Management</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='26' fill='%230906d7'/><text y='68' x='50' font-size='50' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'>FN</text></svg>">
 <style>
@@ -2826,6 +2826,34 @@ tbody tr.clickable { cursor: pointer; }
 .wm-plate:hover { transform: translateY(-1px); box-shadow: var(--lift-2), var(--specular); }
 .wm-plate-sm { padding: 6px 14px; }
 
+/* Small home shortcut on the mobile bar — same glass language as the
+   menu toggle, one size down, pinned to the far right of the bar. Lives
+   inside .mobile-bar, so it only shows where that bar shows. */
+.home-mini {
+  margin-left: auto;          /* push to the right edge of the bar */
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center; justify-content: center;
+  width: 42px; height: 42px;
+  padding: 0;
+  border: 1px solid var(--edge);
+  border-radius: 50%;
+  background: var(--glass-raised);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow:
+    var(--lift-1),
+    inset 0 1.5px 0 rgba(255, 255, 255, .5),
+    inset 0 -2px 4px rgba(10, 20, 45, .06);
+  transition: transform .2s cubic-bezier(.22,1,.36,1), background .2s ease, box-shadow .2s ease, color .2s ease;
+}
+.home-mini:hover { background: var(--glass-hover); transform: translateY(-1px); }
+.home-mini:active { transform: scale(.92); }
+.home-mini:focus-visible { outline: 2.5px solid var(--accent-blue); outline-offset: 2px; }
+.home-mini svg { display: block; }
+
 /* ---- Tablet & phone ------------------------------------------
    Navigation becomes a toggle drawer:
 
@@ -3231,6 +3259,13 @@ tbody tr.clickable { cursor: pointer; }
   <span class="wm-plate wm-plate-sm">
     <span class="wordmark"><span class="wm-fn">FN</span><span class="wm-rest">Machine Care</span></span>
   </span>
+  <!-- Small home shortcut, pinned to the right of the bar. Jumps straight
+       to the home menu without opening the drawer. -->
+  <button class="home-mini" id="homeMini" type="button" aria-label="Home / หน้าแรก">
+    <svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M3.6 11.4L12 4l8.4 7.4"/><path d="M5.6 10v9.6a1 1 0 001 1h10.8a1 1 0 001-1V10"/><path d="M9.8 20.6v-5.4h4.4v5.4"/>
+    </svg>
+  </button>
 </header>
 
 <div class="scrim no-print" id="scrim"></div>
@@ -3295,7 +3330,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260826-061509"></script>
+<script src="firebase-bundle.js?v=20260826-063438"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -4520,7 +4555,10 @@ const FNCloud = (function () {
      'auto' follows the device. On a shop-floor tablet that means the
      app dims itself with the rest of the screen in the evening. */
 
-  let theme = localStorage.getItem('fn-machine-care.theme') || 'auto';
+  /* Dark is the house default now — a fresh device with no saved
+     preference opens dark. 'auto' (follow device) and 'light' remain
+     available in Settings. */
+  let theme = localStorage.getItem('fn-machine-care.theme') || 'dark';
   const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
   function resolvedTheme() {
@@ -8454,7 +8492,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260826-061509';
+  const BUILD_ID = '20260826-063438';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
@@ -8790,6 +8828,11 @@ const FNCloud = (function () {
     mark.setAttribute('aria-label', 'Home');
     mark.addEventListener('click', () => go('home'));
     mark.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go('home'); } });
+
+    /* Mobile bar's small home shortcut — close the drawer if it's open,
+       then land on the home menu. */
+    const mini = document.getElementById('homeMini');
+    if (mini) mini.addEventListener('click', () => { closeNav(); go('home'); });
   }
 
   function boot() {
