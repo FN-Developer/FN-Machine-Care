@@ -1137,7 +1137,9 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   color: var(--text);
   cursor: pointer;
   overflow: visible;
-  transition: transform .3s cubic-bezier(.34,1.15,.4,1), box-shadow .3s ease, border-color .2s ease;
+  /* Longer transition so the auto-swap crossfade reads as the highlight
+     sliding from one card to the next (real hover feels the same). */
+  transition: transform .5s cubic-bezier(.34,1.1,.4,1), box-shadow .5s ease, border-color .45s ease;
 }
 .home-card:hover { z-index: 5; }
 .home-card:hover {
@@ -1291,6 +1293,36 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .home-card.t-dashboard:hover .hc-deco { animation: t-rise 1.8s ease-in-out infinite; }
 .home-card.t-data:hover     .hc-deco { animation: t-save 1.6s ease-in-out infinite; }
 
+/* ---- Auto-demo cycle ----
+   With no real hover, the cards take turns showing their hover state so a
+   first-time user sees what each one holds. JS adds .is-demo to one card
+   at a time (see startHomeDemo in app.js). These rules mirror :hover, so
+   the driven state looks identical to a real hover. A real hover always
+   wins — the cycle pauses the moment the cursor enters a card. */
+.home-card.is-demo { z-index: 5; transform: translateY(-5px) scale(1.02);
+  box-shadow: var(--lift-2), 0 0 0 1px color-mix(in srgb, var(--accent, var(--erp-indigo)) 30%, transparent), var(--specular);
+  border-color: color-mix(in srgb, var(--accent, var(--erp-indigo)) 45%, var(--edge)); }
+.home-card.is-demo .hc-arrow { transform: translateX(3px); color: var(--accent, var(--erp-indigo)); }
+/* Auto-loop shows the hover LOOK only — the popup preview (.hc-pop) stays
+   hidden and appears solely on a real hover. */
+.home-card.is-demo .viz-fill { animation: viz-grow .55s cubic-bezier(.3,1,.4,1) both; }
+.home-card.is-demo .viz-pbar { animation: viz-rise .5s cubic-bezier(.3,1,.4,1) both; }
+.home-card.is-demo .hc-deco { opacity: .13; }
+.home-card.t-newform.is-demo  .hc-icon { animation: t-create .6s ease; }
+.home-card.t-records.is-demo  .hc-icon { animation: t-flip .7s ease; }
+.home-card.t-machines.is-demo .hc-icon { animation: t-machine .55s ease-in-out infinite; }
+.home-card.t-dashboard.is-demo .hc-icon { animation: t-rise .7s cubic-bezier(.3,1.5,.5,1); }
+.home-card.t-data.is-demo     .hc-icon { animation: t-save 1s ease-in-out infinite; }
+.home-card.t-newform.is-demo  .hc-deco { animation: t-create 1.6s ease-in-out infinite; }
+.home-card.t-records.is-demo  .hc-deco { animation: t-flip 1.8s ease-in-out infinite; }
+.home-card.t-machines.is-demo .hc-deco { animation: t-machine .7s ease-in-out infinite; }
+.home-card.t-dashboard.is-demo .hc-deco { animation: t-rise 1.8s ease-in-out infinite; }
+.home-card.t-data.is-demo     .hc-deco { animation: t-save 1.6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .home-card.is-demo .hc-icon, .home-card.is-demo .hc-deco,
+  .home-card.is-demo .viz-fill, .home-card.is-demo .viz-pbar { animation: none; }
+}
+
 /* More buttons: quick-start pills, one per form type. */
 .home-quick { width: 100%; }
 .hq-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint); font-weight: 700; text-align: center; margin-bottom: 11px; }
@@ -1301,7 +1333,7 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   padding: 9px 15px; border-radius: 13px;
   background: var(--glass); border: 1px solid var(--edge); box-shadow: var(--lift-1);
   color: var(--text); cursor: pointer;
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  transition: transform .45s ease, box-shadow .45s ease, border-color .45s ease;
 }
 .hq-btn:hover { transform: translateY(-3px); box-shadow: var(--lift-2); border-color: color-mix(in srgb, var(--accent) 22%, var(--edge)); }
 /* Running border on hover — a lit arc in the pill's own colour chases its
@@ -1309,7 +1341,9 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .hq-btn::before {
   content: ''; position: absolute; inset: 0; z-index: 2;
   border-radius: inherit; padding: 1.7px; pointer-events: none;
-  opacity: 0; transition: opacity .2s ease;
+  /* Longer opacity fade so the running border crossfades between pills —
+     it looks like the light travels along the row. */
+  opacity: 0; transition: opacity .5s ease;
   background: conic-gradient(from var(--run-a),
     transparent 0deg, transparent 36deg,
     color-mix(in srgb, var(--accent) 72%, transparent) 80deg,
@@ -1322,6 +1356,10 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
           mask-composite: exclude;
 }
 .hq-btn:hover::before { opacity: 1; animation: nav-run 1.1s linear infinite; }
+/* Auto-loop: the pills take turns running their border, same swap as the
+   cards. JS adds .is-demo to one pill at a time; a real hover pauses it. */
+.hq-btn.is-demo { transform: translateY(-3px); box-shadow: var(--lift-2); border-color: color-mix(in srgb, var(--accent) 22%, var(--edge)); }
+.hq-btn.is-demo::before { opacity: 1; animation: nav-run 1.1s linear infinite; }
 .hq-ico, .hq-txt { position: relative; z-index: 1; }
 .hq-ico { color: var(--accent); display: inline-flex; }
 .hq-txt { display: flex; flex-direction: column; line-height: 1.12; text-align: left; }
@@ -2313,6 +2351,45 @@ tbody tr.clickable { cursor: pointer; }
 .field textarea { min-height: 98px; resize: vertical; }
 .field .unit { font-size: 11.5px; color: var(--text-faint); margin-left: 5px; }
 .cell-input { padding: 8px 11px; border-radius: 10px; }
+
+/* ---- Suggestion combobox (works on touch, unlike native <datalist>) ---- */
+.combo { position: relative; width: 100%; }
+.combo input { padding-right: 40px; }   /* room for the caret button */
+.combo-caret {
+  position: absolute; top: 0; right: 0; height: 100%; width: 38px;
+  display: grid; place-items: center;
+  background: none; border: none; padding: 0;
+  color: var(--text-faint); font-size: 15px; line-height: 1; cursor: pointer;
+  border-radius: 0 var(--radius-ctl) var(--radius-ctl) 0;
+  transition: transform .2s ease, color .2s ease;
+}
+.combo-caret:hover { color: var(--text); }
+.combo.is-open .combo-caret { transform: rotate(180deg); color: var(--accent-blue); }
+/* Hung on <body>, positioned in JS, fixed to the viewport. */
+.combo-pop {
+  position: fixed; z-index: 90;
+  max-height: 250px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--glass-raised, var(--field));
+  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  box-shadow: var(--lift-3, var(--lift-2)), var(--specular);
+  padding: 5px;
+}
+.combo-opt {
+  padding: 11px 12px; border-radius: 8px;
+  font-size: 14px; color: var(--text); cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.combo-opt:hover, .combo-opt.is-active {
+  background: color-mix(in srgb, var(--accent-blue) 16%, transparent);
+}
+/* The "None (clear)" row — muted, with a divider under it. */
+.combo-opt.combo-clear {
+  color: var(--text-faint); font-style: italic;
+  border-bottom: 1px solid var(--hairline-soft); border-radius: 8px 8px 0 0; margin-bottom: 3px;
+}
+.combo-opt.combo-clear:hover { background: color-mix(in srgb, var(--fail) 14%, transparent); color: var(--text); }
 
 /* ---- checklist rows ---- */
 
@@ -3330,7 +3407,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260826-063438"></script>
+<script src="firebase-bundle.js?v=20260826-073834"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -4555,9 +4632,9 @@ const FNCloud = (function () {
      'auto' follows the device. On a shop-floor tablet that means the
      app dims itself with the rest of the screen in the evening. */
 
-  /* Dark is the house default now — a fresh device with no saved
-     preference opens dark. 'auto' (follow device) and 'light' remain
-     available in Settings. */
+  /* Dark is the house default — a device with no saved preference opens
+     dark. But a choice made in Settings is remembered: pick Light or
+     Auto and it stays that way next time. */
   let theme = localStorage.getItem('fn-machine-care.theme') || 'dark';
   const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
@@ -5481,7 +5558,15 @@ const FNCloud = (function () {
 
   /* ---------------- Render: shell ---------------- */
 
+  /* Stop callbacks for the home-screen auto-demo cycles (one per group:
+     the menu cards and the quick-start pills). Torn down the instant we
+     leave the home view — render() wipes #main on every navigation, which
+     would otherwise orphan the timers. */
+  let homeDemoStops = [];
+  function stopHomeDemo() { homeDemoStops.forEach((fn) => fn()); homeDemoStops = []; }
+
   function render() {
+    stopHomeDemo();
     document.body.className = 'lang-' + lang;
     /* The home menu is its own full screen — no sidebar, no mobile bar. */
     document.documentElement.classList.toggle('view-home', state.view === 'home');
@@ -5799,7 +5884,62 @@ const FNCloud = (function () {
         ]))),
     ]);
 
-    root.appendChild(el('div', { class: 'home' }, [hero, grid, quick]));
+    const homeEl = el('div', { class: 'home' }, [hero, grid, quick]);
+    root.appendChild(homeEl);
+
+    startHomeDemo(homeEl);
+  }
+
+  /* Auto-demo: two independent swap-loops on the home screen — the menu
+     cards and the quick-start pills. Each walks its group, holding one
+     item in its hover state before handing off to the next, forever. A
+     real hover pauses that group's walk (and the auto-highlight steps
+     aside so the two never show at once); when the cursor leaves, the
+     walk resumes from the item AFTER the one that was hovered. */
+  function startHomeDemo(homeEl) {
+    stopHomeDemo();
+    /* Respect a reduced-motion preference — no auto-cycling. */
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    /* Continuous swap — no dark pause. The highlight fades straight from
+       one item to the next, so it looks like it's moving along the row. */
+    demoCycle(Array.prototype.slice.call(homeEl.querySelectorAll('.home-card')), 2800);
+    demoCycle(Array.prototype.slice.call(homeEl.querySelectorAll('.hq-btn')), 2800);
+  }
+
+  function demoCycle(items, hold) {
+    if (items.length < 2) return;
+    const RESUME = 500;   /* brief beat after the cursor leaves */
+    let idx = 0;
+    let paused = false;
+    let timer = null;
+    const clearAll = () => items.forEach((c) => c.classList.remove('is-demo'));
+    const stop = () => { if (timer) { clearTimeout(timer); timer = null; } };
+
+    function tick() {
+      if (paused) return;
+      /* Removing .is-demo from the old item and adding it to the new one
+         in the same frame lets their CSS opacity/transform transitions
+         cross-fade — the highlight slides to the next item, no gap. */
+      clearAll();
+      items[idx].classList.add('is-demo');
+      timer = setTimeout(() => { idx = (idx + 1) % items.length; tick(); }, hold);
+    }
+
+    items.forEach((it, i) => {
+      /* Real hover: stop this group's walk and get out of its way. */
+      it.addEventListener('mouseenter', () => { paused = true; stop(); clearAll(); idx = i; });
+      /* Cursor left: resume from the next item along. */
+      it.addEventListener('mouseleave', () => {
+        paused = false;
+        idx = (i + 1) % items.length;
+        stop();
+        timer = setTimeout(() => { paused = false; tick(); }, RESUME);
+      });
+    });
+
+    /* Register teardown so leaving the home view kills this loop cleanly. */
+    homeDemoStops.push(() => { stop(); clearAll(); });
+    tick();
   }
 
   function viewDashboard(root) {
@@ -7355,17 +7495,13 @@ const FNCloud = (function () {
           },
         });
 
-        /* Native suggestion list: it offers what has been typed before
-           without preventing a brand-new value. */
+        /* Suggestions from prior entries. A native <datalist> used to do
+           this, but its dropdown does not show on iPhone/iPad and most
+           mobile browsers — the technician got a plain box with no way to
+           pick. This is a custom, touch-friendly picker instead; a
+           brand-new value is still allowed. */
         if (f.suggest) {
-          const values = suggestionsFor(f.key);
-          if (values.length) {
-            const listId = 'dl-' + f.key;
-            input.setAttribute('list', listId);
-            const dl = el('datalist', { id: listId });
-            values.forEach((v) => dl.appendChild(el('option', { value: v })));
-            wrap.appendChild(dl);
-          }
+          input = attachSuggest(input, wrap, rec, f);
         }
       }
 
@@ -7374,6 +7510,109 @@ const FNCloud = (function () {
       grid.appendChild(wrap);
     });
     body.appendChild(grid);
+  }
+
+  /* Touch-friendly suggestion picker for text fields — replaces the native
+     <datalist>, whose dropdown does not appear on phones and tablets. Tap
+     the field (or its caret) to see values entered before, type to filter,
+     tap one to fill it in; typing a brand-new value is always allowed.
+     The list is hung on <body> (positioned like the chart tooltip) so the
+     section card's overflow:hidden can't clip it. Returns a combobox
+     wrapper, or the plain input when there is nothing to suggest yet. */
+  function attachSuggest(input, wrap, rec, f) {
+    const values = suggestionsFor(f.key);
+    if (!values.length) return input;
+
+    input.setAttribute('autocomplete', 'off');
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-expanded', 'false');
+
+    const combo = el('div', { class: 'combo' });
+    const caret = el('button', {
+      class: 'combo-caret', type: 'button', tabindex: '-1',
+      'aria-label': T({ en: 'Show suggestions', th: 'แสดงรายการที่เคยกรอก' }),
+    }, ['⌄']);
+    const pop = el('div', { class: 'combo-pop', role: 'listbox' });
+
+    let open = false;
+
+    function reposition() {
+      pop.style.width = input.offsetWidth + 'px';
+      placeFloating(pop, input.getBoundingClientRect(), { below: true, align: 'start', gap: 5 });
+    }
+    const onScroll = () => close();
+    function setOpen(v) {
+      if (v === open) { if (v) reposition(); return; }
+      open = v;
+      input.setAttribute('aria-expanded', v ? 'true' : 'false');
+      combo.classList.toggle('is-open', v);
+      if (v) {
+        document.body.appendChild(pop);
+        reposition();
+        window.addEventListener('scroll', onScroll, true);
+        window.addEventListener('resize', onScroll);
+      } else {
+        if (pop.parentNode) pop.parentNode.removeChild(pop);
+        window.removeEventListener('scroll', onScroll, true);
+        window.removeEventListener('resize', onScroll);
+      }
+    }
+    function close() { setOpen(false); }
+
+    function choose(v) {
+      input.value = v;
+      rec.fields[f.key] = v;
+      close();
+      if (f.identity) autofillIdentity(rec, f.key, v);
+      touch(rec);
+      markField(wrap, rec, f);
+    }
+
+    function build() {
+      const q = (input.value || '').trim().toLowerCase();
+      const hasVal = (input.value || '').trim() !== '';
+      /* Skip a match that is exactly what's already typed — no point. */
+      const matches = values.filter((v) => (!q || v.toLowerCase().indexOf(q) !== -1) && v.toLowerCase() !== q);
+      pop.innerHTML = '';
+
+      /* A "None" row at the top clears the field back to empty — only
+         worth showing when there is something to clear. mousedown +
+         preventDefault (not click) keeps focus on the input so blur never
+         fires before the pick is handled — the trick that makes this work
+         the same on a touchscreen. */
+      if (hasVal) {
+        pop.appendChild(el('div', {
+          class: 'combo-opt combo-clear', role: 'option',
+          onmousedown: (e) => { e.preventDefault(); choose(''); },
+        }, [T({ en: 'None (clear)', th: 'ไม่ระบุ (ล้างค่า)' })]));
+      }
+
+      matches.slice(0, 60).forEach((v) => {
+        pop.appendChild(el('div', {
+          class: 'combo-opt', role: 'option',
+          onmousedown: (e) => { e.preventDefault(); choose(v); },
+        }, [v]));
+      });
+
+      if (!pop.children.length) { close(); return; }
+      setOpen(true);
+    }
+
+    input.addEventListener('focus', build);
+    input.addEventListener('input', build);
+    input.addEventListener('blur', () => setTimeout(close, 60));
+    input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) { e.stopPropagation(); close(); } });
+    caret.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      if (open) { close(); return; }
+      input.focus();
+      build();
+    });
+
+    combo.appendChild(input);
+    combo.appendChild(caret);
+    return combo;
   }
 
   /* Choose a person, see their position, or add someone new. */
@@ -8492,7 +8731,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260826-063438';
+  const BUILD_ID = '20260826-073834';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
