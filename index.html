@@ -789,6 +789,10 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .nav .nav-icon { width: 21px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
 .ico { display: block; }
 .nav button .ico { opacity: .82; }
+/* Each menu item's icon wears its own colour when idle; the active item
+   (blue pill, white text) keeps a white icon so it stays legible. */
+.nav button:not(.active) .nav-icon .ico { color: var(--nav-accent, currentColor); opacity: 1; }
+.nav button.active .nav-icon .ico { color: #fff; }
 
 /* ---- Icons idle, never quite still ----
    Every icon breathes on a slow loop — a small scale so it feels alive
@@ -826,9 +830,53 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .nav button.t-machines:hover  .nav-icon .ico { animation: t-machine .55s ease-in-out infinite; }
 .nav button.t-dashboard:hover .nav-icon .ico { animation: t-rise .7s cubic-bezier(.3,1.5,.5,1); }
 .nav button.t-data:hover      .nav-icon .ico { animation: t-save 1s ease-in-out infinite; }
+
+/* ---- Project Phase menu: each icon loops its own idle animation on
+   hover, on topic. New Requirement writes, the list flips, follow-up
+   waves its flag, kickoff launches, Main menu rises. ---- */
+.nav button.t-reqnew:hover   .nav-icon .ico { animation: t-create .6s ease; }
+.nav button.t-reqlist:hover  .nav-icon .ico { animation: t-flip .7s ease; }
+.nav button.t-followup:hover .nav-icon .ico { animation: t-flag 1.1s ease-in-out infinite; }
+.nav button.t-kickoff:hover  .nav-icon .ico { animation: t-launch 1s ease-in-out infinite; }
+.nav button.t-main:hover     .nav-icon .ico { animation: t-rise .6s cubic-bezier(.3,1.5,.5,1); }
+@keyframes t-flag {
+  0%, 100% { transform: rotate(0) translateX(0); }
+  25% { transform: rotate(-4deg) translateX(-1px); }
+  60% { transform: rotate(5deg) translateX(1px); }
+}
+@keyframes t-launch {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-3px) rotate(-6deg); }
+  55% { transform: translateY(-4.5px) rotate(2deg); }
+}
+
+/* Project home cards — same topic hover on the icon and the watermark */
+.home-card.t-care:hover     .hc-icon { animation: t-rise .7s cubic-bezier(.3,1.5,.5,1); }
+.home-card.t-phase:hover    .hc-icon { animation: t-flip .7s ease; }
+.home-card.t-reqnew:hover   .hc-icon { animation: t-create .6s ease; }
+.home-card.t-reqlist:hover  .hc-icon { animation: t-flip .7s ease; }
+.home-card.t-followup:hover .hc-icon { animation: t-flag 1.1s ease-in-out infinite; }
+.home-card.t-kickoff:hover  .hc-icon { animation: t-launch 1s ease-in-out infinite; }
+.home-card.t-data:hover     .hc-icon { animation: t-save 1s ease-in-out infinite; }
+.home-card.t-care:hover      .hc-deco { animation: t-rise 1.8s ease-in-out infinite; }
+.home-card.t-phase:hover     .hc-deco { animation: t-flip 1.8s ease-in-out infinite; }
+.home-card.t-reqnew:hover    .hc-deco { animation: t-create 1.6s ease-in-out infinite; }
+.home-card.t-reqlist:hover   .hc-deco { animation: t-flip 1.8s ease-in-out infinite; }
+.home-card.t-followup:hover  .hc-deco { animation: t-flag 1.8s ease-in-out infinite; }
+.home-card.t-kickoff:hover   .hc-deco { animation: t-launch 1.6s ease-in-out infinite; }
+/* and while the auto-demo highlights them (matches the care cards) */
+.home-card.t-reqnew.is-demo  .hc-icon { animation: t-create .6s ease; }
+.home-card.t-reqlist.is-demo .hc-icon { animation: t-flip .7s ease; }
+.home-card.t-followup.is-demo .hc-icon { animation: t-flag 1.1s ease-in-out infinite; }
+.home-card.t-kickoff.is-demo .hc-icon { animation: t-launch 1s ease-in-out infinite; }
+.home-card.t-care.is-demo    .hc-icon { animation: t-rise .7s cubic-bezier(.3,1.5,.5,1); }
+.home-card.t-phase.is-demo   .hc-icon { animation: t-flip .7s ease; }
+
 @media (prefers-reduced-motion: reduce) {
   .ico, .nav .nav-icon .ico,
   .nav button:hover .nav-icon .ico { animation: none; }
+  .home-card.t-followup:hover .hc-icon, .home-card.t-kickoff:hover .hc-icon,
+  .home-card [class*="is-demo"] .hc-icon { animation: none; }
 }
 
 /* ---- New Form: the primary action, always alive ----
@@ -1487,6 +1535,29 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .main.enter-warp { animation: warp-in .55s cubic-bezier(.1,.6,.2,1) both; }
 .main.enter-down { animation: tilt-in .55s cubic-bezier(.3,1.3,.4,1) both; }
 .main.enter-up   { animation: orbit-in .55s cubic-bezier(.25,1,.35,1) both; }
+
+/* ---- Touch devices: lighter, blur-free transitions ----
+   A full-screen blur() on a View Transition snapshot is one of the most
+   expensive things a phone GPU can do — it is what made page changes
+   stall for a beat. On touch devices the transitions keep their motion
+   (scale, slide, fade) but drop every blur, and run a touch shorter.
+   Redefining the keyframes here overrides the desktop ones for coarse
+   pointers only; desktop is untouched. */
+@media (pointer: coarse) and (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(screen), ::view-transition-new(screen) { animation-duration: .34s; }
+  html.vt-warp::view-transition-old(screen) { animation-duration: .3s; }
+  html.vt-warp::view-transition-new(screen) { animation-duration: .38s; }
+  html.vt-down::view-transition-new(screen),
+  html.vt-up::view-transition-new(screen)   { animation-duration: .4s; }
+
+  @keyframes warp-out { to { opacity: 0; transform: scale(1.4); } }
+  @keyframes warp-in  { from { opacity: 0; transform: scale(.7); } 60% { opacity: 1; } to { opacity: 1; transform: none; } }
+  /* the scan-wipe / slide pair, minus their brightness/clip work */
+  @keyframes pg-in-r { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+  @keyframes pg-in-l { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+  @keyframes pg-out-l { to { opacity: 0; transform: translateX(-18px); } }
+  @keyframes pg-out-r { to { opacity: 0; transform: translateX(18px); } }
+}
 
 /* ---- Glitch Step on theme change ----
    Switching Light/Dark/Auto jump-cuts between the two looks with a
@@ -3535,6 +3606,326 @@ tbody tr.clickable { cursor: pointer; }
 .print-head h1 { margin: 0 0 2mm; font-size: 16pt; }
 .print-head .ph-meta { font-size: 9pt; color: #333; }
 
+/* ============================================================
+   PROJECT PHASE MODULE
+   ============================================================ */
+
+/* Main menu: two big workspace cards */
+.home-grid-2 { grid-template-columns: repeat(2, 1fr); max-width: 760px; }
+@media (max-width: 640px) { .home-grid-2 { grid-template-columns: 1fr; } }
+.main-stats { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 22px;
+  font-size: 12.5px; color: var(--text-faint); font-weight: 600; letter-spacing: .02em; }
+.main-stats-dot { opacity: .5; }
+
+/* Sidebar "Main menu" back button — quieter than the module items */
+.nav-back { margin-top: 8px; border-top: 1px solid var(--hairline-soft); padding-top: 12px !important; opacity: .82; }
+.nav-back:hover { opacity: 1; }
+
+/* Requirement list */
+.req-list, .followup-list { display: flex; flex-direction: column; gap: 10px; }
+.req-card, .fu-row {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+  background: var(--glass); border: 1px solid var(--edge); border-radius: 14px;
+  box-shadow: var(--lift-1); padding: 15px 17px; cursor: pointer; color: var(--text);
+  transition: transform .2s cubic-bezier(.3,1.1,.4,1), box-shadow .2s, border-color .2s;
+}
+.req-card:hover, .fu-row:hover { transform: translateY(-2px); box-shadow: var(--lift-2); border-color: color-mix(in srgb, var(--accent-blue) 30%, var(--edge)); }
+.req-card-main, .fu-main { flex: 1; min-width: 0; background: none; border: none; text-align: left; cursor: pointer; color: inherit; padding: 0; }
+.req-card-top, .fu-top, .req-card-top { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+.req-no { font-family: var(--font-mono, ui-monospace, monospace); font-size: 12px; font-weight: 700; color: var(--text-dim); letter-spacing: .01em; }
+.req-title { font-size: 15.5px; font-weight: 650; margin: 2px 0 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.req-meta { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-faint); }
+.req-meta svg { width: 12px; height: 12px; vertical-align: -2px; }
+.req-dot { opacity: .45; }
+.req-arrow { color: var(--text-faint); font-size: 18px; flex: 0 0 auto; }
+
+/* Stage badge */
+.stage-badge { display: inline-flex; align-items: center; font-size: 11px; font-weight: 700; letter-spacing: .03em;
+  padding: 3px 10px; border-radius: 999px; color: var(--sc, var(--accent-blue));
+  background: color-mix(in srgb, var(--sc, var(--accent-blue)) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sc, var(--accent-blue)) 40%, transparent); }
+
+/* Requirement list: toolbar, status grouping, blinking status cards */
+.req-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 4px 0 16px; }
+.req-sort { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--surface); border: 1px solid var(--edge); }
+.req-sort .seg-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 9px; border: none; cursor: pointer;
+  background: transparent; color: var(--text-faint); font-size: 12.5px; font-weight: 650; transition: background .16s, color .16s, box-shadow .16s; }
+.req-sort .seg-btn svg { width: 14px; height: 14px; }
+.req-sort .seg-btn:hover { color: var(--text); }
+.req-sort .seg-btn.on { color: var(--text); background: var(--glass); box-shadow: var(--lift-1); }
+.btn-ghost { background: transparent; border-color: color-mix(in srgb, var(--fail) 34%, var(--edge)); color: var(--fail); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--fail) 10%, transparent); }
+
+.req-group-head { display: flex; align-items: center; gap: 9px; margin: 22px 0 10px; }
+.req-group-head:first-of-type { margin-top: 4px; }
+.req-group-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--sc); flex: 0 0 auto;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc) 22%, transparent); animation: reqDot 2s ease-in-out infinite; }
+.req-group-name { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--sc); }
+.req-group-count { font-size: 11px; font-weight: 700; color: var(--text-faint); background: color-mix(in srgb, var(--sc) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--sc) 32%, transparent); border-radius: 999px; padding: 1px 8px; }
+.req-group-head + .req-list { margin-bottom: 4px; }
+
+.req-card { position: relative; overflow: hidden; border-color: color-mix(in srgb, var(--sc, var(--edge)) 38%, var(--edge));
+  animation: reqPulse 2.6s ease-in-out infinite; }
+.req-card:hover { animation-play-state: paused; }
+.req-status-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--sc, var(--accent-blue));
+  box-shadow: 0 0 10px 0 color-mix(in srgb, var(--sc) 60%, transparent); animation: reqRail 2.6s ease-in-out infinite; }
+.req-card:nth-child(2n) { animation-delay: .5s; }
+.req-card:nth-child(3n) { animation-delay: 1s; }
+.req-card:nth-child(2n) .req-status-rail { animation-delay: .5s; }
+.req-card:nth-child(3n) .req-status-rail { animation-delay: 1s; }
+@keyframes reqPulse {
+  0%, 100% { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 26%, transparent); }
+  50%      { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 62%, transparent), 0 0 15px -1px color-mix(in srgb, var(--sc) 40%, transparent); }
+}
+@keyframes reqRail { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
+@keyframes reqDot { 0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc) 22%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--sc) 10%, transparent); } }
+@media (prefers-reduced-motion: reduce) {
+  .req-card, .req-status-rail, .req-group-dot { animation: none; }
+  .req-card { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 45%, transparent); }
+}
+
+/* Participant dropdown — decorated */
+.part-add { position: relative; }
+.part-select { -webkit-appearance: none; appearance: none; width: 100%; cursor: pointer;
+  padding: 11px 40px 11px 15px; border-radius: 12px; font-size: 13.5px; font-weight: 600; color: var(--text);
+  background-color: color-mix(in srgb, #ff9f0a 8%, var(--surface));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ff9f0a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  border: 1px solid color-mix(in srgb, #ff9f0a 40%, var(--edge));
+  box-shadow: var(--lift-1), inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent);
+  transition: border-color .16s, box-shadow .16s, background-color .16s; }
+.part-select:hover { border-color: color-mix(in srgb, #ff9f0a 62%, var(--edge)); background-color: color-mix(in srgb, #ff9f0a 12%, var(--surface)); }
+.part-select:focus { outline: none; border-color: #ff9f0a; box-shadow: 0 0 0 3px color-mix(in srgb, #ff9f0a 26%, transparent), var(--lift-1); }
+.part-select option { color: var(--text); background: var(--env-2, #14161c); font-weight: 500; }
+
+/* Pipeline sections */
+.pipe-sec { --accent: var(--erp-indigo); position: relative; }
+.pipe-sec > header { display: flex; align-items: center; justify-content: space-between; }
+.pipe-ico { display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px;
+  margin-right: 9px; color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); vertical-align: middle; }
+.pipe-sec .section-title { display: flex; align-items: center; }
+.lock-tag { color: var(--text-faint); opacity: .6; }
+.pipe-sec.is-locked { opacity: .62; }
+.lock-hint { font-size: 13px; color: var(--text-faint); font-style: italic; padding: 4px 0; }
+.sec-hint { font-size: 13px; color: var(--text-dim); line-height: 1.55; margin-bottom: 14px; }
+.sub-h { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); margin: 20px 0 11px; }
+
+/* Requirement topics */
+.topic-list { display: flex; flex-direction: column; gap: 12px; }
+.topic-row { display: flex; gap: 12px; align-items: flex-start; background: var(--glass-sunken); border: 1px solid var(--hairline-soft); border-radius: 12px; padding: 12px; }
+.topic-idx { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 7px; display: grid; place-items: center; font-size: 12px; font-weight: 700;
+  color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 15%, transparent); }
+.topic-fields { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.topic-fields input, .topic-fields textarea { width: 100%; }
+.topic-img { flex: 0 0 auto; }
+.topic-thumb { display: block; width: 84px; height: 84px; border-radius: 10px; background-size: cover; background-position: center; border: 1px solid var(--edge); }
+.topic-img-add { width: 84px; height: 84px; border-radius: 10px; border: 1.5px dashed var(--edge); background: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: var(--text-faint); font-size: 10.5px; }
+.topic-img-add:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+.topic-img { position: relative; }
+.topic-img-del, .topic-del { border: none; background: rgba(0,0,0,.35); color: #fff; cursor: pointer; }
+.topic-img-del { position: absolute; top: 4px; right: 4px; width: 20px; height: 20px; border-radius: 50%; font-size: 11px; }
+.topic-del { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 7px; background: color-mix(in srgb, var(--fail) 14%, transparent); color: var(--fail); font-size: 12px; }
+
+/* Discipline checklist */
+.disc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.disc-item { --accent: var(--accent-blue); border: 1px solid var(--edge); border-radius: 12px; background: var(--glass-sunken); overflow: hidden; transition: border-color .2s, background .2s; }
+.disc-item.on { border-color: color-mix(in srgb, var(--accent) 55%, var(--edge)); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.disc-head { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none; cursor: pointer; padding: 12px 13px; color: var(--text); font-family: inherit; }
+.disc-check { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--edge); display: grid; place-items: center; color: #fff; transition: all .18s; }
+.disc-item.on .disc-check { background: var(--accent); border-color: var(--accent); }
+.disc-ico { color: var(--accent); display: inline-flex; }
+.disc-name { font-size: 14px; font-weight: 600; }
+.disc-head { position: relative; }
+.disc-head:hover { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.disc-edit-ico { margin-left: auto; color: var(--accent); opacity: .55; display: inline-flex; }
+.disc-head:hover .disc-edit-ico { opacity: 1; }
+/* "Add design idea" prompt when a ticked discipline has no idea yet */
+.disc-add { display: flex; align-items: center; gap: 7px; width: calc(100% - 26px); margin: 0 13px 13px;
+  padding: 8px 11px; border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, var(--edge)); border-radius: 9px;
+  background: none; cursor: pointer; color: var(--accent); font-size: 12.5px; font-weight: 600; font-family: inherit; }
+.disc-add:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+/* Filled: a one-line preview that reveals a small popover on hover and
+   opens the big editor on click. */
+.disc-desc { position: relative; margin: 0 13px 13px; padding: 8px 11px; border-radius: 9px; cursor: pointer;
+  background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); }
+.disc-desc:hover { border-color: color-mix(in srgb, var(--accent) 45%, transparent); }
+.disc-prev-text { display: block; font-size: 12.5px; color: var(--text-dim); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* hover popover */
+.disc-tip { position: absolute; left: 0; right: 0; bottom: calc(100% + 8px); z-index: 40;
+  opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity .16s ease, transform .16s ease; pointer-events: none;
+  background: var(--glass-drawer); border: 1px solid var(--edge); border-radius: 10px; box-shadow: var(--lift-3, var(--lift-2)), var(--specular);
+  padding: 10px 12px; }
+.disc-tip::after { content: ''; position: absolute; top: 100%; left: 22px; width: 10px; height: 10px; transform: translateY(-5px) rotate(45deg);
+  background: var(--glass-drawer); border-right: 1px solid var(--edge); border-bottom: 1px solid var(--edge); }
+.disc-tip-text { display: block; font-size: 12px; color: var(--text-dim); line-height: 1.5; max-height: 120px; overflow: hidden; }
+.disc-desc:hover .disc-tip { opacity: 1; visibility: visible; transform: translateY(0); }
+/* the big editor textarea inside the modal */
+.disc-editor { width: 100%; min-height: 180px; resize: vertical; }
+
+/* File upload zone */
+.upload-zone { margin-bottom: 16px; }
+.uz-label { font-size: 12.5px; font-weight: 650; color: var(--text-dim); margin-bottom: 8px; }
+.file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.file-card { display: flex; align-items: center; gap: 10px; background: var(--glass-sunken); border: 1px solid var(--edge); border-radius: 11px; padding: 9px 10px; position: relative; }
+.file-card.is-local { border-style: dashed; }
+.fp-thumb { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 8px; background-size: cover; background-position: center; }
+.fp-ico { flex: 0 0 auto; width: 42px; height: 42px; border-radius: 8px; display: grid; place-items: center; position: relative;
+  color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 14%, transparent); }
+.fp-ext { position: absolute; bottom: 1px; font-size: 7.5px; font-weight: 800; letter-spacing: .03em; color: var(--accent-blue); }
+.fp-meta { flex: 1; min-width: 0; }
+.fp-name { font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fp-sub { font-size: 10.5px; color: var(--text-faint); }
+.fp-open, .fp-del { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 7px; border: none; cursor: pointer; display: grid; place-items: center; }
+.fp-open { background: color-mix(in srgb, var(--accent-blue) 14%, transparent); color: var(--accent-blue); }
+.fp-del { background: color-mix(in srgb, var(--fail) 14%, transparent); color: var(--fail); font-size: 12px; }
+.file-add { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-height: 62px;
+  border: 1.5px dashed var(--edge); border-radius: 11px; background: none; cursor: pointer; color: var(--text-faint); font-size: 12px; font-weight: 600; }
+.file-add:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+/* Confirm / status rows */
+.confirm-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.confirmed-chip { display: inline-flex; align-items: center; gap: 8px; margin-top: 16px; font-size: 13px; font-weight: 650;
+  color: var(--ok, #3fae3a); background: color-mix(in srgb, var(--ok, #3fae3a) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ok, #3fae3a) 38%, transparent); border-radius: 999px; padding: 7px 14px; }
+.reopen { border: none; background: none; cursor: pointer; font-size: 11.5px; color: var(--text-faint); text-decoration: underline; margin-left: 4px; font-family: inherit; }
+.wait-banner, .meet-reminder { display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600;
+  color: #b8860b; background: color-mix(in srgb, #ffd60a 15%, transparent); border: 1px solid color-mix(in srgb, #ffd60a 42%, transparent);
+  border-radius: 11px; padding: 11px 14px; margin-bottom: 14px; }
+.meet-reminder { color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 12%, transparent); border-color: color-mix(in srgb, var(--accent-blue) 34%, transparent); }
+.btn-won { background: color-mix(in srgb, #30d158 18%, transparent) !important; color: #1f8a3b !important; border-color: color-mix(in srgb, #30d158 45%, transparent) !important; }
+:root[data-theme="dark"] .btn-won { color: #5fe08a !important; }
+.decision-final { display: inline-flex; align-items: center; gap: 9px; font-size: 15px; font-weight: 750; padding: 10px 16px; border-radius: 12px; }
+.decision-won { color: #1f8a3b; background: color-mix(in srgb, #30d158 14%, transparent); }
+.decision-lost { color: var(--fail); background: color-mix(in srgb, var(--fail) 12%, transparent); }
+:root[data-theme="dark"] .decision-won { color: #5fe08a; }
+
+/* Meeting participants */
+.people-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+.people-row { display: flex; gap: 8px; align-items: center; }
+.people-row input { flex: 1; }
+
+/* Meeting participants — chips + one dropdown that adds/manages names */
+.part-field { display: flex; flex-direction: column; gap: 10px; margin-bottom: 6px; }
+.part-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.part-empty { font-size: 12.5px; color: var(--text-faint); font-style: italic; padding: 2px 0; }
+.part-chip { display: inline-flex; align-items: center; gap: 8px; padding: 6px 8px 6px 13px; border-radius: 999px;
+  background: color-mix(in srgb, #ff9f0a 13%, var(--surface)); border: 1px solid color-mix(in srgb, #ff9f0a 42%, var(--edge));
+  font-size: 13px; font-weight: 600; color: var(--text); }
+.part-chip-name { line-height: 1.2; }
+.part-chip-x { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; border: none; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; font-size: 11px; line-height: 1;
+  background: color-mix(in srgb, #ff9f0a 22%, transparent); color: var(--text); transition: background .15s, transform .15s; }
+.part-chip-x:hover { background: var(--fail); color: #fff; transform: scale(1.08); }
+.part-add { max-width: 340px; }
+.part-select { width: 100%; }
+
+/* Manage-names popup: one deletable row per saved name */
+.manage-people { display: flex; flex-direction: column; gap: 7px; max-height: 46vh; overflow-y: auto; }
+.mp-empty { font-size: 13px; color: var(--text-faint); font-style: italic; padding: 8px 2px; }
+.mp-row { display: flex; align-items: center; gap: 10px; padding: 9px 11px; border-radius: 11px;
+  background: var(--surface); border: 1px solid var(--edge); }
+.mp-name { flex: 1; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mp-name > span:first-child { font-weight: 600; font-size: 13.5px; color: var(--text); }
+.mp-pos { font-size: 11.5px; color: var(--text-faint); }
+.mp-del { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 8px; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--fail) 35%, var(--edge)); background: color-mix(in srgb, var(--fail) 8%, transparent);
+  color: var(--fail); font-size: 13px; display: inline-flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s; }
+.mp-del:hover { background: var(--fail); color: #fff; }
+
+/* Follow-up */
+.fu-row.is-waiting { border-color: color-mix(in srgb, #ffd60a 55%, var(--edge)); box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, #ffd60a 30%, transparent); }
+.fu-ctrl { flex: 0 0 auto; display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+.fu-tag { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 5px 11px; border-radius: 999px; }
+.fu-tag.won { color: #1f8a3b; background: color-mix(in srgb, #30d158 15%, transparent); }
+.fu-tag.lost { color: var(--fail); background: color-mix(in srgb, var(--fail) 13%, transparent); }
+:root[data-theme="dark"] .fu-tag.won { color: #5fe08a; }
+
+/* Kickoff */
+.ko-card { margin-bottom: 16px; }
+.ko-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+.ko-miles { display: flex; flex-direction: column; gap: 8px; }
+.ko-mile { display: flex; align-items: center; gap: 11px; width: 100%; text-align: left; background: var(--glass-sunken); border: 1px solid var(--edge);
+  border-radius: 10px; padding: 11px 13px; cursor: pointer; color: var(--text); font-size: 14px; font-family: inherit; transition: all .18s; }
+.ko-mile.done { color: var(--text-dim); }
+.ko-check { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--edge); display: grid; place-items: center; color: #fff; }
+.ko-mile.done .ko-check { background: var(--ok, #3fae3a); border-color: var(--ok, #3fae3a); }
+.ko-mile.done span:last-child { text-decoration: line-through; opacity: .7; }
+
+/* The FN logo on a module home is a shortcut back to the main menu. */
+.home-logo.is-link { cursor: pointer; transition: transform .22s cubic-bezier(.34,1.2,.4,1), filter .22s ease; }
+.home-logo.is-link:hover { transform: translateY(-2px) scale(1.04); filter: brightness(1.06); }
+.home-logo.is-link:active { transform: scale(.97); }
+.home-logo.is-link:focus-visible { outline: 2.5px solid var(--accent-blue); outline-offset: 4px; border-radius: 20px; }
+
+/* Requirement topics — read cards, edited via a popup */
+.topic-cards { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+.topic-empty { font-size: 13px; color: var(--text-faint); font-style: italic; padding: 4px 2px; }
+.topic-card { display: flex; align-items: center; gap: 13px; width: 100%; text-align: left; cursor: pointer;
+  background: var(--glass-sunken); border: 1px solid var(--edge); border-radius: 12px; padding: 11px 13px; color: var(--text);
+  transition: transform .18s cubic-bezier(.3,1.1,.4,1), box-shadow .18s, border-color .18s; }
+.topic-card:hover { transform: translateY(-2px); box-shadow: var(--lift-2); border-color: color-mix(in srgb, var(--accent-blue) 32%, var(--edge)); }
+.topic-card-thumb { flex: 0 0 auto; width: 56px; height: 56px; border-radius: 10px; background-size: cover; background-position: center; border: 1px solid var(--edge); }
+.topic-card-noimg { flex: 0 0 auto; width: 56px; height: 56px; border-radius: 10px; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--accent-blue) 12%, transparent); color: var(--accent-blue); }
+.topic-card-idx { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.topic-card-body { flex: 1; min-width: 0; }
+.topic-card-title { font-size: 14.5px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topic-card-desc { font-size: 12.5px; color: var(--text-dim); line-height: 1.4; margin-top: 3px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.topic-card-edit { flex: 0 0 auto; color: var(--text-faint); }
+.topic-card:hover .topic-card-edit { color: var(--accent-blue); }
+.topic-add-btn { display: inline-flex; }
+
+/* Topic editor popup image control */
+.topic-edit-img { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.topic-thumb-lg { display: block; width: 120px; height: 120px; border-radius: 12px; background-size: cover; background-position: center; border: 1px solid var(--edge); }
+.topic-modal-del { margin-top: 6px; }
+.modal-body .field { margin-bottom: 14px; }
+.modal-body .field:last-child { margin-bottom: 0; }
+.modal-body textarea { width: 100%; resize: vertical; min-height: 96px; }
+
+/* Topic card: multiple pictures + full-screen preview button */
+.topic-card-thumb { position: relative; }
+.topic-card-count { position: absolute; right: 3px; bottom: 3px; font-size: 10px; font-weight: 800; color: #fff;
+  background: rgba(0,0,0,.62); border-radius: 6px; padding: 1px 6px; }
+.topic-card-view { flex: 0 0 auto; width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center;
+  color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 14%, transparent); }
+.topic-card-view:hover { background: color-mix(in srgb, var(--accent-blue) 24%, transparent); }
+
+/* Topic editor: a row of picture thumbnails, each removable */
+.topic-edit-img { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+.topic-eimg { position: relative; }
+.topic-eimg .topic-thumb-lg { cursor: pointer; }
+.topic-eimg-del { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%;
+  border: none; background: var(--fail); color: #fff; cursor: pointer; font-size: 11px; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+
+/* Full-screen picture viewer */
+.lightbox { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center;
+  background: rgba(6,9,16,.86); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  opacity: 0; transition: opacity .2s ease; padding: 40px; }
+.lightbox.show { opacity: 1; }
+.lb-stage { max-width: 100%; max-height: 100%; display: grid; place-items: center; }
+.lb-img { max-width: min(94vw, 1400px); max-height: 88vh; border-radius: 8px; box-shadow: 0 20px 60px -12px rgba(0,0,0,.7);
+  object-fit: contain; user-select: none; }
+.lb-close { position: fixed; top: 18px; right: 20px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(255,255,255,.25);
+  background: rgba(20,26,40,.7); color: #fff; font-size: 17px; cursor: pointer; display: grid; place-items: center; }
+.lb-close:hover { background: rgba(40,50,70,.9); }
+.lb-nav { position: fixed; top: 50%; transform: translateY(-50%); width: 52px; height: 52px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,.22); background: rgba(20,26,40,.6); color: #fff; font-size: 30px; line-height: 1; cursor: pointer;
+  display: grid; place-items: center; padding-bottom: 4px; }
+.lb-nav:hover { background: rgba(40,50,70,.9); }
+.lb-prev { left: 18px; } .lb-next { right: 18px; }
+.lb-count { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); color: #fff; font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12.5px; background: rgba(20,26,40,.7); border: 1px solid rgba(255,255,255,.18); border-radius: 999px; padding: 5px 14px; }
+@media (max-width: 640px) {
+  .lb-nav { width: 44px; height: 44px; font-size: 26px; }
+  .lb-prev { left: 8px; } .lb-next { right: 8px; }
+}
+
 </style>
 </head>
 <body class="lang-th">
@@ -3630,7 +4021,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260827-025020"></script>
+<script src="firebase-bundle.js?v=20260827-092744"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -3753,6 +4144,29 @@ const ICONS = {
   pdi:       '<circle cx="12" cy="12" r="8.4"/><path pathLength="1" d="M8.2 12.2l2.7 2.7 5-5.6"/>',
   delivery:  '<path d="M3.2 7h10.3v9.4H3.2z"/><path d="M13.5 10.4h3.7l3 3.1v2.9h-6.7z"/><circle cx="7.2" cy="18.4" r="1.9"/><circle cx="17" cy="18.4" r="1.9"/>',
   service:   '<path d="M15 6.1a4.1 4.1 0 00-5.5 5.5l-5.4 5.4a1.4 1.4 0 000 2l.9.9a1.4 1.4 0 002 0l5.4-5.4a4.1 4.1 0 005.5-5.5l-2.5 2.5-2.4-2.4L15 6.1z"/>',
+
+  /* ---- Project Phase module ---- */
+  care:      '<path d="M12 3.4l8.2 4.3-8.2 4.3-8.2-4.3z"/><path d="M4.2 12.1L12 16.2l7.8-4.1"/><path d="M4.2 16.2L12 20.3l7.8-4.1"/>',
+  phase:     '<path d="M4 5.5h16"/><path d="M4 12h16"/><path d="M4 18.5h16"/><circle cx="8" cy="5.5" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="18.5" r="2"/>',
+  reqnew:    '<path d="M6 3.5h8l4 4v9a1.5 1.5 0 01-1.5 1.5H6A1.5 1.5 0 014.5 16.5v-11A1.5 1.5 0 016 3.5z"/><path d="M13.5 3.5v4h4"/><path d="M8 12h5M8 15h3"/><circle cx="16.5" cy="16.5" r="3.4" fill="none"/><path d="M16.5 15v3M15 16.5h3"/>',
+  reqlist:   '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 9h16M4 14h16"/><path d="M8 6.5h.01"/>',
+  feasible:  '<path d="M12 3l7 3v5c0 4.2-2.9 7.4-7 9-4.1-1.6-7-4.8-7-9V6z"/><path d="M9 12l2 2 4-4.5"/>',
+  solution:  '<path d="M9.2 18h5.6"/><path d="M10 21h4"/><path d="M12 3.5a6 6 0 00-3.4 10.9c.6.4.9 1 .9 1.6h5c0-.6.3-1.2.9-1.6A6 6 0 0012 3.5z"/>',
+  proposal:  '<rect x="4.5" y="3.5" width="15" height="17" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+  meeting:   '<rect x="3.6" y="5.2" width="16.8" height="15.2" rx="2.4"/><path d="M3.6 10h16.8"/><path d="M8.4 3.6v3.2M15.6 3.6v3.2"/><path d="M9 15l2 2 4-4"/>',
+  followup:  '<path d="M4 4v16"/><path d="M4 5h11l-2 3 2 3H4"/><circle cx="18" cy="17" r="2.6"/>',
+  kickoff:   '<path d="M5.5 14.5c3-8 8-10.5 12.5-10.5.5 5-2 10.5-10 13z"/><path d="M9 15l-4 4"/><path d="M7.5 12.5l-3 .5 1.5-3"/><path d="M11.5 16.5l-.5 3 3-1.5"/><circle cx="14.5" cy="9.5" r="1.4"/>',
+  won:       '<circle cx="12" cy="12" r="8.5"/><path d="M8.2 12.2l2.7 2.7 5-5.6"/>',
+  lost:      '<circle cx="12" cy="12" r="8.5"/><path d="M9 9l6 6M15 9l-6 6"/>',
+  upload:    '<path d="M12 15V4"/><path d="M8.4 7.6L12 4l3.6 3.6"/><path d="M4.6 14v3.4a2 2 0 002 2h10.8a2 2 0 002-2V14"/>',
+  clock:     '<circle cx="12" cy="12" r="8.4"/><path d="M12 7.5V12l3 2"/>',
+  mech:      '<circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+  elec:      '<path d="M13 3L5 13h5l-1 8 8-11h-5z"/>',
+  plc:       '<rect x="4" y="6" width="16" height="12" rx="1.6"/><path d="M8 6V4M12 6V4M16 6V4M8 18v2M12 18v2M16 18v2"/><path d="M8 11h3M8 14h5"/>',
+  robot:     '<rect x="6" y="9" width="12" height="9" rx="2"/><path d="M12 5v4"/><circle cx="12" cy="4" r="1.4"/><path d="M9.5 13h.01M14.5 13h.01"/><path d="M4 12v3M20 12v3"/>',
+  vision:    '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  software:  '<path d="M8.5 9L5 12l3.5 3"/><path d="M15.5 9l3.5 3-3.5 3"/><path d="M13 6l-2 12"/>',
+  prod:      '<path d="M3.5 20h17"/><path d="M5 20v-9l4 2.6V11l4 2.6V11l4 2.6V20"/>',
 };
 
 /* ---------- People ----------
@@ -4257,6 +4671,34 @@ const FORM_BY_TYPE = FORM_TYPES.reduce((acc, f) => {
   return acc;
 }, {});
 
+/* ---------- Project Phase module ----------
+   A customer requirement flows through gated stages: Requirement →
+   Technical Feasibility → Solution Design → Proposal → Meeting →
+   Decision. Each stage unlocks the next only once confirmed. */
+
+const PROJ_DISCIPLINES = [
+  { key: 'mechanical', icon: 'mech',     accent: '#0a84ff', label: { en: 'Mechanical', th: 'เครื่องกล' } },
+  { key: 'electrical', icon: 'elec',     accent: '#ffb454', label: { en: 'Electrical', th: 'ไฟฟ้า' } },
+  { key: 'plc',        icon: 'plc',      accent: '#30d158', label: { en: 'PLC',        th: 'PLC' } },
+  { key: 'robot',      icon: 'robot',    accent: '#bf5af3', label: { en: 'Robot',      th: 'หุ่นยนต์' } },
+  { key: 'vision',     icon: 'vision',   accent: '#00c2d6', label: { en: 'Vision',     th: 'วิชัน' } },
+  { key: 'software',   icon: 'software', accent: '#ff6b5e', label: { en: 'Software',   th: 'ซอฟต์แวร์' } },
+  { key: 'production', icon: 'prod',     accent: '#8e8e93', label: { en: 'Production', th: 'การผลิต' } },
+];
+
+/* Ordered pipeline stages with a colour for the status badge. */
+const PROJ_STAGES = [
+  { key: 'requirement', color: '#8e8e93', label: { en: 'Requirement',  th: 'ความต้องการ' } },
+  { key: 'feasibility', color: '#0a84ff', label: { en: 'Feasibility',  th: 'ความเป็นไปได้' } },
+  { key: 'solution',    color: '#bf5af3', label: { en: 'Solution',     th: 'ออกแบบโซลูชัน' } },
+  { key: 'proposal',    color: '#00c2d6', label: { en: 'Proposal',     th: 'ข้อเสนอ' } },
+  { key: 'meeting',     color: '#ff9f0a', label: { en: 'Meeting',      th: 'นัดประชุม' } },
+  { key: 'decision',    color: '#ffd60a', label: { en: 'Awaiting decision', th: 'รอลูกค้าตัดสินใจ' } },
+  { key: 'won',         color: '#30d158', label: { en: 'Won',          th: 'ได้งาน' } },
+  { key: 'lost',        color: '#ff453a', label: { en: 'Lost',         th: 'เสียงาน' } },
+];
+const PROJ_STAGE_BY_KEY = PROJ_STAGES.reduce((a, s) => { a[s.key] = s; return a; }, {});
+
 /* ---------- UI strings ---------- */
 
 const UI = {
@@ -4307,6 +4749,77 @@ const UI = {
     th: 'มีรายการความปลอดภัยไม่ผ่าน จึงไม่สามารถอนุมัติ FAT เป็น “พร้อมส่งมอบ” ได้',
   },
   confirmDelete: { en: 'Delete this record permanently?', th: 'ต้องการลบเอกสารนี้ถาวรหรือไม่?' },
+
+  /* ---- Project Phase module ---- */
+  main_care: { en: 'Machine Care', th: 'งานบริการเครื่องจักร' },
+  main_care_sub: { en: 'Inspection, FAT/SAT, service reports', th: 'ตรวจสอบ FAT/SAT และรายงานบริการ' },
+  main_proj: { en: 'Project Phase', th: 'งานโครงการ' },
+  main_proj_sub: { en: 'From customer requirement to project kickoff', th: 'ตั้งแต่ความต้องการลูกค้าจนถึงเริ่มโครงการ' },
+  main_menu: { en: 'Main menu', th: 'เมนูหลัก' },
+  back_main: { en: '← Main menu', th: '← เมนูหลัก' },
+
+  nav_req_new:  { en: 'New Requirement', th: 'สร้างความต้องการ' },
+  nav_req_list: { en: 'Requirements', th: 'รายการความต้องการ' },
+  nav_followup: { en: 'Project Follow-up', th: 'ติดตามโครงการ' },
+  nav_kickoff:  { en: 'Project Kickoff', th: 'เริ่มโครงการ' },
+
+  req_title: { en: 'Project / requirement title', th: 'ชื่อโครงการ / ความต้องการ' },
+  req_customer: { en: 'Customer', th: 'ลูกค้า' },
+  req_contact: { en: 'Customer contact', th: 'ผู้ติดต่อฝ่ายลูกค้า' },
+  req_date: { en: 'Enquiry date', th: 'วันที่รับความต้องการ' },
+  req_summary: { en: 'Overview', th: 'ภาพรวม' },
+  req_topics: { en: 'Requirement topics', th: 'หัวข้อความต้องการ' },
+  req_topic_add: { en: '+ Add topic', th: '+ เพิ่มหัวข้อ' },
+  req_topic_add_title: { en: 'Add requirement topic', th: 'เพิ่มหัวข้อความต้องการ' },
+  req_topic_edit_title: { en: 'Edit topic', th: 'แก้ไขหัวข้อ' },
+  req_topic_empty: { en: 'No topics yet — add the first one.', th: 'ยังไม่มีหัวข้อ — เพิ่มหัวข้อแรก' },
+  update: { en: 'Update', th: 'อัปเดต' },
+  add: { en: 'Add', th: 'เพิ่ม' },
+  req_topic_title: { en: 'Topic', th: 'หัวข้อ' },
+  req_topic_desc: { en: 'Description', th: 'รายละเอียด' },
+  req_topic_img: { en: '+ Picture', th: '+ รูปภาพ' },
+
+  feas_title: { en: 'Technical Feasibility', th: 'การประเมินความเป็นไปได้ทางเทคนิค' },
+  feas_hint: { en: 'The engineering team reviews the requirement and confirms which disciplines can deliver it. Tick a discipline to add its design idea.', th: 'ทีมวิศวกรรมพิจารณาความต้องการและยืนยันว่าสาขาใดทำได้ ติ๊กสาขาเพื่อเพิ่มแนวคิดการออกแบบ' },
+  feas_idea: { en: 'Solution design idea (reply to customer)', th: 'แนวคิดโซลูชัน (สำหรับตอบลูกค้า)' },
+  feas_confirm: { en: 'Confirm feasibility', th: 'ยืนยันความเป็นไปได้' },
+  feas_confirmed: { en: 'Feasibility confirmed', th: 'ยืนยันความเป็นไปได้แล้ว' },
+
+  sol_title: { en: 'Solution Design', th: 'ออกแบบโซลูชัน' },
+  sol_hint: { en: 'Attach the design deliverables — drawings, models, calculations. Excel, PDF, image or STL.', th: 'แนบผลงานออกแบบ — แบบ โมเดล การคำนวณ (Excel, PDF, รูปภาพ หรือ STL)' },
+  sol_confirm: { en: 'Confirm solution', th: 'ยืนยันโซลูชัน' },
+  sol_confirmed: { en: 'Solution confirmed', th: 'ยืนยันโซลูชันแล้ว' },
+
+  prop_title: { en: 'Proposal', th: 'ข้อเสนอ' },
+  prop_hint: { en: 'Attach what will be presented to the customer: presentation, scope of work, cost and timeline.', th: 'แนบเอกสารสำหรับนำเสนอลูกค้า: พรีเซนต์ ขอบเขตงาน ราคา และกำหนดการ' },
+  prop_present: { en: 'Presentation', th: 'ไฟล์นำเสนอ' },
+  prop_scope: { en: 'Scope of work', th: 'ขอบเขตงาน' },
+  prop_cost: { en: 'Cost', th: 'ราคา' },
+  prop_timeline: { en: 'Timeline', th: 'กำหนดการ' },
+  prop_confirm: { en: 'Confirm proposal', th: 'ยืนยันข้อเสนอ' },
+  prop_confirmed: { en: 'Proposal confirmed', th: 'ยืนยันข้อเสนอแล้ว' },
+
+  meet_title: { en: 'Customer Meeting', th: 'การประชุมกับลูกค้า' },
+  meet_hint: { en: 'Set the appointment to present the proposal, and who attends.', th: 'กำหนดนัดนำเสนอข้อเสนอ และผู้เข้าร่วม' },
+  meet_date: { en: 'Meeting date', th: 'วันประชุม' },
+  meet_time: { en: 'Start time', th: 'เวลาเริ่ม' },
+  meet_end: { en: 'Finish time', th: 'เวลาสิ้นสุด' },
+  meet_people: { en: 'Participants', th: 'ผู้เข้าร่วม' },
+  meet_people_add: { en: '+ Add participant', th: '+ เพิ่มผู้เข้าร่วม' },
+  meet_confirm: { en: 'Confirm meeting & send to customer', th: 'ยืนยันการประชุมและส่งให้ลูกค้า' },
+  meet_set: { en: 'Meeting scheduled', th: 'นัดประชุมแล้ว' },
+
+  decision_wait: { en: 'Waiting for customer decision', th: 'รอลูกค้าตัดสินใจ' },
+  mark_won: { en: 'Mark WON', th: 'บันทึกว่าได้งาน' },
+  mark_lost: { en: 'Mark LOST', th: 'บันทึกว่าเสียงาน' },
+
+  file_local_note: { en: 'kept on this device (too large to sync)', th: 'เก็บบนเครื่องนี้ (ใหญ่เกินกว่าจะซิงก์)' },
+  file_add: { en: '+ Attach file', th: '+ แนบไฟล์' },
+  preview: { en: 'Preview', th: 'ดูตัวอย่าง' },
+  confirm: { en: 'Confirm', th: 'ยืนยัน' },
+  locked_hint: { en: 'Confirm the step above to unlock this section', th: 'ยืนยันขั้นตอนด้านบนเพื่อปลดล็อกส่วนนี้' },
+  ko_title: { en: 'Project Kickoff', th: 'เริ่มโครงการ' },
+  noProjects: { en: 'No projects yet.', th: 'ยังไม่มีโครงการ' },
 };
 
 </script>
@@ -4855,10 +5368,12 @@ const FNCloud = (function () {
      'auto' follows the device. On a shop-floor tablet that means the
      app dims itself with the rest of the screen in the evening. */
 
-  /* Dark is the house default — a device with no saved preference opens
-     dark. But a choice made in Settings is remembered: pick Light or
-     Auto and it stays that way next time. */
-  let theme = localStorage.getItem('fn-machine-care.theme') || 'dark';
+  /* Always start dark. Every open boots in dark mode, whatever was last
+     picked — the app is a dark-first tool. The Settings switch still
+     changes Light/Auto live during the session (so the glitch and the
+     light backdrop are reachable), but the next open returns to dark;
+     the saved value is deliberately not read on startup. */
+  let theme = 'dark';
   const darkQuery = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
 
   function resolvedTheme() {
@@ -5143,6 +5658,17 @@ const FNCloud = (function () {
     return people().find((p) => p.name.toLowerCase() === clean) || null;
   }
 
+  /* Drop a name from the register — used when a wrong name was added.
+     Records that already stamped that name keep their copy; this only
+     removes it from the picker. */
+  function removePerson(name) {
+    const clean = (name || '').trim().toLowerCase();
+    if (!clean) return;
+    const list = people();
+    const i = list.findIndex((p) => p.name.toLowerCase() === clean);
+    if (i >= 0) { list.splice(i, 1); saveDB(); }
+  }
+
   function positionLabel(value) {
     const p = POSITIONS.find((x) => x.value === value);
     return p ? p.label : { en: value || '', th: value || '' };
@@ -5165,6 +5691,29 @@ const FNCloud = (function () {
       if (v) seen.add(v);
     });
     return Array.from(seen).sort((x, y) => x.localeCompare(y));
+  }
+
+  /* Same, but narrowed by context: whatever OTHER identity fields are
+     already filled in this form constrain the list — pick a customer and
+     the Work No. dropdown then offers only that customer's work numbers.
+     Nothing is ever filled in automatically; the relation only decides
+     what the dropdown OFFERS. Falls back to the full list when the
+     narrowed one would be empty. */
+  function suggestionsRelated(rec, key) {
+    const constraints = IDENTITY_KEYS.filter((k) =>
+      k !== key && ((rec.fields[k] || '').trim() !== ''));
+    const matches = (r) => constraints.every((k) =>
+      ((r.fields[k] || '').trim().toLowerCase() === (rec.fields[k] || '').trim().toLowerCase()));
+    const related = new Set(), all = new Set();
+    db.records.forEach((r) => {
+      if (r.id === rec.id) return;
+      const v = (r.fields[key] || '').trim();
+      if (!v) return;
+      all.add(v);
+      if (constraints.length && matches(r)) related.add(v);
+    });
+    const list = constraints.length && related.size ? related : all;
+    return Array.from(list).sort((x, y) => x.localeCompare(y));
   }
 
   /* Pick a Work No. that already exists and the rest of the machine's
@@ -5211,6 +5760,28 @@ const FNCloud = (function () {
       result: null,
       signatures: {},  // roleKey -> { data, name, date }
     };
+  }
+
+  /* Empty every filled-in part of a record back to a blank form, keeping
+     its id, type, doc number and dates. Used by the form's Clear button. */
+  function clearRecord(rec) {
+    const fresh = newRecord(rec.type);
+    rec.fields = fresh.fields;
+    rec.checks = {};
+    rec.measures = {};
+    rec.perf = {};
+    rec.docs = {};
+    rec.photos = {};
+    rec.tables = {};
+    rec.notes = {};
+    rec.rootcause = {};
+    rec.priority = {};
+    rec.beforeAfter = { before: [], after: [] };
+    rec.result = null;
+    rec.signatures = {};
+    rec._showErrors = false;
+    rec.status = 'draft';
+    touch(rec);
   }
 
   /* Identity used to group a machine's history */
@@ -5742,8 +6313,23 @@ const FNCloud = (function () {
 
   /* ---------------- Router ---------------- */
 
-  const state = { view: 'home', recordId: null, machineKey: null, search: '', customer: null,
-                  filterCustomer: null, filterMachine: null, openMachine: null };
+  const state = { view: 'main', module: 'main', recordId: null, machineKey: null, projectId: null,
+                  search: '', customer: null,
+                  filterCustomer: null, filterMachine: null, openMachine: null,
+                  projSort: 'status' };
+
+  /* Which module each view belongs to — drives the sidebar menu and the
+     "back to main menu" behaviour. 'data' (Backup) is shared, so it
+     keeps whichever module it was reached from. */
+  const CARE_VIEWS = { home: 1, newform: 1, records: 1, machines: 1, dashboard: 1, form: 1, machine: 1 };
+  const PROJ_VIEWS = { projhome: 1, reqnew: 1, reqlist: 1, reqview: 1, followup: 1, kickoff: 1 };
+  const MENU_VIEWS = { main: 1, home: 1, projhome: 1 };   /* full-screen menus, no sidebar */
+  function moduleOf(view) {
+    if (view === 'main') return 'main';
+    if (PROJ_VIEWS[view]) return 'project';
+    if (CARE_VIEWS[view]) return 'care';
+    return null;   /* 'data' → keep current */
+  }
 
   /* The URL hash carries the current view so a tablet refresh — or a
      browser crash mid-inspection — returns to the same form. */
@@ -5751,6 +6337,7 @@ const FNCloud = (function () {
     const parts = [state.view];
     if (state.recordId) parts.push(state.recordId);
     else if (state.machineKey) parts.push(encodeURIComponent(state.machineKey));
+    else if (state.projectId) parts.push(state.projectId);
     const hash = '#/' + parts.join('/');
     if (window.location.hash !== hash) {
       suppressHashChange = true;
@@ -5762,18 +6349,24 @@ const FNCloud = (function () {
 
   function readHash() {
     const raw = (window.location.hash || '').replace(/^#\/?/, '');
-    if (!raw) return false;
+    if (!raw) { state.view = 'main'; state.module = 'main'; return true; }
     const [view, arg] = raw.split('/');
     if (!view) return false;
     state.view = view;
     state.recordId = null;
     state.machineKey = null;
+    state.projectId = null;
     if (view === 'form' && arg) {
       if (!db.records.some((r) => r.id === arg)) { state.view = 'records'; return true; }
       state.recordId = arg;
     } else if (view === 'machine' && arg) {
       state.machineKey = decodeURIComponent(arg);
+    } else if (view === 'reqview' && arg) {
+      if (!db.records.some((r) => r.id === arg && r.type === 'PROJECT')) { state.view = 'reqlist'; }
+      else state.projectId = arg;
     }
+    const m = moduleOf(state.view);
+    if (m) state.module = m;
     return true;
   }
 
@@ -5782,7 +6375,11 @@ const FNCloud = (function () {
      list, so opening one reads as going deeper (forward) and leaving it
      as coming back. Home is 0 — home to anywhere slides forward, and
      returning home slides back. */
-  const NAV_ORDER = { home: 0, newform: 1, records: 2, form: 2.4, machines: 3, machine: 3.4, dashboard: 4, data: 5 };
+  const NAV_ORDER = {
+    main: -1, home: 0, projhome: 0,
+    newform: 1, records: 2, form: 2.4, machines: 3, machine: 3.4, dashboard: 4, data: 5,
+    reqnew: 1, reqlist: 2, reqview: 2.4, followup: 3, kickoff: 4,
+  };
 
   function go(view, opts) {
     closeNav();
@@ -5791,14 +6388,17 @@ const FNCloud = (function () {
     state.view = view;
     state.recordId = (opts && opts.recordId) || null;
     state.machineKey = (opts && opts.machineKey) || null;
+    state.projectId = (opts && opts.projectId) || null;
+    const m = moduleOf(view);
+    if (m) state.module = m;   /* 'data' keeps the current module */
     writeHash();
     window.scrollTo(0, 0);
     animateGo(from, view);
   }
 
   /* Detail pages opened from inside the content area (a record form, a
-     machine's history) rather than from the sidebar menu. */
-  const DETAIL_VIEWS = { form: 1, machine: 1 };
+     machine's history, a requirement) rather than from the sidebar. */
+  const DETAIL_VIEWS = { form: 1, machine: 1, reqview: 1 };
   const VT_CLASSES = ['vt-forward', 'vt-back', 'vt-warp', 'vt-down', 'vt-up', 'vt-glitch'];
 
   /* Move the content on a navigation. The chosen motion system:
@@ -5817,7 +6417,9 @@ const FNCloud = (function () {
 
     const fwd = (NAV_ORDER[to] !== undefined ? NAV_ORDER[to] : 9) >= (NAV_ORDER[from] !== undefined ? NAV_ORDER[from] : 0);
     let enterClass;
-    if (from === 'home' || to === 'home') {
+    if (MENU_VIEWS[from] || MENU_VIEWS[to]) {
+      /* Crossing into or out of a full-screen menu (main / module home)
+         is the app's Warp Zoom moment. */
       html.classList.add('vt-warp');
       enterClass = 'enter-warp';
       warpRing();
@@ -5902,12 +6504,18 @@ const FNCloud = (function () {
   function render() {
     stopHomeDemo();
     document.body.className = 'lang-' + lang;
-    /* The home menu is its own full screen — no sidebar, no mobile bar. */
-    document.documentElement.classList.toggle('view-home', state.view === 'home');
+    /* Full-screen menus (main chooser, each module home) hide the
+       sidebar and mobile bar. */
+    document.documentElement.classList.toggle('view-home', !!MENU_VIEWS[state.view]);
+    document.documentElement.dataset.module = state.module || 'main';
+    /* The wordmark follows the module you are in. */
+    const restTxt = state.module === 'project' ? 'Project Phase' : 'Machine Care';
+    document.querySelectorAll('.wm-rest').forEach((e) => { e.textContent = restTxt; });
     renderNav();
     const main = $('#main');
     main.innerHTML = '';
     const views = {
+      main: viewMain,
       home: viewHome,
       dashboard: viewDashboard,
       machines: viewMachines,
@@ -5916,6 +6524,12 @@ const FNCloud = (function () {
       form: viewForm,
       machine: viewMachine,
       data: viewData,
+      projhome: viewProjHome,
+      reqnew: viewReqNew,
+      reqlist: viewReqList,
+      reqview: viewReqView,
+      followup: viewFollowup,
+      kickoff: viewKickoff,
     };
     /* A blank screen tells a technician nothing and tells me less.
        Twice now a single bad record has taken a whole page down — once
@@ -5998,35 +6612,60 @@ const FNCloud = (function () {
   function renderNav() {
     const nav = $('#nav');
     nav.innerHTML = '';
-    /* Ordered by how often a technician reaches for them:
-       start a form, find a form, find a machine, then overview. */
-    const items = [
+    /* The sidebar shows the menu of whichever module you are in. The
+       first item of each module is its primary call-to-action (New Form
+       / New Requirement) and keeps the running-border highlight. */
+    const careItems = [
       ['newform', 'newform', UI.nav_new],
       ['records', 'records', UI.nav_records],
       ['machines', 'machines', UI.nav_machines],
       ['dashboard', 'dashboard', UI.nav_dashboard],
       ['data', 'backup', UI.nav_data],
     ];
-    items.forEach(([view, iconName, label]) => {
-      const active = state.view === view || (view === 'records' && state.view === 'form') || (view === 'machines' && state.view === 'machine');
-      /* t-<view> drives the topic hover animation on the icon; the New
-         Form button also keeps its primary-action highlight. */
-      const cls = (active ? 'active' : '') + ' t-' + view + (view === 'newform' ? ' nav-cta' : '');
+    const projItems = [
+      ['reqnew', 'reqnew', UI.nav_req_new],
+      ['reqlist', 'reqlist', UI.nav_req_list],
+      ['followup', 'followup', UI.nav_followup],
+      ['kickoff', 'kickoff', UI.nav_kickoff],
+      ['data', 'backup', UI.nav_data],
+    ];
+    const items = state.module === 'project' ? projItems : careItems;
+    const cta = items[0][0];
+    /* Each menu item carries its own accent, so the little icons read as
+       a colourful set rather than one uniform blue. */
+    const NAV_ACCENT = {
+      newform: '#4b49ff', records: '#0a84ff', machines: '#00c2d6', dashboard: '#bf5af3', data: '#30d158',
+      reqnew: '#00c2d6', reqlist: '#0a84ff', followup: '#ffb454', kickoff: '#30d158',
+    };
+    const activeMap = state.module === 'project'
+      ? { reqlist: state.view === 'reqview' }
+      : { records: state.view === 'form', machines: state.view === 'machine' };
+    items.forEach(([view, iconName, label], i) => {
+      const active = state.view === view || activeMap[view];
+      const cls = (active ? 'active' : '') + ' t-' + view + (view === cta ? ' nav-cta' : '');
       const kids = [
         el('span', { class: 'nav-icon' }, [icon(iconName, 19)]),
         el('span', { class: 'nav-text' }, [L(label)]),
       ];
-      /* New Form gets a border that runs around its edge on hover. */
-      if (view === 'newform') kids.push(el('span', { class: 'nav-run', 'aria-hidden': 'true' }));
-      nav.appendChild(el('button', { class: cls.trim(), onclick: () => go(view) }, kids));
+      if (view === cta) kids.push(el('span', { class: 'nav-run', 'aria-hidden': 'true' }));
+      const onclick = view === 'reqnew' ? () => createAndOpenProject() : () => go(view);
+      const accent = NAV_ACCENT[view];
+      nav.appendChild(el('button', { class: cls.trim(), onclick, style: accent ? `--nav-accent:${accent}` : null }, kids));
     });
+    /* Back to the two-module main menu. */
+    nav.appendChild(el('button', { class: 'nav-back t-main', onclick: () => go('main') }, [
+      el('span', { class: 'nav-icon' }, [icon('home', 19)]),
+      el('span', { class: 'nav-text' }, [L(UI.main_menu)]),
+    ]));
 
     const ts = $('#themeSwitch');
     if (ts) {
       ts.innerHTML = '';
+      /* Dark first — it is the app's primary look; Light is the
+         secondary choice, Auto last. */
       [
-        ['light', '☀', { en: 'Light', th: 'สว่าง' }],
         ['dark', '☾', { en: 'Dark', th: 'มืด' }],
+        ['light', '☀', { en: 'Light', th: 'สว่าง' }],
         ['auto', '◐', { en: 'Auto', th: 'ตามระบบ' }],
       ].forEach(([v, icon, label]) => {
         ts.appendChild(
@@ -6073,7 +6712,10 @@ const FNCloud = (function () {
     const latest = recs.slice().sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1))[0];
 
     const hero = el('div', { class: 'home-hero' }, [
-      el('div', { class: 'home-logo brand-logo', 'aria-hidden': 'true' },
+      el('div', { class: 'home-logo brand-logo is-link', 'aria-hidden': 'true', role: 'button', tabindex: '0',
+        'aria-label': T(UI.main_menu),
+        onclick: () => go('main'),
+        onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go('main'); } } },
         [el('span', { class: 'lf', text: 'F' }), el('span', { class: 'ln', text: 'N' })]),
       el('div', { class: 'home-wordmark wordmark' },
         [el('span', { class: 'wm-fn', text: 'FN' }), el('span', { class: 'wm-rest', text: 'Machine Care' })]),
@@ -6192,10 +6834,11 @@ const FNCloud = (function () {
       },
     ];
 
+    const CARE_ACCENT = { newform: '#4b49ff', records: '#0a84ff', machines: '#00c2d6', dashboard: '#bf5af3', data: '#30d158' };
     const grid = el('div', { class: 'home-grid' });
     cards.forEach((c) => {
       grid.appendChild(
-        el('button', { class: 'home-card t-' + c.view, style: `--accent:${(FORM_BY_TYPE[c.view] || {}).accent || 'var(--erp-indigo)'}`, onclick: () => go(c.view) }, [
+        el('button', { class: 'home-card t-' + c.view, style: `--accent:${CARE_ACCENT[c.view] || 'var(--erp-indigo)'}`, onclick: () => go(c.view) }, [
           el('span', { class: 'hc-deco', 'aria-hidden': 'true' }, [icon(c.icon, 96)]),
           el('div', { class: 'hc-top' }, [
             el('span', { class: 'hc-icon' }, [icon(c.icon, 26)]),
@@ -6282,6 +6925,898 @@ const FNCloud = (function () {
     /* Hold the first tick until the return transition has landed —
        flipping card classes mid-transition costs frames on a phone. */
     timer = setTimeout(tick, 700);
+  }
+
+  /* ============================================================
+     PROJECT PHASE MODULE
+     A two-module app: the main menu chooses Machine Care or Project
+     Phase. Project Phase runs a gated pipeline for each customer
+     requirement. Projects are stored as records of type 'PROJECT', so
+     they sync and tombstone through the same machinery as everything
+     else; the Machine Care views ignore them (no FORM_BY_TYPE entry).
+     ============================================================ */
+
+  /* ---- Main menu: choose a workspace ---- */
+  function menuHero(wordRest, tag, toMain) {
+    /* On a module home the logo is a shortcut back to the main menu. */
+    const logoAttrs = { class: 'home-logo brand-logo' + (toMain ? ' is-link' : ''), 'aria-hidden': 'true' };
+    if (toMain) {
+      logoAttrs.role = 'button';
+      logoAttrs.tabindex = '0';
+      logoAttrs['aria-label'] = T(UI.main_menu);
+      logoAttrs.onclick = () => go('main');
+      logoAttrs.onkeydown = (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go('main'); } };
+    }
+    return el('div', { class: 'home-hero' }, [
+      el('div', logoAttrs, [el('span', { class: 'lf', text: 'F' }), el('span', { class: 'ln', text: 'N' })]),
+      el('div', { class: 'home-wordmark wordmark' },
+        [el('span', { class: 'wm-fn', text: 'FN' }), el('span', { class: 'wm-rest', text: wordRest })]),
+      el('div', { class: 'home-tag' }, [L(tag)]),
+    ]);
+  }
+
+  function menuCard(view, iconName, accent, title, sub, onclick) {
+    return el('button', { class: 'home-card t-' + view, style: `--accent:${accent}`, onclick }, [
+      el('span', { class: 'hc-deco', 'aria-hidden': 'true' }, [icon(iconName, 96)]),
+      el('div', { class: 'hc-top' }, [
+        el('span', { class: 'hc-icon' }, [icon(iconName, 26)]),
+        el('div', { class: 'hc-titles' }, [
+          el('div', { class: 'hc-title' }, [L(title)]),
+          el('div', { class: 'hc-sub' }, [L(sub)]),
+        ]),
+        el('span', { class: 'hc-arrow', text: '→' }),
+      ]),
+    ]);
+  }
+
+  function viewMain(root) {
+    const hero = menuHero('Technology', { en: 'F N Technology · choose a workspace', th: 'เอฟ เอ็น เทคโนโลยี · เลือกพื้นที่ทำงาน' });
+    const projCount = projectRecords().length;
+    const careCount = db.records.filter((r) => FORM_BY_TYPE[r.type]).length;
+    const grid = el('div', { class: 'home-grid home-grid-2' }, [
+      menuCard('care', 'care', 'var(--erp-indigo)', UI.main_care, UI.main_care_sub, () => go('home')),
+      menuCard('phase', 'phase', '#00c2d6', UI.main_proj, UI.main_proj_sub, () => go('projhome')),
+    ]);
+    /* tiny counts under each card title via sub already; add a stat row */
+    const stat = el('div', { class: 'main-stats' }, [
+      el('span', {}, [String(careCount) + ' ', L({ en: 'machine documents', th: 'เอกสารเครื่องจักร' })]),
+      el('span', { class: 'main-stats-dot' }, ['·']),
+      el('span', {}, [String(projCount) + ' ', L({ en: 'projects', th: 'โครงการ' })]),
+    ]);
+    const homeEl = el('div', { class: 'home' }, [hero, grid, stat]);
+    root.appendChild(homeEl);
+    startHomeDemo(homeEl);
+  }
+
+  function viewProjHome(root) {
+    const hero = menuHero('Project Phase', { en: 'From customer requirement to project kickoff', th: 'ตั้งแต่ความต้องการลูกค้าจนถึงเริ่มโครงการ' }, true);
+    const projs = projectRecords();
+    const openN = projs.filter((p) => !['won', 'lost'].includes(projStage(p))).length;
+    const waitN = projs.filter((p) => projStage(p) === 'decision').length;
+    const cards = [
+      ['reqnew', 'reqnew', '#00c2d6', UI.nav_req_new, { en: 'Capture a new customer requirement', th: 'บันทึกความต้องการลูกค้าใหม่' }, () => createAndOpenProject()],
+      ['reqlist', 'reqlist', '#0a84ff', UI.nav_req_list, { en: `${projs.length} requirements`, th: `${projs.length} ความต้องการ` }, () => go('reqlist')],
+      ['followup', 'followup', '#ffb454', UI.nav_followup, { en: `${openN} open · ${waitN} awaiting decision`, th: `กำลังดำเนินการ ${openN} · รอตัดสินใจ ${waitN}` }, () => go('followup')],
+      ['kickoff', 'kickoff', '#30d158', UI.nav_kickoff, { en: 'Start delivery on a won project', th: 'เริ่มส่งมอบโครงการที่ได้งาน' }, () => go('kickoff')],
+      ['data', 'backup', 'var(--erp-indigo)', UI.nav_data, { en: 'Export, restore, manage data', th: 'สำรอง กู้คืน จัดการข้อมูล' }, () => go('data')],
+    ];
+    const grid = el('div', { class: 'home-grid' }, cards.map(([v, ic, ac, t, s, fn]) => menuCard(v, ic, ac, t, s, fn)));
+    const homeEl = el('div', { class: 'home' }, [hero, grid]);
+    root.appendChild(homeEl);
+    startHomeDemo(homeEl);
+  }
+
+  /* ---- Project data ---- */
+  function projectRecords() { return db.records.filter((r) => r.type === 'PROJECT' && !r.deleted); }
+
+  function newProject() {
+    return {
+      id: uid(), type: 'PROJECT',
+      docNo: nextProjNo(),
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      status: 'draft',
+      fields: { customer: '', title: '', contact: '', enquiryDate: todayISO() },
+      topics: [],                       /* [{id, title, desc, img}] */
+      feasibility: { confirmed: false, disc: {} },  /* disc: { key:{on,idea} } */
+      solution: { confirmed: false, files: [] },
+      proposal: { confirmed: false, present: [], scope: [], cost: [], timeline: [] },
+      meeting: { date: '', time: '', end: '', people: [], confirmed: false },
+      decision: 'pending',              /* pending | won | lost */
+      kickoff: { date: '', lead: '', team: [], milestones: [] },
+    };
+  }
+
+  function nextProjNo() {
+    const year = new Date().getFullYear();
+    const key = `REQ-${year}`;
+    const used = db.records.filter((r) => r.docNo && r.docNo.startsWith(key))
+      .map((r) => parseInt(r.docNo.slice(key.length + 1), 10)).filter((n) => !isNaN(n));
+    return `${key}-${String((used.length ? Math.max(...used) : 0) + 1).padStart(4, '0')}`;
+  }
+
+  function createAndOpenProject() {
+    const p = newProject();
+    db.records.push(p);
+    saveDB();
+    go('reqview', { projectId: p.id });
+  }
+
+  /* ---- Example data ----
+     A one-tap set of demo projects, one at every pipeline stage, so all
+     of the Project Phase features can be seen working. Each carries
+     demo:true so they can be cleared again in one tap. */
+  function demoPic(label, c1, c2) {
+    const svg = "<svg xmlns='http://www.w3.org/2000/svg' width='760' height='520'>" +
+      "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>" +
+      "<stop offset='0' stop-color='" + c1 + "'/><stop offset='1' stop-color='" + c2 + "'/></linearGradient>" +
+      "<pattern id='grid' width='38' height='38' patternUnits='userSpaceOnUse'>" +
+      "<path d='M38 0H0V38' fill='none' stroke='rgba(255,255,255,.16)' stroke-width='1'/></pattern></defs>" +
+      "<rect width='760' height='520' fill='url(#g)'/><rect width='760' height='520' fill='url(#grid)'/>" +
+      "<text x='380' y='276' font-family='sans-serif' font-size='40' font-weight='700' fill='rgba(255,255,255,.94)' text-anchor='middle'>" + label + "</text></svg>";
+    return 'data:image/svg+xml,' + encodeURIComponent(svg);
+  }
+  const DISC_IDEA = {
+    mechanical: 'Servo-driven pick head on a linear rail; hardened tool plate, quick-change gripper fingers.',
+    electrical: 'Central control cabinet, 24V DC bus, safety relays and E-stop loop to Cat.3 / PLe.',
+    plc: 'Omron NX PLC, sequence + recipe handling, HMI on 10" panel with alarm log.',
+    robot: '6-axis robot for load/unload, reach 900mm, vacuum EOAT, calibrated to conveyor frame.',
+    vision: 'Fixed camera + ring light for presence / orientation check; pass-fail to PLC over Ethernet/IP.',
+    software: 'MES tie-in over REST, per-unit traceability, CSV export and dashboard for OEE.',
+    production: 'Target 22s cycle, single operator, changeover under 8 minutes between variants.',
+  };
+  function projExamplesPresent() { return db.records.some((r) => r.type === 'PROJECT' && r.demo); }
+  function clearProjectExamples() {
+    /* Tombstone each one so the delete travels to every device — a plain
+       filter would let a synced copy come back from the server. */
+    db.records.filter((r) => r.type === 'PROJECT' && r.demo).forEach((r) => tombstoneRecord(r));
+    render();
+    toast(T({ en: 'Example projects removed', th: 'ลบตัวอย่างแล้ว' }));
+  }
+  function seedProjectExamples() {
+    if (projExamplesPresent()) { toast(T({ en: 'Examples already loaded', th: 'มีตัวอย่างอยู่แล้ว' })); return; }
+    const demoNames = ['Somchai P.', 'Alice Wong', 'K. Warit', 'Nattapong S.', 'Ploy R.'];
+    demoNames.forEach((n) => addPerson(n, ''));
+
+    const mkDisc = (keys) => { const d = {}; keys.forEach((k) => { d[k] = { on: true, idea: DISC_IDEA[k] }; }); return d; };
+    const imgF = (label, c1, c2) => ({ id: uid(), name: label.replace(/\s+/g, '_') + '.jpg', type: 'image/jpeg', size: 84000, kind: 'image', data: demoPic(label, c1, c2), synced: true });
+    const docF = (name, type, size) => ({ id: uid(), name: name, type: type, size: size, kind: 'file', data: null, synced: false });
+    const topic = (title, desc, pics) => ({ id: uid(), title: title, desc: desc, imgs: (pics || []) });
+
+    const configs = [
+      { level: 0, date: '2026-08-24', customer: 'Delta Electronics', title: 'Connector auto-insertion cell',
+        contact: 'K. Warit',
+        topics: [
+          topic('Insertion accuracy', 'Insert 6 connectors per board, ±0.05mm placement, no bent pins.',
+            [demoPic('Connector board', '#0a84ff', '#00c2d6'), demoPic('Insert head', '#0a3a6b', '#0a84ff')]),
+          topic('Throughput', 'Line must keep 24s takt to match the SMT feeder upstream.', [demoPic('Line layout', '#1c2540', '#0a84ff')]),
+        ] },
+      { level: 1, date: '2026-08-12', customer: 'Western Digital', title: 'HDD tray de-stacker',
+        contact: 'Nattapong S.',
+        disc: mkDisc(['mechanical', 'electrical', 'plc']),
+        topics: [topic('De-stack reliability', 'Separate one tray at a time from a 40-tray stack without jams.', [demoPic('Tray stack', '#bf5af3', '#0a84ff')])] },
+      { level: 2, date: '2026-07-28', customer: 'Seagate', title: 'Vision inspection retrofit',
+        contact: 'Alice Wong',
+        disc: mkDisc(['electrical', 'vision', 'software']),
+        solFiles: [imgF('Layout render', '#bf5af3', '#ff6b5e'), docF('Solution_design_v2.pdf', 'application/pdf', 1840000), docF('Cell_frame.stl', 'model/stl', 5200000)],
+        topics: [topic('Defect classes', 'Scratch, contamination, and label skew — three fail codes.', [demoPic('Defect chart', '#00c2d6', '#0a84ff')])] },
+      { level: 3, date: '2026-07-10', customer: 'Celestica', title: 'PCB conformal coating line',
+        contact: 'Somchai P.',
+        disc: mkDisc(['mechanical', 'electrical', 'plc', 'robot', 'production']),
+        solFiles: [imgF('Coating cell', '#30d158', '#0a84ff'), docF('BOM.xlsx', 'application/vnd.ms-excel', 240000)],
+        present: [docF('Proposal_deck.pdf', 'application/pdf', 3200000)],
+        scope: [docF('Scope_of_work.pdf', 'application/pdf', 420000)],
+        cost: [docF('Cost_breakdown.xlsx', 'application/vnd.ms-excel', 96000)],
+        timeline: [imgF('Gantt', '#ff9f0a', '#ffd60a')],
+        topics: [topic('Coating window', 'Selective coat 4 zones, keep connectors masked.', [demoPic('Coat zones', '#00c2d6', '#30d158')])] },
+      { level: 4, date: '2026-06-22', customer: 'Fabrinet', title: 'Fiber module test handler',
+        contact: 'Ploy R.', decision: 'pending',
+        disc: mkDisc(['mechanical', 'electrical', 'plc', 'robot', 'vision', 'software', 'production']),
+        solFiles: [imgF('Handler CAD', '#bf5af3', '#0a84ff')],
+        present: [docF('Proposal.pdf', 'application/pdf', 2600000)],
+        scope: [docF('Scope.pdf', 'application/pdf', 380000)],
+        cost: [docF('Cost.xlsx', 'application/vnd.ms-excel', 88000)],
+        timeline: [imgF('Schedule', '#ff9f0a', '#ff6b5e')],
+        mdate: '2026-08-20', people: ['Somchai P.', 'Alice Wong', 'Ploy R.'],
+        topics: [topic('Test coverage', 'Optical + electrical test, 8 sites parallel.', [demoPic('Test sites', '#0a84ff', '#bf5af3')])] },
+      { level: 5, date: '2026-05-30', customer: 'Benchmark', title: 'Automated screwdriving station', decision: 'won',
+        contact: 'K. Warit',
+        disc: mkDisc(['mechanical', 'electrical', 'plc', 'robot', 'production']),
+        solFiles: [imgF('Station CAD', '#30d158', '#0a84ff')],
+        present: [docF('Proposal.pdf', 'application/pdf', 2100000)],
+        scope: [docF('Scope.pdf', 'application/pdf', 360000)],
+        cost: [docF('Cost.xlsx', 'application/vnd.ms-excel', 92000)],
+        timeline: [imgF('Timeline', '#ff9f0a', '#30d158')],
+        mdate: '2026-07-15', people: ['Somchai P.', 'Nattapong S.', 'K. Warit'],
+        milestones: [
+          { id: uid(), label: 'Kickoff meeting held', done: true },
+          { id: uid(), label: 'Scope & spec frozen', done: true },
+          { id: uid(), label: 'PO received', done: false },
+          { id: uid(), label: 'Design released to build', done: false },
+        ],
+        topics: [topic('Torque spec', '12 screws, 0.6 Nm ±5%, auto re-work on fail.', [demoPic('Screw map', '#30d158', '#00c2d6')])] },
+      { level: 5, date: '2026-05-08', customer: 'Jabil', title: 'Laser marking gantry', decision: 'lost',
+        contact: 'Alice Wong',
+        disc: mkDisc(['mechanical', 'electrical', 'software']),
+        solFiles: [imgF('Gantry CAD', '#ff453a', '#ff9f0a')],
+        present: [docF('Proposal.pdf', 'application/pdf', 1900000)],
+        scope: [docF('Scope.pdf', 'application/pdf', 340000)],
+        cost: [docF('Cost.xlsx', 'application/vnd.ms-excel', 84000)],
+        timeline: [imgF('Plan', '#ff453a', '#bf5af3')],
+        mdate: '2026-06-18', people: ['Alice Wong', 'Ploy R.'],
+        topics: [topic('Mark quality', 'Grade-A 2D code, verify each part.', [demoPic('Code grade', '#ff453a', '#0a84ff')])] },
+    ];
+
+    configs.forEach((o, i) => {
+      const p = newProject();
+      p.demo = true;
+      p.docNo = 'REQ-2026-' + String(9001 + i).padStart(4, '0');
+      p.createdAt = o.date + 'T08:00:00.000Z';
+      p.updatedAt = o.date + 'T08:00:00.000Z';
+      p.fields = { customer: o.customer, title: o.title, contact: o.contact || '', enquiryDate: o.date };
+      p.topics = o.topics || [];
+      if (o.level >= 1) p.feasibility = { confirmed: true, disc: o.disc || mkDisc(['mechanical', 'electrical']) };
+      if (o.level >= 2) p.solution = { confirmed: true, files: o.solFiles || [] };
+      if (o.level >= 3) p.proposal = { confirmed: true, present: o.present || [], scope: o.scope || [], cost: o.cost || [], timeline: o.timeline || [] };
+      if (o.level >= 4) p.meeting = { date: o.mdate || o.date, time: '10:00', end: '11:30', people: o.people || [], confirmed: true };
+      if (o.decision) p.decision = o.decision;
+      if (o.decision === 'won') p.kickoff = { date: o.mdate || o.date, lead: (o.people && o.people[0]) || '', team: o.people || [], milestones: o.milestones || [] };
+      db.records.push(p);
+    });
+    saveDB(); render();
+    toast(T({ en: '7 example projects loaded', th: 'โหลดตัวอย่าง 7 โครงการแล้ว' }));
+  }
+
+  /* Which stage a project has reached, from its confirmations/decision. */
+  function projStage(p) {
+    if (p.decision === 'won') return 'won';
+    if (p.decision === 'lost') return 'lost';
+    if (p.meeting && p.meeting.confirmed) return 'decision';
+    if (p.proposal && p.proposal.confirmed) return 'meeting';
+    if (p.solution && p.solution.confirmed) return 'proposal';
+    if (p.feasibility && p.feasibility.confirmed) return 'solution';
+    return 'requirement';
+  }
+  function stageBadge(p) {
+    const k = projStage(p);
+    const s = PROJ_STAGE_BY_KEY[k] || PROJ_STAGE_BY_KEY.requirement;
+    return el('span', { class: 'stage-badge', style: `--sc:${s.color}` }, [L(s.label)]);
+  }
+
+  /* ---- Local-only file store (big files that don't sync) ----
+     Kept in its own localStorage key so a quota failure here never
+     corrupts the synced records. Images under the limit go straight into
+     the record and sync; everything else is stored here by id. */
+  const LOCAL_FILES_KEY = STORAGE_KEY + '.localfiles';
+  const SYNC_IMG_LIMIT = 320 * 1024;   /* images up to ~320KB sync inline */
+  function localFilesMap() { try { return JSON.parse(localStorage.getItem(LOCAL_FILES_KEY) || '{}'); } catch (e) { return {}; } }
+  function putLocalFile(id, dataURL) {
+    const m = localFilesMap(); m[id] = dataURL;
+    try { localStorage.setItem(LOCAL_FILES_KEY, JSON.stringify(m)); return true; } catch (e) { return false; }
+  }
+  function getLocalFile(id) { return localFilesMap()[id] || null; }
+  function fileDataURL(f) { return f.data || getLocalFile(f.id) || null; }
+
+  /* Read a File → attach a descriptor to `list`, then re-render. Images
+     within the limit are stored inline (synced); larger files are kept
+     on this device only. */
+  function attachFile(rec, list, file) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataURL = reader.result;
+      const isImg = /^image\//.test(file.type);
+      const f = { id: uid(), name: file.name, type: file.type || '', size: file.size, kind: isImg ? 'image' : 'file', data: null, synced: false };
+      if (isImg && file.size <= SYNC_IMG_LIMIT) {
+        f.data = dataURL; f.synced = true;
+      } else {
+        const ok = putLocalFile(f.id, dataURL);
+        f.synced = false;
+        if (!ok) { f.tooBig = true; toast(T({ en: 'File too large to store — kept name only', th: 'ไฟล์ใหญ่เกินไป เก็บได้เฉพาะชื่อ' }), true); }
+      }
+      list.push(f);
+      touch(rec);
+      render();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function fileExtLabel(f) {
+    const m = (f.name || '').match(/\.([a-z0-9]+)$/i);
+    return (m ? m[1] : (f.type.split('/')[1] || 'file')).toUpperCase();
+  }
+  function humanSize(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+
+  /* One file's preview card. Images show a thumbnail; other files show a
+     typed icon; a data URL that exists on this device opens on tap. */
+  function filePreview(rec, list, f, editable) {
+    const data = fileDataURL(f);
+    const open = () => { if (data) { const w = window.open(); if (w) w.document.write(`<iframe src="${data}" style="border:0;position:fixed;inset:0;width:100%;height:100%"></iframe>`); } };
+    const thumb = f.kind === 'image' && data
+      ? el('span', { class: 'fp-thumb', style: `background-image:url(${data})` })
+      : el('span', { class: 'fp-ico' }, [icon(f.kind === 'image' ? 'vision' : 'proposal', 20), el('span', { class: 'fp-ext', text: fileExtLabel(f) })]);
+    const kids = [
+      thumb,
+      el('div', { class: 'fp-meta' }, [
+        el('div', { class: 'fp-name', title: f.name, text: f.name }),
+        el('div', { class: 'fp-sub', text: humanSize(f.size) + (f.synced ? '' : ' · ' + T(UI.file_local_note)) }),
+      ]),
+    ];
+    if (data) kids.push(el('button', { class: 'fp-open', type: 'button', title: T(UI.preview), onclick: open }, [icon('records', 15)]));
+    if (editable) kids.push(el('button', { class: 'fp-del', type: 'button', title: T(UI.remove), onclick: () => { const i = list.indexOf(f); if (i >= 0) list.splice(i, 1); touch(rec); render(); } }, ['✕']));
+    return el('div', { class: 'file-card' + (f.synced ? '' : ' is-local') }, kids);
+  }
+
+  /* An upload zone: a labelled "attach" button plus the previews. */
+  function uploadZone(rec, list, editable, label, accept) {
+    const zone = el('div', { class: 'upload-zone' });
+    if (label) zone.appendChild(el('div', { class: 'uz-label' }, [L(label)]));
+    const grid = el('div', { class: 'file-grid' });
+    (list || []).forEach((f) => grid.appendChild(filePreview(rec, list, f, editable)));
+    if (editable) {
+      const input = el('input', { type: 'file', accept: accept || '', style: 'display:none', multiple: true,
+        onchange: (e) => { Array.prototype.forEach.call(e.target.files, (file) => attachFile(rec, list, file)); e.target.value = ''; } });
+      grid.appendChild(el('button', { class: 'file-add', type: 'button', onclick: () => input.click() }, [icon('upload', 20), el('span', { text: T(UI.file_add) }), input]));
+    }
+    zone.appendChild(grid);
+    return zone;
+  }
+
+  /* A topic's pictures, tolerant of the old single-image field. */
+  function topicImgs(tp) {
+    if (tp.imgs && tp.imgs.length) return tp.imgs;
+    if (tp.img) return [tp.img];
+    return [];
+  }
+
+  /* Shrink an uploaded image before storing it — topic pictures sync
+     inside the record, so keeping them ~1400px / JPEG keeps the record
+     small enough for Firestore. Falls back to the raw data on failure. */
+  function downscaleImage(file, cb) {
+    const rd = new FileReader();
+    rd.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const max = 1400;
+          let w = img.width, h = img.height;
+          if (w > max || h > max) { const s = max / Math.max(w, h); w = Math.round(w * s); h = Math.round(h * s); }
+          const c = document.createElement('canvas'); c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          cb(c.toDataURL('image/jpeg', 0.85));
+        } catch (e) { cb(rd.result); }
+      };
+      img.onerror = () => cb(rd.result);
+      img.src = rd.result;
+    };
+    rd.readAsDataURL(file);
+  }
+
+  /* Full-screen picture viewer: arrows / swipe to slide, click backdrop
+     or ✕ or Escape to close. Reusable for any list of image data URLs. */
+  function openLightbox(images, start) {
+    if (!images || !images.length) return;
+    let idx = start || 0;
+    const overlay = el('div', { class: 'lightbox' });
+    const imgEl = el('img', { class: 'lb-img', alt: '' });
+    const counter = el('div', { class: 'lb-count' });
+    const show = () => { imgEl.src = images[idx]; counter.textContent = (idx + 1) + ' / ' + images.length; };
+    const prev = () => { idx = (idx - 1 + images.length) % images.length; show(); };
+    const next = () => { idx = (idx + 1) % images.length; show(); };
+    const onKey = (e) => { if (e.key === 'Escape') close(); else if (e.key === 'ArrowLeft') prev(); else if (e.key === 'ArrowRight') next(); };
+    function close() { overlay.classList.remove('show'); document.removeEventListener('keydown', onKey); setTimeout(() => overlay.remove(), 200); }
+    const btnPrev = el('button', { class: 'lb-nav lb-prev', 'aria-label': 'Previous', onclick: (e) => { e.stopPropagation(); prev(); } }, ['‹']);
+    const btnNext = el('button', { class: 'lb-nav lb-next', 'aria-label': 'Next', onclick: (e) => { e.stopPropagation(); next(); } }, ['›']);
+    const stage = el('div', { class: 'lb-stage' }, [imgEl]);
+    overlay.appendChild(el('button', { class: 'lb-close', 'aria-label': 'Close', onclick: close }, ['✕']));
+    overlay.appendChild(btnPrev);
+    overlay.appendChild(btnNext);
+    overlay.appendChild(stage);
+    overlay.appendChild(counter);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay || e.target === stage) close(); });
+    let sx = 0;
+    overlay.addEventListener('touchstart', (e) => { sx = e.touches[0].clientX; }, { passive: true });
+    overlay.addEventListener('touchend', (e) => { const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 40) { if (dx < 0) next(); else prev(); } });
+    if (images.length < 2) { btnPrev.style.display = 'none'; btnNext.style.display = 'none'; counter.style.display = 'none'; }
+    document.addEventListener('keydown', onKey);
+    document.body.appendChild(overlay);
+    show();
+    requestAnimationFrame(() => overlay.classList.add('show'));
+  }
+
+  /* ---- New Requirement (fallback for a direct #/reqnew hash) ---- */
+  function viewReqNew(root) {
+    /* Not a real page — creating one and opening its pipeline. Defer so
+       we never re-enter render() from inside render(). */
+    setTimeout(createAndOpenProject, 0);
+    root.appendChild(el('div', { class: 'empty' }, [L({ en: 'Creating…', th: 'กำลังสร้าง…' })]));
+  }
+
+  /* ---- Requirement list ---- */
+  /* Position of a stage in the pipeline, for ordering. */
+  const STAGE_ORDER = PROJ_STAGES.reduce((a, s, i) => { a[s.key] = i; return a; }, {});
+  function stageColor(p) { return (PROJ_STAGE_BY_KEY[projStage(p)] || PROJ_STAGE_BY_KEY.requirement).color; }
+
+  function reqCard(p) {
+    const topics = (p.topics || []).length;
+    const sc = stageColor(p);
+    return el('button', { class: 'req-card', style: `--sc:${sc}`, onclick: () => go('reqview', { projectId: p.id }) }, [
+      el('span', { class: 'req-status-rail', 'aria-hidden': 'true' }),
+      el('div', { class: 'req-card-main' }, [
+        el('div', { class: 'req-card-top' }, [
+          el('span', { class: 'req-no', text: p.docNo }),
+          stageBadge(p),
+        ]),
+        el('div', { class: 'req-title', text: p.fields.title || T({ en: '(untitled requirement)', th: '(ยังไม่ตั้งชื่อ)' }) }),
+        el('div', { class: 'req-meta' }, [
+          el('span', { text: p.fields.customer || '—' }),
+          el('span', { class: 'req-dot', text: '·' }),
+          el('span', { text: fmtDate(p.fields.enquiryDate) }),
+          el('span', { class: 'req-dot', text: '·' }),
+          el('span', { text: topics + ' ' + T({ en: 'topics', th: 'หัวข้อ' }) }),
+        ]),
+      ]),
+      el('span', { class: 'req-arrow', text: '→' }),
+    ]);
+  }
+
+  function viewReqList(root) {
+    const projs = projectRecords().slice();
+    root.appendChild(el('div', { class: 'page-head' }, [
+      el('div', {}, [
+        el('h1', { class: 'page-title' }, [L(UI.nav_req_list)]),
+        el('div', { class: 'page-sub' }, [String(projs.length) + ' ', L({ en: 'total', th: 'รายการ' })]),
+      ]),
+      el('button', { class: 'btn btn-primary no-print', onclick: () => createAndOpenProject() }, [L(UI.nav_req_new)]),
+    ]));
+
+    /* Toolbar: sort mode + example-data controls */
+    const sortSeg = el('div', { class: 'req-sort seg no-print', role: 'group' }, [
+      el('button', { class: 'seg-btn' + (state.projSort === 'status' ? ' on' : ''), type: 'button',
+        onclick: () => { state.projSort = 'status'; render(); } }, [icon('feasible', 14), L({ en: 'By status', th: 'ตามสถานะ' })]),
+      el('button', { class: 'seg-btn' + (state.projSort === 'date' ? ' on' : ''), type: 'button',
+        onclick: () => { state.projSort = 'date'; render(); } }, [icon('clock', 14), L({ en: 'By date', th: 'ตามวันที่' })]),
+    ]);
+    const demoBtn = projExamplesPresent()
+      ? el('button', { class: 'btn btn-sm btn-ghost no-print', onclick: () => clearProjectExamples() }, [L({ en: 'Clear examples', th: 'ลบตัวอย่าง' })])
+      : el('button', { class: 'btn btn-sm no-print', onclick: () => seedProjectExamples() }, [L({ en: 'Load examples', th: 'โหลดตัวอย่าง' })]);
+    root.appendChild(el('div', { class: 'req-toolbar' }, [sortSeg, demoBtn]));
+
+    if (!projs.length) { root.appendChild(el('div', { class: 'empty' }, [L(UI.noProjects)])); return; }
+
+    if (state.projSort === 'date') {
+      projs.sort((a, b) => ((b.fields.enquiryDate || '') > (a.fields.enquiryDate || '') ? 1 : -1));
+      const list = el('div', { class: 'req-list' });
+      projs.forEach((p) => list.appendChild(reqCard(p)));
+      root.appendChild(list);
+    } else {
+      /* Group by status, ordered latest stage first, cards newest-first within */
+      const groups = {};
+      projs.forEach((p) => { const k = projStage(p); (groups[k] = groups[k] || []).push(p); });
+      const order = PROJ_STAGES.map((s) => s.key).filter((k) => groups[k]).reverse();
+      order.forEach((k) => {
+        const s = PROJ_STAGE_BY_KEY[k];
+        const items = groups[k].sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1));
+        root.appendChild(el('div', { class: 'req-group-head', style: `--sc:${s.color}` }, [
+          el('span', { class: 'req-group-dot' }),
+          el('span', { class: 'req-group-name' }, [L(s.label)]),
+          el('span', { class: 'req-group-count', text: String(items.length) }),
+        ]));
+        const list = el('div', { class: 'req-list' });
+        items.forEach((p) => list.appendChild(reqCard(p)));
+        root.appendChild(list);
+      });
+    }
+  }
+
+  /* ---- Requirement detail: the gated pipeline ---- */
+  function viewReqView(root) {
+    const rec = db.records.find((r) => r.id === state.projectId && r.type === 'PROJECT');
+    if (!rec) return go('reqlist');
+    /* keep older records forward-compatible */
+    rec.feasibility = rec.feasibility || { confirmed: false, disc: {} };
+    rec.feasibility.disc = rec.feasibility.disc || {};
+    rec.solution = rec.solution || { confirmed: false, files: [] };
+    rec.proposal = rec.proposal || { confirmed: false, present: [], scope: [], cost: [], timeline: [] };
+    rec.meeting = rec.meeting || { date: '', time: '', end: '', people: [], confirmed: false };
+    rec.topics = rec.topics || [];
+
+    const stage = projStage(rec);
+    const tInput = (obj, key, ph) => {
+      const i = el('input', { type: 'text', value: obj[key] || '', placeholder: ph || '' });
+      i.addEventListener('input', () => { obj[key] = i.value; });
+      i.addEventListener('change', () => { obj[key] = i.value; touch(rec); });
+      return i;
+    };
+    const tArea = (obj, key, ph) => {
+      const i = el('textarea', { placeholder: ph || '', rows: '2' }); i.value = obj[key] || '';
+      i.addEventListener('input', () => { obj[key] = i.value; });
+      i.addEventListener('change', () => { obj[key] = i.value; touch(rec); });
+      return i;
+    };
+    const dInput = (obj, key, type) => {
+      /* Dates use the app's dd/mm/yyyy picker; times stay native HH:MM. */
+      if (type === 'date') return dateField({ value: obj[key] || '', onCommit: (iso) => { obj[key] = iso; touch(rec); } });
+      const i = el('input', { type: type, value: obj[key] || '' });
+      i.addEventListener('change', () => { obj[key] = i.value; touch(rec); });
+      return i;
+    };
+    const fieldWrap = (labelObj, node) => el('div', { class: 'field' }, [el('label', {}, [L(labelObj)]), node]);
+
+    /* Toolbar */
+    root.appendChild(el('div', { class: 'toolbar no-print' }, [
+      el('div', {}, [
+        el('div', { class: 'tb-title' }, [
+          el('span', { class: 'tb-ico', style: '--accent:#00c2d6' }, [icon('reqnew', 17)]),
+          el('span', { text: rec.docNo }),
+        ]),
+        el('div', { class: 'tb-sub' }, [stageBadge(rec)]),
+      ]),
+      el('div', { class: 'btn-row' }, [
+        el('button', { class: 'btn', onclick: () => go('reqlist') }, [L({ en: '← Requirements', th: '← รายการ' })]),
+        el('button', { class: 'btn btn-danger', onclick: () => { if (confirm(T(UI.confirmDelete))) { tombstoneRecord(rec); go('reqlist'); } } }, [L(UI.delete)]),
+      ]),
+    ]));
+
+    const shell = el('div', { class: 'form-shell' });
+
+    /* ---- Requirement (always editable) ---- */
+    const reqSec = pipeSection('reqnew', '#00c2d6', UI.req_summary, false);
+    const grid = el('div', { class: 'field-grid' });
+    grid.appendChild(fieldWrap(UI.req_customer, tInput(rec.fields, 'customer', 'ABC Manufacturing')));
+    grid.appendChild(fieldWrap(UI.req_title, tInput(rec.fields, 'title', T({ en: 'e.g. Auto vision sorter line', th: 'เช่น สายคัดแยกด้วยวิชัน' }))));
+    grid.appendChild(fieldWrap(UI.req_contact, tInput(rec.fields, 'contact', '')));
+    grid.appendChild(fieldWrap(UI.req_date, dInput(rec.fields, 'enquiryDate', 'date')));
+    reqSec.body.appendChild(grid);
+
+    /* Topics — added and edited through a popup, shown as ready cards.
+       Clicking a card reopens the same popup pre-filled (button →
+       Update); adding opens it empty (button → Add). */
+    const openTopicEditor = (topic) => {
+      const isNew = !topic;
+      const draft = { title: topic ? topic.title : '', desc: topic ? topic.desc : '', imgs: topic ? topicImgs(topic).slice() : [] };
+      const titleIn = el('input', { type: 'text', placeholder: T(UI.req_topic_title) }); titleIn.value = draft.title || '';
+      titleIn.addEventListener('input', () => { draft.title = titleIn.value; });
+      const descIn = el('textarea', { rows: '5', placeholder: T(UI.req_topic_desc) }); descIn.value = draft.desc || '';
+      descIn.addEventListener('input', () => { draft.desc = descIn.value; });
+      const imgWrap = el('div', { class: 'topic-edit-img' });
+      const renderImg = () => {
+        imgWrap.innerHTML = '';
+        draft.imgs.forEach((src, i) => {
+          imgWrap.appendChild(el('div', { class: 'topic-eimg' }, [
+            el('span', { class: 'topic-thumb-lg', style: `background-image:url(${src})`, title: T(UI.preview), onclick: () => openLightbox(draft.imgs, i) }),
+            el('button', { class: 'topic-eimg-del', type: 'button', title: T(UI.remove), onclick: (e) => { e.stopPropagation(); draft.imgs.splice(i, 1); renderImg(); } }, ['✕']),
+          ]));
+        });
+        const inp = el('input', { type: 'file', accept: 'image/*', multiple: true, style: 'display:none',
+          onchange: (e) => { Array.prototype.forEach.call(e.target.files, (f) => downscaleImage(f, (d) => { draft.imgs.push(d); renderImg(); })); e.target.value = ''; } });
+        imgWrap.appendChild(el('button', { class: 'topic-img-add', type: 'button', onclick: () => inp.click() }, [icon('vision', 18), el('span', { text: T(UI.req_topic_img) }), inp]));
+      };
+      renderImg();
+      const body = [
+        el('div', { class: 'field' }, [el('label', {}, [L(UI.req_topic_title)]), titleIn]),
+        el('div', { class: 'field' }, [el('label', {}, [L(UI.req_topic_desc)]), descIn]),
+        el('div', { class: 'field' }, [el('label', {}, [L(UI.req_topic_img)]), imgWrap]),
+      ];
+      let mref = null;
+      if (!isNew) {
+        body.push(el('button', { class: 'btn btn-danger btn-sm topic-modal-del', type: 'button',
+          onclick: () => { const i = rec.topics.indexOf(topic); if (i >= 0) rec.topics.splice(i, 1); touch(rec); render(); if (mref) mref.close(); } },
+          [icon('lost', 14), L(UI.remove)]));
+      }
+      mref = modal({
+        title: isNew ? UI.req_topic_add_title : UI.req_topic_edit_title,
+        body,
+        confirmLabel: isNew ? UI.add : UI.update,
+        onConfirm: () => {
+          if (!draft.title.trim() && !draft.desc.trim() && !draft.imgs.length) return false;   /* nothing to save */
+          if (isNew) rec.topics.push({ id: uid(), title: draft.title.trim(), desc: draft.desc.trim(), imgs: draft.imgs });
+          else { topic.title = draft.title.trim(); topic.desc = draft.desc.trim(); topic.imgs = draft.imgs; topic.img = null; }
+          touch(rec); render();
+        },
+      });
+      setTimeout(() => titleIn.focus(), 80);
+    };
+
+    reqSec.body.appendChild(el('div', { class: 'sub-h' }, [L(UI.req_topics)]));
+    const topicWrap = el('div', { class: 'topic-cards' });
+    if (!rec.topics.length) topicWrap.appendChild(el('div', { class: 'topic-empty' }, [L(UI.req_topic_empty)]));
+    rec.topics.forEach((tp, idx) => {
+      const imgs = topicImgs(tp);
+      const thumb = imgs.length
+        ? el('span', { class: 'topic-card-thumb', style: `background-image:url(${imgs[0]})` },
+            imgs.length > 1 ? [el('span', { class: 'topic-card-count', text: '+' + (imgs.length - 1) })] : [])
+        : el('span', { class: 'topic-card-noimg' }, [el('span', { class: 'topic-card-idx', text: String(idx + 1) })]);
+      const kids = [
+        thumb,
+        el('div', { class: 'topic-card-body' }, [
+          el('div', { class: 'topic-card-title', text: tp.title || T({ en: '(untitled topic)', th: '(หัวข้อไม่มีชื่อ)' }) }),
+          tp.desc ? el('div', { class: 'topic-card-desc', text: tp.desc }) : null,
+        ]),
+      ];
+      if (imgs.length) {
+        kids.push(el('span', { class: 'topic-card-view', role: 'button', tabindex: '0', title: T(UI.preview),
+          onclick: (e) => { e.stopPropagation(); openLightbox(imgs, 0); },
+          onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); openLightbox(imgs, 0); } } },
+          [icon('vision', 16)]));
+      }
+      kids.push(el('span', { class: 'topic-card-edit', title: T({ en: 'Edit', th: 'แก้ไข' }) }, [icon('records', 15)]));
+      topicWrap.appendChild(el('button', { class: 'topic-card', type: 'button', onclick: () => openTopicEditor(tp) }, kids));
+    });
+    reqSec.body.appendChild(topicWrap);
+    reqSec.body.appendChild(el('button', { class: 'btn btn-sm no-print topic-add-btn', onclick: () => openTopicEditor(null) }, [L(UI.req_topic_add)]));
+    shell.appendChild(reqSec.box);
+
+    /* ---- 1. Technical Feasibility ---- */
+    const feas = rec.feasibility;
+    const fSec = pipeSection('feasible', '#0a84ff', UI.feas_title, false);
+    fSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.feas_hint)]));
+    /* The big description editor for one discipline. Opened when a
+       discipline is ticked, or when its filled preview is clicked. */
+    const openDiscEditor = (d, cur) => {
+      const ta = el('textarea', { class: 'disc-editor', rows: '8', placeholder: T(UI.feas_idea) });
+      ta.value = cur.idea || '';
+      modal({
+        title: d.label,
+        note: UI.feas_idea,
+        body: [ta],
+        confirmLabel: { en: 'Save', th: 'บันทึก' },
+        onConfirm: () => { cur.idea = ta.value.trim(); if (cur.idea) cur.on = true; touch(rec); render(); },
+      });
+      setTimeout(() => ta.focus(), 80);
+    };
+
+    const discGrid = el('div', { class: 'disc-grid' });
+    PROJ_DISCIPLINES.forEach((d) => {
+      const cur = feas.disc[d.key] || { on: false, idea: '' };
+      feas.disc[d.key] = cur;
+      const box = el('div', { class: 'disc-item' + (cur.on ? ' on' : '') + (cur.idea ? ' has-idea' : ''), style: `--accent:${d.accent}` });
+
+      /* The check toggles the discipline on/off independently. Turning it
+         ON with no idea yet immediately pops up the description field. */
+      const check = el('span', { class: 'disc-check', role: 'checkbox', 'aria-checked': cur.on ? 'true' : 'false', tabindex: '0',
+        onclick: (e) => { e.stopPropagation(); cur.on = !cur.on; touch(rec); render(); if (cur.on && !cur.idea) openDiscEditor(d, cur); },
+        onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); cur.on = !cur.on; touch(rec); render(); if (cur.on && !cur.idea) openDiscEditor(d, cur); } },
+      }, cur.on ? [icon('pdi', 15)] : []);
+
+      /* Clicking the name row: turn on + open the popup, or (already on)
+         open the popup to edit. */
+      const activate = () => { if (!cur.on) { cur.on = true; touch(rec); render(); } openDiscEditor(d, cur); };
+      const head = el('div', { class: 'disc-head', role: 'button', tabindex: '0',
+        onclick: activate,
+        onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); } },
+      }, [
+        check,
+        el('span', { class: 'disc-ico' }, [icon(d.icon, 17)]),
+        el('span', { class: 'disc-name' }, [L(d.label)]),
+        cur.on ? el('span', { class: 'disc-edit-ico', title: T(UI.preview) }, [icon('records', 14)]) : null,
+      ]);
+      box.appendChild(head);
+
+      if (cur.on) {
+        if (cur.idea) {
+          /* Filled: a one-line preview; hover shows a small popover, a
+             click opens the big editor. */
+          const snippet = cur.idea.length > 240 ? cur.idea.slice(0, 240) + '…' : cur.idea;
+          box.appendChild(el('div', { class: 'disc-desc', role: 'button', tabindex: '0', title: T(UI.preview),
+            onclick: () => openDiscEditor(d, cur),
+            onkeydown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDiscEditor(d, cur); } },
+          }, [
+            el('span', { class: 'disc-prev-text', text: cur.idea }),
+            el('span', { class: 'disc-tip' }, [el('span', { class: 'disc-tip-text', text: snippet })]),
+          ]));
+        } else {
+          box.appendChild(el('button', { class: 'disc-add', type: 'button', onclick: () => openDiscEditor(d, cur) },
+            [icon('newform', 14), el('span', { text: T({ en: 'Add design idea', th: 'เพิ่มแนวคิดการออกแบบ' }) })]));
+        }
+      }
+      discGrid.appendChild(box);
+    });
+    fSec.body.appendChild(discGrid);
+    fSec.body.appendChild(confirmRow(rec, feas, UI.feas_confirm, UI.feas_confirmed));
+    shell.appendChild(fSec.box);
+
+    /* ---- 2. Solution Design (locked until feasibility) ---- */
+    const sol = rec.solution;
+    const sSec = pipeSection('solution', '#bf5af3', UI.sol_title, !feas.confirmed);
+    if (feas.confirmed) {
+      sSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.sol_hint)]));
+      sSec.body.appendChild(uploadZone(rec, sol.files, !sol.confirmed, null, '.xlsx,.xls,.pdf,image/*,.stl'));
+      sSec.body.appendChild(confirmRow(rec, sol, UI.sol_confirm, UI.sol_confirmed));
+    }
+    shell.appendChild(sSec.box);
+
+    /* ---- 3. Proposal (locked until solution) ---- */
+    const prop = rec.proposal;
+    const pSec = pipeSection('proposal', '#00c2d6', UI.prop_title, !sol.confirmed);
+    if (sol.confirmed) {
+      pSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.prop_hint)]));
+      const ed = !prop.confirmed;
+      pSec.body.appendChild(uploadZone(rec, prop.present, ed, UI.prop_present, ''));
+      pSec.body.appendChild(uploadZone(rec, prop.scope, ed, UI.prop_scope, ''));
+      pSec.body.appendChild(uploadZone(rec, prop.cost, ed, UI.prop_cost, ''));
+      pSec.body.appendChild(uploadZone(rec, prop.timeline, ed, UI.prop_timeline, ''));
+      pSec.body.appendChild(confirmRow(rec, prop, UI.prop_confirm, UI.prop_confirmed));
+    }
+    shell.appendChild(pSec.box);
+
+    /* ---- 4. Customer Meeting (locked until proposal) ---- */
+    const mt = rec.meeting;
+    const mSec = pipeSection('meeting', '#ff9f0a', UI.meet_title, !prop.confirmed);
+    if (prop.confirmed) {
+      mSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.meet_hint)]));
+      const mg = el('div', { class: 'field-grid' });
+      mg.appendChild(fieldWrap(UI.meet_date, dInput(mt, 'date', 'date')));
+      mg.appendChild(fieldWrap(UI.meet_time, dInput(mt, 'time', 'time')));
+      mg.appendChild(fieldWrap(UI.meet_end, dInput(mt, 'end', 'time')));
+      mSec.body.appendChild(mg);
+      mSec.body.appendChild(el('div', { class: 'sub-h' }, [L(UI.meet_people)]));
+      mt.people = mt.people || [];
+      mSec.body.appendChild(participantPicker(rec, mt));
+      if (!mt.confirmed) {
+        mSec.body.appendChild(el('div', { class: 'confirm-row' }, [
+          el('button', { class: 'btn btn-primary', onclick: () => {
+            if (!mt.date) { toast(T({ en: 'Set a meeting date first', th: 'กรุณาระบุวันประชุมก่อน' }), true); return; }
+            mt.confirmed = true; touch(rec); render(); toast(T(UI.meet_set));
+          } }, [L(UI.meet_confirm)]),
+        ]));
+      } else {
+        mSec.body.appendChild(el('div', { class: 'confirmed-chip' }, [icon('pdi', 14), L(UI.meet_set), el('button', { class: 'reopen', type: 'button', onclick: () => { mt.confirmed = false; touch(rec); render(); } }, [L({ en: 'reopen', th: 'แก้ไข' })])]));
+      }
+    }
+    shell.appendChild(mSec.box);
+
+    /* ---- 5. Decision (locked until meeting confirmed) ---- */
+    if (mt.confirmed) {
+      const dSec = pipeSection('followup', '#ffd60a', { en: 'Decision', th: 'การตัดสินใจ' }, false);
+      if (rec.decision === 'pending') {
+        dSec.body.appendChild(el('div', { class: 'wait-banner' }, [icon('clock', 18), L(UI.decision_wait)]));
+        dSec.body.appendChild(el('div', { class: 'confirm-row' }, [
+          el('button', { class: 'btn btn-won', onclick: () => { rec.decision = 'won'; touch(rec); render(); } }, [icon('won', 15), L(UI.mark_won)]),
+          el('button', { class: 'btn btn-danger', onclick: () => { rec.decision = 'lost'; touch(rec); render(); } }, [icon('lost', 15), L(UI.mark_lost)]),
+        ]));
+      } else {
+        dSec.body.appendChild(el('div', { class: 'decision-final decision-' + rec.decision }, [
+          icon(rec.decision === 'won' ? 'won' : 'lost', 20),
+          L(rec.decision === 'won' ? { en: 'Project WON', th: 'ได้งานแล้ว' } : { en: 'Project LOST', th: 'เสียงาน' }),
+          el('button', { class: 'reopen', type: 'button', onclick: () => { rec.decision = 'pending'; touch(rec); render(); } }, [L({ en: 'reset', th: 'รีเซ็ต' })]),
+        ]));
+        if (rec.decision === 'won') dSec.body.appendChild(el('button', { class: 'btn btn-primary no-print', style: 'margin-top:10px', onclick: () => go('kickoff') }, [L({ en: 'Go to Project Kickoff →', th: 'ไปหน้าเริ่มโครงการ →' })]));
+      }
+      shell.appendChild(dSec.box);
+    }
+
+    root.appendChild(shell);
+  }
+
+  /* A pipeline section shell: header with icon, a body, and a lock veil
+     when the previous stage hasn't been confirmed yet. Returns {box, body}. */
+  function pipeSection(iconName, accent, titleObj, locked) {
+    const box = el('section', { class: 'section pipe-sec' + (locked ? ' is-locked' : ''), style: `--accent:${accent}` });
+    box.appendChild(el('header', {}, [
+      el('div', { class: 'section-title' }, [
+        el('span', { class: 'pipe-ico' }, [icon(iconName, 18)]),
+        el('span', {}, [L(titleObj)]),
+      ]),
+      locked ? el('span', { class: 'lock-tag' }, [icon('feasible', 14)]) : null,
+    ]));
+    const body = el('div', { class: 'section-body' });
+    if (locked) body.appendChild(el('div', { class: 'lock-hint' }, [L(UI.locked_hint)]));
+    box.appendChild(body);
+    return { box, body };
+  }
+
+  /* A confirm button that becomes a green confirmed chip (with a reopen
+     link to revise). `obj.confirmed` is the gate for the next stage. */
+  function confirmRow(rec, obj, labelConfirm, labelDone) {
+    if (obj.confirmed) {
+      return el('div', { class: 'confirmed-chip' }, [
+        icon('pdi', 14), L(labelDone),
+        el('button', { class: 'reopen', type: 'button', onclick: () => { obj.confirmed = false; touch(rec); render(); } }, [L({ en: 'reopen', th: 'แก้ไข' })]),
+      ]);
+    }
+    return el('div', { class: 'confirm-row' }, [
+      el('button', { class: 'btn btn-primary', onclick: () => { obj.confirmed = true; touch(rec); render(); toast(T(UI.saved)); } }, [icon('pdi', 15), L(labelConfirm)]),
+    ]);
+  }
+
+  /* ---- Project Follow-up ---- */
+  function viewFollowup(root) {
+    const projs = projectRecords().slice().sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1));
+    root.appendChild(el('div', { class: 'page-head' }, [
+      el('div', {}, [
+        el('h1', { class: 'page-title' }, [L(UI.nav_followup)]),
+        el('div', { class: 'page-sub' }, [L({ en: 'Status of every project — mark won or lost', th: 'สถานะทุกโครงการ — บันทึกได้งาน/เสียงาน' })]),
+      ]),
+    ]));
+
+    /* Upcoming meetings banner (the app's own reminder). */
+    const soon = projs.filter((p) => p.meeting && p.meeting.confirmed && p.decision === 'pending' && p.meeting.date);
+    if (soon.length) {
+      root.appendChild(el('div', { class: 'meet-reminder' }, [
+        icon('meeting', 18),
+        el('span', {}, [String(soon.length) + ' ', L({ en: 'meeting(s) awaiting customer decision', th: 'การประชุมที่รอลูกค้าตัดสินใจ' })]),
+      ]));
+    }
+
+    if (!projs.length) { root.appendChild(el('div', { class: 'empty' }, [L(UI.noProjects)])); return; }
+
+    /* Group by stage for a simple board feel. */
+    const board = el('div', { class: 'followup-list' });
+    projs.forEach((p) => {
+      const st = projStage(p);
+      const s = PROJ_STAGE_BY_KEY[st];
+      const waiting = st === 'decision';
+      const row = el('div', { class: 'fu-row' + (waiting ? ' is-waiting' : '') });
+      row.appendChild(el('button', { class: 'fu-main', onclick: () => go('reqview', { projectId: p.id }) }, [
+        el('div', { class: 'fu-top' }, [
+          el('span', { class: 'req-no', text: p.docNo }),
+          stageBadge(p),
+        ]),
+        el('div', { class: 'req-title', text: p.fields.title || '—' }),
+        el('div', { class: 'req-meta' }, [
+          el('span', { text: p.fields.customer || '—' }),
+          p.meeting && p.meeting.date ? el('span', { class: 'req-dot', text: '·' }) : null,
+          p.meeting && p.meeting.date ? el('span', {}, [icon('meeting', 12), ' ' + fmtDate(p.meeting.date) + (p.meeting.time ? ' ' + p.meeting.time : '')]) : null,
+        ]),
+      ]));
+      /* Won/Lost quick controls */
+      const ctrl = el('div', { class: 'fu-ctrl no-print' });
+      if (p.decision === 'won') ctrl.appendChild(el('span', { class: 'fu-tag won' }, [icon('won', 14), L({ en: 'WON', th: 'ได้งาน' })]));
+      else if (p.decision === 'lost') ctrl.appendChild(el('span', { class: 'fu-tag lost' }, [icon('lost', 14), L({ en: 'LOST', th: 'เสียงาน' })]));
+      else {
+        ctrl.appendChild(el('button', { class: 'btn btn-sm btn-won', onclick: () => { p.decision = 'won'; if (p.meeting) p.meeting.confirmed = true; touch(p); render(); } }, [L(UI.mark_won)]));
+        ctrl.appendChild(el('button', { class: 'btn btn-sm btn-danger', onclick: () => { p.decision = 'lost'; if (p.meeting) p.meeting.confirmed = true; touch(p); render(); } }, [L(UI.mark_lost)]));
+      }
+      row.appendChild(ctrl);
+      board.appendChild(row);
+    });
+    root.appendChild(board);
+  }
+
+  /* ---- Project Kickoff (won projects) ---- */
+  function viewKickoff(root) {
+    const won = projectRecords().filter((p) => p.decision === 'won').sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1));
+    root.appendChild(el('div', { class: 'page-head' }, [
+      el('div', {}, [
+        el('h1', { class: 'page-title' }, [L(UI.ko_title)]),
+        el('div', { class: 'page-sub' }, [L({ en: 'Won projects, ready to start delivery', th: 'โครงการที่ได้งาน พร้อมเริ่มส่งมอบ' })]),
+      ]),
+    ]));
+    if (!won.length) { root.appendChild(el('div', { class: 'empty' }, [L({ en: 'No won projects yet. Win one in Follow-up first.', th: 'ยังไม่มีโครงการที่ได้งาน' })])); return; }
+
+    won.forEach((p) => {
+      const k = p.kickoff = p.kickoff || { date: '', lead: '', team: [], milestones: [] };
+      const card = el('div', { class: 'card ko-card' });
+      card.appendChild(el('div', { class: 'ko-head' }, [
+        el('div', {}, [el('span', { class: 'req-no', text: p.docNo }), el('div', { class: 'req-title', text: p.fields.title || '—' }), el('div', { class: 'req-meta' }, [p.fields.customer || '—'])]),
+        el('button', { class: 'btn btn-sm', onclick: () => go('reqview', { projectId: p.id }) }, [L({ en: 'Open requirement', th: 'เปิดความต้องการ' })]),
+      ]));
+      const dLead = el('input', { type: 'text', value: k.lead || '', placeholder: T({ en: 'Project lead', th: 'หัวหน้าโครงการ' }) });
+      dLead.addEventListener('change', () => { k.lead = dLead.value; touch(p); });
+      const dDate = dateField({ value: k.date || '', onCommit: (iso) => { k.date = iso; touch(p); } });
+      const g = el('div', { class: 'field-grid' }, [
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Kickoff date', th: 'วันเริ่มโครงการ' })]), dDate]),
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Project lead', th: 'หัวหน้าโครงการ' })]), dLead]),
+      ]);
+      card.appendChild(g);
+      /* Milestones checklist */
+      card.appendChild(el('div', { class: 'sub-h' }, [L({ en: 'Kickoff checklist', th: 'รายการเริ่มโครงการ' })]));
+      const defaults = [
+        { en: 'Kickoff meeting held', th: 'ประชุมเริ่มโครงการ' },
+        { en: 'Scope & spec frozen', th: 'สรุปขอบเขตและสเปก' },
+        { en: 'PO received', th: 'รับใบสั่งซื้อ' },
+        { en: 'Design released to build', th: 'ปล่อยแบบเข้าผลิต' },
+      ];
+      if (!k.milestones.length) k.milestones = defaults.map((d) => ({ id: uid(), label: T(d), done: false }));
+      const ml = el('div', { class: 'ko-miles' });
+      k.milestones.forEach((m) => {
+        ml.appendChild(el('button', { class: 'ko-mile' + (m.done ? ' done' : ''), type: 'button', onclick: () => { m.done = !m.done; touch(p); render(); } }, [
+          el('span', { class: 'ko-check' }, m.done ? [icon('pdi', 14)] : []),
+          el('span', { text: m.label }),
+        ]));
+      });
+      card.appendChild(ml);
+      root.appendChild(card);
+    });
   }
 
   function viewDashboard(root) {
@@ -7677,6 +9212,7 @@ const FNCloud = (function () {
         el('div', { class: 'btn-row' }, [
           el('button', { class: 'btn', onclick: () => go('records') }, [L({ en: '← Back', th: '← กลับ' })]),
           el('button', { class: 'btn', onclick: () => window.print() }, [L(UI.print)]),
+          el('button', { class: 'btn', onclick: () => clearForm(rec) }, [L({ en: 'Clear all', th: 'ล้างทั้งหมด' })]),
           el('button', { class: 'btn btn-danger', onclick: () => deleteRecord(rec) }, [L(UI.delete)]),
           el('button', { class: 'btn', onclick: () => { touch(rec); toast(T(UI.saved)); } }, [L(UI.save)]),
           el('button', { class: 'btn btn-primary', onclick: () => submitRecord(rec) }, [L(UI.submit)]),
@@ -7738,6 +9274,19 @@ const FNCloud = (function () {
     if (!confirm(T(UI.confirmDelete))) return;
     tombstoneRecord(rec);
     go('records');
+  }
+
+  /* Wipe every entry on this form back to blank (the document itself is
+     kept — use Delete to remove it entirely). Confirmed first, since it
+     cannot be undone. */
+  function clearForm(rec) {
+    if (!confirm(T({
+      en: 'Clear everything filled in on this form? The document is kept but all entries are removed.',
+      th: 'ล้างข้อมูลที่กรอกทั้งหมดในเอกสารนี้หรือไม่? เอกสารยังอยู่ แต่ข้อมูลที่กรอกจะถูกลบทั้งหมด',
+    }))) return;
+    clearRecord(rec);
+    render();
+    toast(T({ en: 'Form cleared', th: 'ล้างข้อมูลแล้ว' }));
   }
 
   /* ---- Section dispatcher ---- */
@@ -7834,7 +9383,8 @@ const FNCloud = (function () {
           oninput: (e) => { rec.fields[f.key] = e.target.value; markField(wrap, rec, f); },
           onchange: (e) => {
             rec.fields[f.key] = e.target.value;
-            if (f.identity) autofillIdentity(rec, f.key, e.target.value);
+            /* No identity auto-fill — related values are offered by the
+               suggestion dropdowns instead of written in unasked. */
             touch(rec);
             markField(wrap, rec, f);
           },
@@ -7865,8 +9415,10 @@ const FNCloud = (function () {
      section card's overflow:hidden can't clip it. Returns a combobox
      wrapper, or the plain input when there is nothing to suggest yet. */
   function attachSuggest(input, wrap, rec, f) {
-    const values = suggestionsFor(f.key);
-    if (!values.length) return input;
+    /* Combo only if this field has ever had values at all; the list
+       itself is rebuilt on every open, narrowed to what relates to the
+       other fields already chosen (see suggestionsRelated). */
+    if (!suggestionsFor(f.key).length) return input;
 
     input.setAttribute('autocomplete', 'off');
     input.setAttribute('role', 'combobox');
@@ -7886,7 +9438,17 @@ const FNCloud = (function () {
       pop.style.width = input.offsetWidth + 'px';
       placeFloating(pop, input.getBoundingClientRect(), { below: true, align: 'start', gap: 5 });
     }
-    const onScroll = () => close();
+    /* Scrolling INSIDE the list must not close it — only the page
+       scrolling underneath does. And dragging the list's scrollbar blurs
+       the input, so the blur-close is skipped while the pointer is over
+       the list; an outside tap/click closes it instead. */
+    let overPop = false;
+    pop.addEventListener('pointerenter', () => { overPop = true; });
+    pop.addEventListener('pointerleave', () => { overPop = false; });
+    const onScroll = (e) => { if (e && e.target && pop.contains(e.target)) return; close(); };
+    const onDocDown = (e) => {
+      if (!pop.contains(e.target) && !combo.contains(e.target)) close();
+    };
     function setOpen(v) {
       if (v === open) { if (v) reposition(); return; }
       open = v;
@@ -7897,10 +9459,13 @@ const FNCloud = (function () {
         reposition();
         window.addEventListener('scroll', onScroll, true);
         window.addEventListener('resize', onScroll);
+        document.addEventListener('pointerdown', onDocDown, true);
       } else {
+        overPop = false;
         if (pop.parentNode) pop.parentNode.removeChild(pop);
         window.removeEventListener('scroll', onScroll, true);
         window.removeEventListener('resize', onScroll);
+        document.removeEventListener('pointerdown', onDocDown, true);
       }
     }
     function close() { setOpen(false); }
@@ -7909,12 +9474,14 @@ const FNCloud = (function () {
       input.value = v;
       rec.fields[f.key] = v;
       close();
-      if (f.identity) autofillIdentity(rec, f.key, v);
+      /* Deliberately NO auto-fill of the other fields — picking a value
+         here only narrows what the other dropdowns offer. */
       touch(rec);
       markField(wrap, rec, f);
     }
 
     function build() {
+      const values = suggestionsRelated(rec, f.key);
       const q = (input.value || '').trim().toLowerCase();
       const hasVal = (input.value || '').trim() !== '';
       /* Skip a match that is exactly what's already typed — no point. */
@@ -7946,7 +9513,7 @@ const FNCloud = (function () {
 
     input.addEventListener('focus', build);
     input.addEventListener('input', build);
-    input.addEventListener('blur', () => setTimeout(close, 60));
+    input.addEventListener('blur', () => setTimeout(() => { if (!overPop) close(); }, 60));
     input.addEventListener('keydown', (e) => { if (e.key === 'Escape' && open) { e.stopPropagation(); close(); } });
     caret.addEventListener('mousedown', (e) => {
       e.preventDefault();
@@ -8046,6 +9613,129 @@ const FNCloud = (function () {
       },
     });
     setTimeout(() => nameInput.focus(), 60);
+  }
+
+  /* Meeting participants: chips for who is coming, plus one dropdown that
+     picks from the saved register, adds a fresh name (kept for reuse), or
+     opens the manager to delete a wrong name. */
+  function participantPicker(rec, mt) {
+    mt.people = mt.people || [];
+    const holder = el('div', { class: 'part-field' });
+
+    function rebuild() {
+      holder.innerHTML = '';
+
+      const chips = el('div', { class: 'part-chips' });
+      if (!mt.people.length) {
+        chips.appendChild(el('span', { class: 'part-empty' }, [L({ en: 'No participants yet', th: 'ยังไม่มีผู้เข้าร่วม' })]));
+      }
+      mt.people.forEach((nm, i) => {
+        const p = findPerson(nm);
+        const label = p && p.position ? `${nm} · ${T(positionLabel(p.position))}` : nm;
+        chips.appendChild(el('span', { class: 'part-chip' }, [
+          el('span', { class: 'part-chip-name' }, [label]),
+          el('button', {
+            class: 'part-chip-x', type: 'button', 'aria-label': 'remove',
+            onclick: () => { mt.people.splice(i, 1); touch(rec); rebuild(); },
+          }, ['✕']),
+        ]));
+      });
+      holder.appendChild(chips);
+
+      const sel = el('select', { class: 'part-select' });
+      sel.appendChild(el('option', { value: '', text: T({ en: '+ Add participant…', th: '+ เพิ่มผู้เข้าร่วม…' }) }));
+      const avail = people().filter((p) => !mt.people.some((n) => n.toLowerCase() === p.name.toLowerCase()));
+      if (avail.length) {
+        const g = el('optgroup', { label: T({ en: 'Saved names', th: 'รายชื่อที่บันทึกไว้' }) });
+        avail.forEach((p) => g.appendChild(el('option', { value: 'name:' + p.name, text: p.position ? `${p.name} — ${T(positionLabel(p.position))}` : p.name })));
+        sel.appendChild(g);
+      }
+      sel.appendChild(el('option', { value: '__add', text: T({ en: '+ Add new name…', th: '+ เพิ่มรายชื่อใหม่…' }) }));
+      sel.appendChild(el('option', { value: '__manage', text: T({ en: '⚙ Manage names…', th: '⚙ จัดการรายชื่อ…' }) }));
+      sel.value = '';
+      sel.addEventListener('change', () => {
+        const v = sel.value;
+        sel.value = '';
+        if (v === '__add') { openAddParticipant(rec, mt, rebuild); return; }
+        if (v === '__manage') { openManagePeople(rebuild); return; }
+        if (v.startsWith('name:')) {
+          const nm = v.slice(5);
+          if (!mt.people.some((n) => n.toLowerCase() === nm.toLowerCase())) { mt.people.push(nm); touch(rec); rebuild(); }
+        }
+      });
+      holder.appendChild(el('div', { class: 'part-add no-print' }, [sel]));
+    }
+
+    rebuild();
+    return holder;
+  }
+
+  /* Add a name that is stored in the register and dropped straight into
+     this meeting. */
+  function openAddParticipant(rec, mt, done) {
+    const nameInput = el('input', { type: 'text', placeholder: T({ en: 'Full name', th: 'ชื่อ-นามสกุล' }) });
+    const posSel = el('select', {});
+    posSel.appendChild(el('option', { value: '', text: T({ en: '— position (optional) —', th: '— ตำแหน่ง (ถ้ามี) —' }) }));
+    POSITIONS.forEach((p) => posSel.appendChild(el('option', { value: p.value, text: T(p.label) })));
+    const err = el('div', { class: 'modal-error', style: 'display:none' });
+
+    modal({
+      title: { en: 'Add a name', th: 'เพิ่มรายชื่อ' },
+      note: { en: 'Saved to the list, so you can reuse it next time.', th: 'บันทึกไว้ในรายชื่อ เลือกใช้ซ้ำได้ครั้งต่อไป' },
+      body: [
+        err,
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Name', th: 'ชื่อ' })]), nameInput]),
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Position', th: 'ตำแหน่ง' })]), posSel]),
+      ],
+      confirmLabel: { en: 'Add', th: 'เพิ่ม' },
+      onConfirm: () => {
+        const name = nameInput.value.trim();
+        if (!name) { err.style.display = ''; err.textContent = T({ en: 'Please type a name.', th: 'กรุณากรอกชื่อ' }); return false; }
+        addPerson(name, posSel.value);
+        if (!mt.people.some((n) => n.toLowerCase() === name.toLowerCase())) mt.people.push(name);
+        touch(rec);
+        if (done) done();
+        toast(T({ en: 'Name added', th: 'เพิ่มรายชื่อแล้ว' }));
+        return true;
+      },
+    });
+    setTimeout(() => nameInput.focus(), 60);
+  }
+
+  /* Manage the saved register: delete a wrong name so it stops appearing
+     in the dropdown. */
+  function openManagePeople(done) {
+    const listBox = el('div', { class: 'manage-people' });
+
+    function fill() {
+      listBox.innerHTML = '';
+      const list = people();
+      if (!list.length) {
+        listBox.appendChild(el('div', { class: 'mp-empty' }, [L({ en: 'No saved names yet.', th: 'ยังไม่มีรายชื่อที่บันทึกไว้' })]));
+        return;
+      }
+      list.slice().forEach((p) => {
+        listBox.appendChild(el('div', { class: 'mp-row' }, [
+          el('div', { class: 'mp-name' }, [
+            el('span', {}, [p.name]),
+            p.position ? el('span', { class: 'mp-pos' }, [T(positionLabel(p.position))]) : '',
+          ]),
+          el('button', {
+            class: 'mp-del', type: 'button', 'aria-label': 'delete',
+            onclick: () => { removePerson(p.name); fill(); },
+          }, ['✕']),
+        ]));
+      });
+    }
+    fill();
+
+    modal({
+      title: { en: 'Manage names', th: 'จัดการรายชื่อ' },
+      note: { en: 'Remove a name to take it out of the dropdown.', th: 'ลบรายชื่อเพื่อไม่ให้แสดงในเมนู' },
+      body: [listBox],
+      confirmLabel: { en: 'Done', th: 'เสร็จ' },
+      onConfirm: () => { if (done) done(); return true; },
+    });
   }
 
   /* Choosing one known identity value fills in the rest. */
@@ -9076,7 +10766,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260827-025020';
+  const BUILD_ID = '20260827-092744';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
@@ -9410,13 +11100,16 @@ const FNCloud = (function () {
     mark.setAttribute('role', 'button');
     mark.setAttribute('tabindex', '0');
     mark.setAttribute('aria-label', 'Home');
-    mark.addEventListener('click', () => go('home'));
-    mark.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go('home'); } });
+    /* The mark goes to the current module's home (Machine Care home or
+       Project Phase home); from anywhere else, the main menu. */
+    const moduleHome = () => go(state.module === 'project' ? 'projhome' : 'home');
+    mark.addEventListener('click', moduleHome);
+    mark.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); moduleHome(); } });
 
-    /* Mobile bar's small home shortcut — close the drawer if it's open,
-       then land on the home menu. */
+    /* Mobile bar's small home shortcut — close the drawer, go to the
+       module home. */
     const mini = document.getElementById('homeMini');
-    if (mini) mini.addEventListener('click', () => { closeNav(); go('home'); });
+    if (mini) mini.addEventListener('click', () => { closeNav(); moduleHome(); });
   }
 
   /* ---------------- Living background ----------------
@@ -9427,8 +11120,17 @@ const FNCloud = (function () {
      Transform-only — no filters, no layout — so it costs almost nothing.
      Skips entirely under reduced motion, idles while the tab is hidden,
      and on touch screens simply keeps the autonomous drift. */
-  let bgKick = 0;
-  function kickAmbient() { bgKick = 1; }
+  /* Touch devices (phones, tablets) have far less GPU headroom than a
+     desktop, so a page transition there competes with the live canvas
+     and stalls. On those devices only, the background freezes for the
+     length of the transition and hands every frame to it. Desktop is
+     left exactly as it was — live and smooth. */
+  const COARSE = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
+  let bgKick = 0, ambHold = 0;
+  function kickAmbient() {
+    bgKick = 1;
+    if (COARSE) ambHold = performance.now() + 560;
+  }
 
   function startAmbient() {
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -9441,7 +11143,70 @@ const FNCloud = (function () {
         my = e.clientY / window.innerHeight;
       }, { passive: true });
     }
-    /* How far each aura leans toward the cursor — nearer layers more. */
+
+    /* ---- device tilt (phone / tablet) ----
+       Angle the device and the whole backdrop floats with it, the same
+       parallax the cursor drives on desktop. The first steady reading is
+       taken as "level", so it works however the device is held; tilting
+       from there moves the scene, and once tilt is feeding in it takes
+       over from any touch position. iOS needs a one-time permission
+       granted from a tap — requested on the first touch below. */
+    let tiltOn = false, gamma0 = null, beta0 = null, calibN = 0;
+    function onTilt(e) {
+      if (e.gamma == null || e.beta == null) return;
+      /* Landscape swaps which axis is left-right; follow the screen. */
+      const land = Math.abs(window.orientation || 0) === 90 ||
+        (screen.orientation && /landscape/.test(screen.orientation.type || ''));
+      let gx = land ? e.beta : e.gamma;     /* left-right tilt  */
+      let gy = land ? e.gamma : e.beta;     /* front-back tilt  */
+      if (land && (window.orientation === 90)) { gx = -gx; }
+      /* Calibrate a neutral pose from the first few readings. */
+      if (calibN < 6) { gamma0 = gx; beta0 = gy; calibN++; return; }
+      tiltOn = true;
+      const R = 34;   /* degrees of tilt that reach the parallax edge */
+      const cl = (v) => Math.max(-1, Math.min(1, v));
+      mx = .5 + cl((gx - gamma0) / R) * .5;
+      my = .5 + cl((gy - beta0) / R) * .5;
+    }
+    let tiltArmed = false;
+    function attachTilt() {
+      if (tiltArmed) return;
+      tiltArmed = true;
+      window.addEventListener('deviceorientation', onTilt, true);
+    }
+    function armTilt() {
+      const DOE = window.DeviceOrientationEvent;
+      if (!DOE) return;
+      if (typeof DOE.requestPermission === 'function') {
+        /* iOS 13+: the motion sensor needs an explicit permission that
+           can only be requested from inside a real tap. Keep asking on
+           each tap until it is granted (a tap consumed by scrolling or a
+           button doesn't always count), then attach and stop asking. */
+        const ask = () => {
+          if (tiltArmed) { cleanup(); return; }
+          DOE.requestPermission().then((s) => {
+            if (s === 'granted') { attachTilt(); cleanup(); }
+          }).catch(() => {});
+        };
+        const cleanup = () => {
+          window.removeEventListener('touchend', ask, true);
+          window.removeEventListener('click', ask, true);
+        };
+        window.addEventListener('touchend', ask, true);
+        window.addEventListener('click', ask, true);
+      } else {
+        /* Android / older iOS: no permission gate — attach directly. */
+        attachTilt();
+      }
+    }
+    armTilt();
+    /* Expose a manual enable so a Settings control (or any code) can
+       trigger the iOS permission prompt on demand. */
+    window.fnEnableMotion = armTilt;
+    /* Re-level when the device rotates or the app returns to view. */
+    window.addEventListener('orientationchange', () => { calibN = 0; });
+
+    /* How far each aura leans — nearer layers more. */
     const depth = [[64, 46], [42, 32], [26, 20]];
 
     /* ---- the workshop scene: Wire Grid 3D + Constellation ----
@@ -9571,9 +11336,13 @@ const FNCloud = (function () {
     }
 
     const t0 = performance.now();
+    let lastScene = 0;
     function loop(now) {
       requestAnimationFrame(loop);
       if (document.hidden) return;
+      /* On touch devices, hold the whole backdrop still while a page
+         transition plays — this is what stops the multi-second stall. */
+      if (COARSE && now < ambHold) return;
       const t = (now - t0) / 1000;
       px += (mx - px) * .05;
       py += (my - py) * .05;
@@ -9588,7 +11357,13 @@ const FNCloud = (function () {
         const y = (py - .5) * depth[i][1] + wy;
         o.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) scale(' + swell.toFixed(3) + ')';
       }
-      drawScene(t);
+      /* Touch devices redraw the scene at ~30fps to leave headroom;
+         desktop stays at full rate (the look it already had). */
+      if (COARSE) {
+        if (now - lastScene >= 33) { lastScene = now; drawScene(t); }
+      } else {
+        drawScene(t);
+      }
     }
     requestAnimationFrame(loop);
   }
