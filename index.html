@@ -37,12 +37,13 @@
 :root {
   color-scheme: light;
 
-  /* Environment behind the glass */
+  /* Environment behind the glass — the app's own cool light, coloured
+     with the ERP brand: indigo, cyan and green auras on pale blue. */
   --env-1: #c6d3ea;
   --env-2: #dae2f0;
-  --orb-a: rgba(10, 132, 255, .16);
-  --orb-b: rgba(191, 90, 243, .10);
-  --orb-c: rgba(48, 209, 88, .07);
+  --orb-a: rgba(75, 73, 255, .26);    /* ERP indigo */
+  --orb-b: rgba(0, 194, 214, .20);    /* ERP cyan   */
+  --orb-c: rgba(88, 200, 96, .16);    /* ERP green  */
 
   /* Glass surfaces — layered by elevation */
   --glass:        rgba(253, 254, 255, .58);
@@ -147,9 +148,9 @@
 
   --env-1: #070a12;
   --env-2: #0e1424;
-  --orb-a: rgba(10, 132, 255, .34);
-  --orb-b: rgba(191, 90, 243, .26);
-  --orb-c: rgba(48, 209, 88, .16);
+  --orb-a: rgba(10, 132, 255, .44);
+  --orb-b: rgba(191, 90, 243, .34);
+  --orb-c: rgba(48, 209, 88, .22);
 
   --glass:        rgba(30, 36, 52, .62);
   --glass-raised: rgba(40, 47, 66, .74);
@@ -463,19 +464,23 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
   overflow: hidden;
   pointer-events: none;
 }
+/* The auras. Previously each orb was a solid disc pushed through
+   filter: blur(90px) — three enormous blur passes re-run by the GPU on
+   every frame of their drift, which is what made the whole app feel
+   heavy. A radial-gradient IS the blurred look, painted once and then
+   only moved by transform, which costs nothing. Their motion (a slow
+   autonomous drift + cursor parallax + a pulse on page transitions)
+   lives in one rAF loop in app.js — see startAmbient(). */
 .orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
   will-change: transform;
 }
-.orb-1 { width: 46vw; height: 46vw; left: -10vw; top: -12vw;   background: var(--orb-a); animation: drift-a 34s ease-in-out infinite; }
-.orb-2 { width: 38vw; height: 38vw; right: -8vw; top: 22vh;    background: var(--orb-b); animation: drift-b 42s ease-in-out infinite; }
-.orb-3 { width: 34vw; height: 34vw; left: 26vw;  bottom: -14vw; background: var(--orb-c); animation: drift-c 38s ease-in-out infinite; }
+#bg3d { position: absolute; inset: 0; width: 100%; height: 100%; }
+.orb-1 { width: 58vw; height: 58vw; left: -14vw; top: -16vw;   background: radial-gradient(closest-side, var(--orb-a), transparent 72%); }
+.orb-2 { width: 48vw; height: 48vw; right: -10vw; top: 18vh;   background: radial-gradient(closest-side, var(--orb-b), transparent 72%); }
+.orb-3 { width: 44vw; height: 44vw; left: 24vw;  bottom: -16vw; background: radial-gradient(closest-side, var(--orb-c), transparent 72%); }
 
-@keyframes drift-a { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(6vw,4vh,0) scale(1.12); } }
-@keyframes drift-b { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(-5vw,6vh,0) scale(1.08); } }
-@keyframes drift-c { 0%,100% { transform: translate3d(0,0,0) scale(1); } 50% { transform: translate3d(4vw,-5vh,0) scale(1.15); } }
 
 /* ---------------- Layout ---------------- */
 
@@ -1179,11 +1184,13 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 }
 .home-card:hover .hc-pop { opacity: 1; transform: translateY(0) scale(1); }
 .hc-pop-inner {
-  background: var(--glass-hover);
-  -webkit-backdrop-filter: var(--blur); backdrop-filter: var(--blur);
+  /* Fully opaque: the drawer glass stacked over the solid environment
+     colour. A translucent pane here let the card underneath bleed
+     through the popup and made both unreadable. */
+  background: linear-gradient(var(--glass-drawer), var(--glass-drawer)), var(--env-2);
   border: 1px solid var(--edge);
   border-radius: 16px;
-  box-shadow: var(--lift-2), var(--specular);
+  box-shadow: var(--lift-3, var(--lift-2)), var(--specular);
   padding: 14px 15px;
 }
 .viz-head { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-faint); margin-bottom: 9px; }
@@ -1201,6 +1208,18 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 .viz-check { width: 15px; height: 15px; border-radius: 5px; border: 2px solid var(--accent, var(--erp-indigo)); flex: 0 0 auto; position: relative; }
 .viz-check::after { content: ''; position: absolute; left: 3.5px; top: 0; width: 4px; height: 8px; border: solid var(--accent, var(--erp-indigo)); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .viz-linebar { height: 8px; border-radius: 999px; background: color-mix(in srgb, var(--text-faint) 28%, transparent); }
+/* Labelled preview rows: the type code in its own accent, then the name. */
+.viz-form-code {
+  flex: 0 0 auto;
+  font-weight: 750; font-size: 12px; letter-spacing: .02em;
+  color: var(--accent, var(--erp-indigo));
+  min-width: 40px;
+}
+.viz-form-name {
+  flex: 1; min-width: 0;
+  font-size: 12.5px; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .viz-big { display: flex; flex-direction: column; }
 .viz-big-num { font-size: 30px; font-weight: 750; line-height: 1; color: var(--accent, var(--erp-indigo)); }
 .viz-big-lab { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
@@ -1376,6 +1395,178 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 
 .brand-mark.is-link { cursor: pointer; border-radius: 12px; transition: transform .18s ease; }
 .brand-mark.is-link:hover { transform: translateY(-1px); }
+
+/* ---------------- Screen transitions ----------------
+   Changing menu slides the content across like a sheet being pinned to
+   a drafting table: the old page drifts out with a slight fade, the new
+   one wipes in from a clipped edge, direction-aware (forward through
+   the menu = left, back = right). Works from the home menu to any page
+   and back, because the name lives on #main, which every view shares.
+   Uses the View Transitions API; browsers without it get a plain enter
+   animation via .enter-fwd/.enter-back. A cyan scan line sweeps the
+   viewport on every change (see .page-scan). */
+.main { view-transition-name: screen; }
+
+/* Keep the rest of the page (sidebar, background) rock-still during the
+   transition — only the content pane moves. Also prevents any flash from
+   the root snapshot. */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(screen),
+  ::view-transition-new(screen) {
+    animation-duration: .44s;
+    animation-timing-function: cubic-bezier(.35, 0, .15, 1);
+    /* Promote the snapshots to their own compositor layers up front so
+       the first animation frame doesn't pay a layerization stall. */
+    will-change: transform, opacity, filter;
+    backface-visibility: hidden;
+  }
+  html.vt-forward::view-transition-old(screen) { animation-name: pg-out-l; }
+  html.vt-forward::view-transition-new(screen) { animation-name: pg-in-r; }
+  html.vt-back::view-transition-old(screen)    { animation-name: pg-out-r; }
+  html.vt-back::view-transition-new(screen)    { animation-name: pg-in-l; }
+}
+@keyframes pg-out-l { to { opacity: 0; transform: translateX(-24px) scale(.992); filter: brightness(1.12); } }
+@keyframes pg-out-r { to { opacity: 0; transform: translateX(24px)  scale(.992); filter: brightness(1.12); } }
+@keyframes pg-in-r {
+  from { opacity: 0; transform: translateX(28px) scale(.995); clip-path: inset(0 0 0 55%); filter: brightness(1.2); }
+  60%  { clip-path: inset(0); }
+  to   { opacity: 1; transform: none; clip-path: inset(0); filter: none; }
+}
+@keyframes pg-in-l {
+  from { opacity: 0; transform: translateX(-28px) scale(.995); clip-path: inset(0 55% 0 0); filter: brightness(1.2); }
+  60%  { clip-path: inset(0); }
+  to   { opacity: 1; transform: none; clip-path: inset(0); filter: none; }
+}
+
+/* ---- The chosen motion system ----
+   WARP ZOOM  (home ↔ any page): fly through the old screen — it blows
+     up past the camera while the new one races up from a point — plus
+     the energy ring from the click.
+   TILT DROP  (menu, moving DOWN the list): the new page falls in from
+     above with a small tilt and settles level.
+   ORBIT SWING (menu, moving UP the list): the new page swings in along
+     an arc, like a sheet on a pivot.
+   (Scan Wipe stays for detail pages opened from the content area, and
+   Glitch Step runs on theme changes — defined further below.)
+   Filters stay small on purpose: big blurs on full-screen snapshots are
+   what make phones drop frames. */
+@media (prefers-reduced-motion: no-preference) {
+  html.vt-warp::view-transition-old(screen) { animation-name: warp-out; animation-duration: .4s; animation-timing-function: cubic-bezier(.5,0,.9,.4); }
+  html.vt-warp::view-transition-new(screen) { animation-name: warp-in;  animation-duration: .55s; animation-timing-function: cubic-bezier(.1,.6,.2,1); }
+  html.vt-down::view-transition-old(screen) { animation-name: tilt-out; }
+  html.vt-down::view-transition-new(screen) { animation-name: tilt-in; animation-duration: .55s; animation-timing-function: cubic-bezier(.3,1.3,.4,1); }
+  html.vt-up::view-transition-old(screen)   { animation-name: orbit-out; }
+  html.vt-up::view-transition-new(screen)   { animation-name: orbit-in; animation-duration: .55s; animation-timing-function: cubic-bezier(.25,1,.35,1); }
+}
+@keyframes warp-out {
+  to { opacity: 0; transform: scale(1.55); filter: blur(5px) brightness(1.35); }
+}
+@keyframes warp-in {
+  from { opacity: 0; transform: scale(.62); filter: blur(5px) brightness(1.2); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: none; filter: none; }
+}
+@keyframes tilt-out {
+  to { opacity: 0; transform: translateY(34px) rotate(1.2deg); }
+}
+@keyframes tilt-in {
+  from { opacity: 0; transform: translateY(-64px) rotate(-2.4deg); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes orbit-out {
+  to { opacity: 0; transform: rotate(-4deg) translateX(-56px) scale(.96); }
+}
+@keyframes orbit-in {
+  from { opacity: 0; transform: rotate(5deg) translateX(62px) scale(.94); }
+  60%  { opacity: 1; }
+  to   { opacity: 1; transform: none; }
+}
+/* Fallback enter animations for browsers without the API. */
+.main.enter-warp { animation: warp-in .55s cubic-bezier(.1,.6,.2,1) both; }
+.main.enter-down { animation: tilt-in .55s cubic-bezier(.3,1.3,.4,1) both; }
+.main.enter-up   { animation: orbit-in .55s cubic-bezier(.25,1,.35,1) both; }
+
+/* ---- Glitch Step on theme change ----
+   Switching Light/Dark/Auto jump-cuts between the two looks with a
+   stepped engineer's glitch. It animates the ROOT pair (the whole page
+   recolours), so the screen pair is silenced for this one. */
+@media (prefers-reduced-motion: no-preference) {
+  html.vt-glitch::view-transition-old(root) { animation: th-glout .28s steps(3, end) both; }
+  html.vt-glitch::view-transition-new(root) { animation: th-glin .42s steps(5, end) both; }
+  html.vt-glitch::view-transition-old(screen),
+  html.vt-glitch::view-transition-new(screen) { animation: none; }
+}
+@keyframes th-glout {
+  0%   { opacity: 1; }
+  40%  { opacity: .7; transform: translateX(-7px) skewX(-1.5deg); filter: hue-rotate(18deg) brightness(1.2); }
+  100% { opacity: 0; transform: translateX(8px); filter: brightness(1.6); }
+}
+@keyframes th-glin {
+  0%   { opacity: 0; transform: translateX(10px); clip-path: inset(0 0 60% 0); filter: brightness(1.4); }
+  30%  { opacity: 1; transform: translateX(-6px); clip-path: inset(26% 0 12% 0); }
+  60%  { transform: translateX(3px); clip-path: inset(0); filter: brightness(1.1); }
+  100% { opacity: 1; transform: none; clip-path: inset(0); filter: none; }
+}
+
+/* The energy ring: two concentric pulses that explode outward from the
+   click point when leaving or entering home. Pure light — no layout. */
+.warp-ring { position: fixed; z-index: 85; pointer-events: none; }
+.warp-ring i {
+  position: absolute; left: 0; top: 0; width: 44px; height: 44px;
+  margin: -22px 0 0 -22px; border-radius: 50%;
+  will-change: transform, opacity;
+  border: 2px solid color-mix(in srgb, var(--accent-blue) 80%, #fff);
+  box-shadow:
+    0 0 24px 2px color-mix(in srgb, var(--accent-blue) 60%, transparent),
+    inset 0 0 14px color-mix(in srgb, var(--accent-blue) 45%, transparent);
+  opacity: 0;
+}
+.warp-ring i:nth-child(2) {
+  border-width: 1px;
+  border-color: color-mix(in srgb, var(--erp-cyan, #00eaff) 85%, #fff);
+  box-shadow: 0 0 18px 1px color-mix(in srgb, var(--erp-cyan, #00eaff) 55%, transparent);
+}
+.warp-ring.go i           { animation: ring-burst .6s cubic-bezier(.2,.65,.25,1) both; }
+.warp-ring.go i:nth-child(2) { animation-duration: .75s; animation-delay: .08s; }
+@keyframes ring-burst {
+  0%   { opacity: .95; transform: scale(.15); }
+  100% { opacity: 0;   transform: scale(14); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .warp-ring { display: none; }
+  .main.enter-launch, .main.enter-return { animation: none; }
+}
+/* Fallback for browsers without the View Transitions API. */
+.main.enter-fwd  { animation: pg-in-r .44s cubic-bezier(.35,0,.15,1) both; }
+.main.enter-back { animation: pg-in-l .44s cubic-bezier(.35,0,.15,1) both; }
+
+/* The scan line: a thin lit edge that sweeps left-to-right on every menu
+   change — the instrument touch. It starts at the CONTENT pane's left
+   edge (--scan-from, set in JS from #main's position), so it never
+   crosses the sidebar; z-index 55 keeps it under the mobile drawer (60)
+   and mobile bar (65) as well. */
+.page-scan {
+  position: fixed; top: 0; bottom: 0; left: 0; width: 2px;
+  z-index: 55; pointer-events: none; opacity: 0;
+  background: linear-gradient(180deg, transparent, var(--accent-blue), transparent);
+  box-shadow: 0 0 16px 1px color-mix(in srgb, var(--accent-blue) 55%, transparent);
+  /* Animate transform, never `left`: left relayouts the page every
+     frame, transform rides the compositor at a clean 60/120fps. */
+  transform: translateX(var(--scan-from, 0px));
+  will-change: transform, opacity;
+}
+.page-scan.go { animation: page-scan .5s cubic-bezier(.3,0,.2,1); }
+@keyframes page-scan {
+  0%   { transform: translateX(var(--scan-from, 0px)); opacity: .9; }
+  100% { transform: translateX(100vw); opacity: .9; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-scan { display: none; }
+  .main.enter-fwd, .main.enter-back { animation: none; }
+}
 
 .seg-label {
   font-size: 11px;
@@ -2042,8 +2233,36 @@ tr.detail-row:hover { background: var(--glass-sunken); }
 }
 @keyframes bar-run { from { background-position: 0 130%; } to { background-position: 0 -170%; } }
 .bar-group:hover .bar { filter: brightness(1.08); }
+
+/* ---- Chart entrance ----
+   When the dashboard arrives (or its filters change), the graph builds
+   itself: gridlines sweep in from the left, then each company's bars
+   rise from the baseline in turn, and the value lands on top of its bar
+   a beat later. --gi is the group's index, set in barChart(). */
+.chart { animation: chart-in .35s ease both; }
+@keyframes chart-in { from { opacity: 0; } }
+.chart-grid .grid-line {
+  animation: grid-in .5s cubic-bezier(.3,0,.2,1) both;
+  transform-origin: left center;
+}
+@keyframes grid-in { from { transform: scaleX(0); opacity: 0; } }
+.bar {
+  animation: bar-in .55s cubic-bezier(.3,1,.4,1) both;
+  /* Base delay parks the bars until the page transition is nearly done,
+     so the two animations never fight for frames on a phone. */
+  animation-delay: calc(var(--gi, 0) * 60ms + 260ms);
+  transform-origin: bottom center;
+}
+@keyframes bar-in { from { transform: scaleY(0); } }
+.bar-value {
+  animation: barval-in .4s ease both;
+  animation-delay: calc(var(--gi, 0) * 60ms + 520ms);
+}
+@keyframes barval-in { from { opacity: 0; transform: translateY(5px); } }
+
 @media (prefers-reduced-motion: reduce) {
   .bar::after { animation: none; }
+  .chart, .chart-grid .grid-line, .bar, .bar-value { animation: none; }
 }
 .bar-value {
   font-size: 12px;
@@ -3320,11 +3539,15 @@ tbody tr.clickable { cursor: pointer; }
 </head>
 <body class="lang-th">
 
-<!-- The environment the glass floats over. Purely atmospheric. -->
+<!-- The environment the glass floats over. Colour auras beneath, and a
+     canvas above them drawing the workshop scene: a 3D wire grid floor
+     that tilts with the cursor, and a constellation of points whose
+     lines reach toward it. All behind every pane of glass. -->
 <div class="ambient" aria-hidden="true">
   <span class="orb orb-1"></span>
   <span class="orb orb-2"></span>
   <span class="orb orb-3"></span>
+  <canvas id="bg3d"></canvas>
 </div>
 
 <!-- Small screens only: the bar that owns the menu toggle -->
@@ -3407,7 +3630,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260826-073834"></script>
+<script src="firebase-bundle.js?v=20260827-025020"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -4655,8 +4878,17 @@ const FNCloud = (function () {
   function setTheme(next) {
     theme = next;
     try { localStorage.setItem('fn-machine-care.theme', next); } catch (e) { /* private mode */ }
-    applyTheme();
-    renderNav();
+    /* Glitch Step: the whole page jump-cuts between the two looks with a
+       stepped engineer's glitch (see html.vt-glitch in the stylesheet).
+       Skipped under reduced motion and on browsers without the API. */
+    const apply = () => { applyTheme(); renderNav(); };
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || !document.startViewTransition) { apply(); return; }
+    const html = document.documentElement;
+    html.classList.remove('vt-forward', 'vt-back', 'vt-warp', 'vt-down', 'vt-up');
+    html.classList.add('vt-glitch');
+    const vt = document.startViewTransition(apply);
+    vt.finished.finally(() => html.classList.remove('vt-glitch'));
   }
 
   if (darkQuery) {
@@ -5545,15 +5777,117 @@ const FNCloud = (function () {
     return true;
   }
 
+  /* Where each view sits along the menu, so a change knows which way to
+     slide. Detail pages (form, machine) belong just after their parent
+     list, so opening one reads as going deeper (forward) and leaving it
+     as coming back. Home is 0 — home to anywhere slides forward, and
+     returning home slides back. */
+  const NAV_ORDER = { home: 0, newform: 1, records: 2, form: 2.4, machines: 3, machine: 3.4, dashboard: 4, data: 5 };
+
   function go(view, opts) {
     closeNav();
     if (view !== 'dashboard') state.customer = null;
+    const from = state.view;
     state.view = view;
     state.recordId = (opts && opts.recordId) || null;
     state.machineKey = (opts && opts.machineKey) || null;
     writeHash();
     window.scrollTo(0, 0);
-    render();
+    animateGo(from, view);
+  }
+
+  /* Detail pages opened from inside the content area (a record form, a
+     machine's history) rather than from the sidebar menu. */
+  const DETAIL_VIEWS = { form: 1, machine: 1 };
+  const VT_CLASSES = ['vt-forward', 'vt-back', 'vt-warp', 'vt-down', 'vt-up', 'vt-glitch'];
+
+  /* Move the content on a navigation. The chosen motion system:
+     - home ↔ any page ............ WARP ZOOM (+ energy ring at the click)
+     - sidebar menu, moving DOWN .. TILT DROP
+     - sidebar menu, moving UP .... ORBIT SWING
+     - detail views in content .... SCAN WIPE (directional, with the line)
+     View Transitions API where the browser has it, plain enter
+     animations where it doesn't, nothing at all under reduced motion. */
+  function animateGo(from, to) {
+    const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || from === to) { render(); return; }
+
+    const html = document.documentElement;
+    VT_CLASSES.forEach((c) => html.classList.remove(c));
+
+    const fwd = (NAV_ORDER[to] !== undefined ? NAV_ORDER[to] : 9) >= (NAV_ORDER[from] !== undefined ? NAV_ORDER[from] : 0);
+    let enterClass;
+    if (from === 'home' || to === 'home') {
+      html.classList.add('vt-warp');
+      enterClass = 'enter-warp';
+      warpRing();
+    } else if (DETAIL_VIEWS[from] || DETAIL_VIEWS[to]) {
+      html.classList.add(fwd ? 'vt-forward' : 'vt-back');
+      enterClass = fwd ? 'enter-fwd' : 'enter-back';
+      pageScan();
+    } else {
+      html.classList.add(fwd ? 'vt-down' : 'vt-up');
+      enterClass = fwd ? 'enter-down' : 'enter-up';
+    }
+    kickAmbient();   /* the background reacts to every transition */
+
+    if (document.startViewTransition) {
+      document.startViewTransition(() => { render(); });
+    } else {
+      render();
+      const main = $('#main');
+      if (main) {
+        main.classList.remove('enter-fwd', 'enter-back', 'enter-warp', 'enter-down', 'enter-up');
+        void main.offsetWidth;                 /* restart the animation */
+        main.classList.add(enterClass);
+      }
+    }
+  }
+
+  /* Where the user last touched, so the launch ring bursts from the very
+     card or pill they pressed rather than an arbitrary centre. */
+  let lastTap = null;
+  document.addEventListener('pointerdown', (e) => {
+    lastTap = { x: e.clientX, y: e.clientY };
+  }, true);
+
+  /* The energy ring for home launches/returns — two pulses of light
+     exploding outward from the click point. Fixed-position, so convert
+     the visual-pixel tap point into layout pixels (see placeFloating). */
+  function warpRing() {
+    let ring = document.getElementById('warpRing');
+    if (!ring) {
+      ring = el('div', { class: 'warp-ring no-print', id: 'warpRing' },
+        [el('i'), el('i')]);
+      document.body.appendChild(ring);
+    }
+    const s = uiScale();
+    const x = lastTap ? lastTap.x : window.innerWidth / 2;
+    const y = lastTap ? lastTap.y : window.innerHeight / 2;
+    ring.style.left = (x / s) + 'px';
+    ring.style.top = (y / s) + 'px';
+    ring.classList.remove('go');
+    void ring.offsetWidth;
+    ring.classList.add('go');
+  }
+
+  /* The sweeping scan line, built once and re-armed on each change. It
+     starts at the content pane's left edge, so it never sweeps over the
+     sidebar — the menu sits still while the light passes the page.
+     getBoundingClientRect is in visual px, fixed positioning in layout
+     px; divide by the zoom (see placeFloating) so the two agree. */
+  function pageScan() {
+    let s = document.getElementById('pageScan');
+    if (!s) {
+      s = el('div', { class: 'page-scan no-print', id: 'pageScan' });
+      document.body.appendChild(s);
+    }
+    const main = $('#main');
+    const from = main ? Math.max(0, main.getBoundingClientRect().left) / uiScale() : 0;
+    s.style.setProperty('--scan-from', from + 'px');
+    s.classList.remove('go');
+    void s.offsetWidth;
+    s.classList.add('go');
   }
 
   /* ---------------- Render: shell ---------------- */
@@ -5783,8 +6117,14 @@ const FNCloud = (function () {
           el('span', { class: 'viz-val', text: String(i.value) }),
         ])));
     };
-    const formPreview = () => el('div', { class: 'viz-form' }, [70, 92, 58, 80].map((w) =>
-      el('div', { class: 'viz-form-row' }, [el('span', { class: 'viz-check' }), el('span', { class: 'viz-linebar', style: `width:${w}%` })])));
+    /* Not skeleton bars — the four real document types, named, so the
+       popup shows exactly what "New Form" offers before it is opened. */
+    const formPreview = () => el('div', { class: 'viz-form' }, FORM_TYPES.map((d) =>
+      el('div', { class: 'viz-form-row', style: `--accent:${d.accent}` }, [
+        el('span', { class: 'viz-check' }),
+        el('span', { class: 'viz-form-code', text: d.prefix }),
+        el('span', { class: 'viz-form-name', text: T(d.short) }),
+      ])));
     const bigStat = (n, lab) => el('div', { class: 'viz-big' }, [
       el('div', { class: 'viz-big-num', text: String(n) }),
       el('div', { class: 'viz-big-lab', text: lab }),
@@ -5813,7 +6153,7 @@ const FNCloud = (function () {
         pop: () => el('div', {}, [
           popHead(T({ en: 'A new checklist', th: 'เอกสารตรวจสอบใหม่' })),
           formPreview(),
-          note('ASSY · FAT · SAT · Service'),
+          note(T({ en: 'Pick a type and start filling in', th: 'เลือกประเภทแล้วเริ่มกรอกได้ทันที' })),
         ]),
       },
       {
@@ -5939,7 +6279,9 @@ const FNCloud = (function () {
 
     /* Register teardown so leaving the home view kills this loop cleanly. */
     homeDemoStops.push(() => { stop(); clearAll(); });
-    tick();
+    /* Hold the first tick until the return transition has landed —
+       flipping card classes mid-transition costs frames on a phone. */
+    timer = setTimeout(tick, 700);
   }
 
   function viewDashboard(root) {
@@ -6219,9 +6561,12 @@ const FNCloud = (function () {
     const tip = chartTip();
 
     const track = el('div', { class: 'chart-track' });
-    rows.forEach((row) => {
+    rows.forEach((row, gi) => {
       const group = el('button', {
         class: 'bar-group' + (options.onSelect ? ' is-clickable' : ''),
+        /* --gi staggers the entrance: each company's bars rise a beat
+           after the previous one (capped so long lists don't crawl). */
+        style: '--gi:' + Math.min(gi, 12),
         type: 'button',
         'aria-label': `${row.label}: ` + series.map((sr) => `${T(sr.label)} ${row.values[sr.key] || 0}`).join(', '),
         onclick: () => { if (options.onSelect) options.onSelect(row); },
@@ -8731,7 +9076,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260826-073834';
+  const BUILD_ID = '20260827-025020';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
@@ -9074,6 +9419,180 @@ const FNCloud = (function () {
     if (mini) mini.addEventListener('click', () => { closeNav(); go('home'); });
   }
 
+  /* ---------------- Living background ----------------
+     One rAF loop moves the three colour auras: a slow autonomous drift
+     (so the scene breathes even when nobody touches it), a parallax that
+     leans the auras toward the cursor at three different depths, and a
+     soft swell whenever a page transition fires (kicked from animateGo).
+     Transform-only — no filters, no layout — so it costs almost nothing.
+     Skips entirely under reduced motion, idles while the tab is hidden,
+     and on touch screens simply keeps the autonomous drift. */
+  let bgKick = 0;
+  function kickAmbient() { bgKick = 1; }
+
+  function startAmbient() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const orbs = [1, 2, 3].map((n) => document.querySelector('.orb-' + n));
+    if (!orbs[0]) return;
+    let mx = .5, my = .5, px = .5, py = .5;
+    if (window.matchMedia && window.matchMedia('(pointer:fine)').matches) {
+      window.addEventListener('pointermove', (e) => {
+        mx = e.clientX / window.innerWidth;
+        my = e.clientY / window.innerHeight;
+      }, { passive: true });
+    }
+    /* How far each aura leans toward the cursor — nearer layers more. */
+    const depth = [[64, 46], [42, 32], [26, 20]];
+
+    /* ---- the workshop scene: Wire Grid 3D + Constellation ----
+       Drawn on one canvas above the auras. The grid floor yaws and
+       pitches with the cursor and dollies forward on every transition
+       (bgKick); the constellation drifts, links its nearby points, and
+       reaches for the cursor — a tap or click scatters the points. */
+    const canvas = document.getElementById('bg3d');
+    const bctx = canvas && canvas.getContext ? canvas.getContext('2d') : null;
+    let W = 0, H = 0, DPRc = 1, pts = [];
+    function fitBg() {
+      if (!bctx) return;
+      DPRc = Math.min(window.devicePixelRatio || 1, 1.5);
+      W = canvas.width = Math.max(1, Math.floor(window.innerWidth * DPRc));
+      H = canvas.height = Math.max(1, Math.floor(window.innerHeight * DPRc));
+      /* The app zooms <html> by --ui-scale, and the canvas lives inside
+         that zoom — so its CSS size must be set in LAYOUT px (visual px
+         divided by the zoom), or the whole scene paints ~10% larger
+         than the screen and everything sits offset from the cursor.
+         Same visual-vs-layout conversion as placeFloating(). */
+      const s = uiScale();
+      canvas.style.width = (window.innerWidth / s) + 'px';
+      canvas.style.height = (window.innerHeight / s) + 'px';
+      pts = [];
+      const n = Math.min(60, Math.max(34, Math.round(window.innerWidth / 24)));
+      for (let i = 0; i < n; i++) {
+        pts.push({ x: Math.random() * W, y: Math.random() * H,
+          vx: (Math.random() - .5) * .2 * DPRc, vy: (Math.random() - .5) * .2 * DPRc, c: i % 3 });
+      }
+    }
+    fitBg();
+    window.addEventListener('resize', fitBg);
+    window.addEventListener('pointerdown', (e) => {
+      if (!bctx) return;
+      const cx = e.clientX * DPRc, cy = e.clientY * DPRc;
+      for (let i = 0; i < pts.length; i++) {
+        const dx = pts[i].x - cx, dy = pts[i].y - cy;
+        const d = Math.sqrt(dx * dx + dy * dy) || 1;
+        if (d < 260 * DPRc) {
+          const f = (1 - d / (260 * DPRc)) * 4 * DPRc;
+          pts[i].vx += dx / d * f; pts[i].vy += dy / d * f;
+        }
+      }
+    }, true);
+
+    function drawScene(t) {
+      if (!bctx || !W) return;
+      const dark = document.documentElement.dataset.theme === 'dark';
+      bctx.clearRect(0, 0, W, H);
+
+      /* -- wire grid floor -- */
+      const yaw = (px - .5) * .4, pit = (py - .45) * .26;
+      const cam = 700 - bgKick * 130;                   /* click = dolly in */
+      const gy = 300;                                   /* floor plane, world units */
+      const cy2 = Math.cos(yaw), sy2 = Math.sin(yaw), cp2 = Math.cos(pit), sp2 = Math.sin(pit);
+      function proj(x, y, z) {
+        let x2 = cy2 * x + sy2 * z, z2 = -sy2 * x + cy2 * z;
+        let y2 = cp2 * y - sp2 * z2; z2 = sp2 * y + cp2 * z2;
+        z2 += cam;
+        if (z2 < 60) return null;
+        const k = 900 / z2;
+        return [W / 2 + x2 * k * DPRc, H * .58 + y2 * k * DPRc];
+      }
+      const gridA = dark ? .30 : .16;
+      const axis = dark ? '0,234,255' : '75,73,255';
+      const gline = dark ? '94,129,172' : '96,116,168';
+      const zsh = (t * 34) % 80;
+      bctx.lineWidth = 1;
+      for (let zi = 0; zi < 20; zi++) {
+        const z = 150 + zi * 80 - zsh;
+        const p1 = proj(-1400, gy, z), p2 = proj(1400, gy, z);
+        if (!p1 || !p2) continue;
+        const a = Math.max(0, gridA - zi * (gridA / 19));
+        bctx.strokeStyle = 'rgba(' + gline + ',' + a.toFixed(3) + ')';
+        bctx.beginPath(); bctx.moveTo(p1[0], p1[1]); bctx.lineTo(p2[0], p2[1]); bctx.stroke();
+      }
+      for (let xi = -12; xi <= 12; xi++) {
+        const q1 = proj(xi * 115, gy, 140), q2 = proj(xi * 115, gy, 2100);
+        if (!q1 || !q2) continue;
+        const a = (gridA * .8) - Math.abs(xi) * (gridA / 16);
+        if (a <= 0) continue;
+        bctx.strokeStyle = xi === 0
+          ? 'rgba(' + axis + ',' + (gridA * 1.1).toFixed(3) + ')'
+          : 'rgba(' + gline + ',' + a.toFixed(3) + ')';
+        bctx.beginPath(); bctx.moveTo(q1[0], q1[1]); bctx.lineTo(q2[0], q2[1]); bctx.stroke();
+      }
+
+      /* -- constellation -- */
+      const PC = dark
+        ? ['0,234,255', '107,140,217', '160,180,210']
+        : ['75,73,255', '0,150,180', '110,130,170'];
+      const ptA = dark ? .55 : .4;
+      const linkA = dark ? .16 : .11;
+      const curA = dark ? .4 : .3;
+      const cxp = px * W, cyp = py * H;
+      const lim = 110 * DPRc * 110 * DPRc, clim = 180 * DPRc * 180 * DPRc;
+      for (let i = 0; i < pts.length; i++) {
+        const p = pts[i];
+        p.x += p.vx; p.y += p.vy;
+        p.vx *= .985; p.vy *= .985;
+        p.vx += (Math.random() - .5) * .012 * DPRc;
+        p.vy += (Math.random() - .5) * .012 * DPRc;
+        if (p.x < -20) p.x = W + 20; if (p.x > W + 20) p.x = -20;
+        if (p.y < -20) p.y = H + 20; if (p.y > H + 20) p.y = -20;
+      }
+      bctx.lineWidth = 1;
+      for (let a1 = 0; a1 < pts.length; a1++) {
+        for (let b1 = a1 + 1; b1 < pts.length; b1++) {
+          const ddx = pts[a1].x - pts[b1].x, ddy = pts[a1].y - pts[b1].y;
+          const dd = ddx * ddx + ddy * ddy;
+          if (dd < lim) {
+            bctx.strokeStyle = 'rgba(' + gline + ',' + ((1 - dd / lim) * linkA).toFixed(3) + ')';
+            bctx.beginPath(); bctx.moveTo(pts[a1].x, pts[a1].y); bctx.lineTo(pts[b1].x, pts[b1].y); bctx.stroke();
+          }
+        }
+        const cdx = pts[a1].x - cxp, cdy = pts[a1].y - cyp;
+        const cd = cdx * cdx + cdy * cdy;
+        if (cd < clim) {
+          bctx.strokeStyle = 'rgba(' + axis + ',' + ((1 - cd / clim) * curA).toFixed(3) + ')';
+          bctx.lineWidth = 1.2;
+          bctx.beginPath(); bctx.moveTo(pts[a1].x, pts[a1].y); bctx.lineTo(cxp, cyp); bctx.stroke();
+          bctx.lineWidth = 1;
+        }
+        bctx.fillStyle = 'rgba(' + PC[pts[a1].c] + ',' + ptA + ')';
+        bctx.beginPath(); bctx.arc(pts[a1].x, pts[a1].y, 1.6 * DPRc, 0, 7); bctx.fill();
+      }
+    }
+
+    const t0 = performance.now();
+    function loop(now) {
+      requestAnimationFrame(loop);
+      if (document.hidden) return;
+      const t = (now - t0) / 1000;
+      px += (mx - px) * .05;
+      py += (my - py) * .05;
+      bgKick *= .95;
+      const swell = 1 + bgKick * .07;
+      for (let i = 0; i < 3; i++) {
+        const o = orbs[i];
+        if (!o) continue;
+        const wx = Math.sin(t * .10 + i * 2.1) * 26;   /* autonomous drift */
+        const wy = Math.cos(t * .085 + i * 1.7) * 20;
+        const x = (px - .5) * depth[i][0] + wx;
+        const y = (py - .5) * depth[i][1] + wy;
+        o.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) scale(' + swell.toFixed(3) + ')';
+      }
+      drawScene(t);
+    }
+    requestAnimationFrame(loop);
+  }
+
   function boot() {
     stampBuild();
     blockPinchShrink();
@@ -9087,6 +9606,7 @@ const FNCloud = (function () {
     setupNavDrawer();
     wireSettingsToggle();
     wireBrandHome();
+    startAmbient();
     startCloud();
     readHash();
     render();
