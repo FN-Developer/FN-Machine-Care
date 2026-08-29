@@ -3913,11 +3913,14 @@ tbody tr.clickable { cursor: pointer; }
 @property --arcLen { syntax: '<number>'; inherits: false; initial-value: 0; }
 .chart-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
 @media (max-width: 820px) { .chart-2col { grid-template-columns: 1fr; } }
-/* Company row: volume pillar 70% left, share donut 30% right */
-.chart-2col.is-7030 { grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); align-items: start; }
+/* Company row: volume pillar 70% left, share donut 30% right.
+   Stretch both panels to one height so the volume box matches the
+   share box, and let the columns fill that height. */
+.chart-2col.is-7030 { grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); align-items: stretch; }
 @media (max-width: 820px) { .chart-2col.is-7030 { grid-template-columns: 1fr; } }
-.chart-2col.is-7030 .chart-body { min-height: 0; }
-.chart-2col.is-7030 .col-svg { max-height: 210px; }
+.chart-2col.is-7030 .chart-panel { display: flex; flex-direction: column; }
+.chart-2col.is-7030 .chart-body { min-height: 0; flex: 1 1 auto; }
+.chart-2col.is-7030 .col-svg { max-height: 320px; }
 
 /* Section divider between the overall charts and the by-company section */
 .dash-section { display: flex; align-items: center; gap: 14px; margin: 28px 0 14px; }
@@ -3937,8 +3940,8 @@ tbody tr.clickable { cursor: pointer; }
 .donut-arc.hot { stroke-width: 22; filter: brightness(1.15) drop-shadow(0 0 5px rgba(255,255,255,.25)); }
 .chart-donut.is-hot .donut-arc:not(.hot) { opacity: .34; }
 @keyframes arcGrow { from { --arcLen: 0; } }
-.donut-big { fill: var(--text); font-size: 26px; font-weight: 800; transition: fill .2s; }
-.donut-small { fill: var(--text-faint); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+.donut-big { fill: var(--text); font-size: 26px; font-weight: 800; transition: fill .2s; pointer-events: none; }
+.donut-small { fill: var(--text-faint); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; pointer-events: none; }
 .chart-donut.is-hot .donut-big { fill: var(--text); }
 .chart-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; }
 .cl-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); cursor: pointer; padding: 3px 9px; border-radius: 999px; border: 1px solid transparent; transition: background .18s, border-color .18s, transform .18s; }
@@ -4395,7 +4398,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260829-085825"></script>
+<script src="firebase-bundle.js?v=20260829-093100"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -8725,6 +8728,15 @@ const FNCloud = (function () {
       chip.addEventListener('mouseenter', stop);
       chip.addEventListener('mouseleave', start);
       chip.addEventListener('click', () => { stop(); openCustomerList(shown, total, opts); start(); });
+      /* Each slice stays individually live: hover pauses the loop and
+         previews that customer (centre + its arc); click selects it. */
+      arcEls.forEach((arc, i) => {
+        if (!arc) return;
+        arc.style.cursor = opts.onPick ? 'pointer' : 'default';
+        arc.addEventListener('mouseenter', () => { stop(); idx = i; paint(i); });
+        arc.addEventListener('mouseleave', start);
+        if (opts.onPick) arc.addEventListener('click', () => { stop(); opts.onPick(shown[i]); });
+      });
       wrap.appendChild(rot);
       return wrap;
     }
@@ -8905,7 +8917,7 @@ const FNCloud = (function () {
       el('div', { class: 'panel-sub' }, [L({ en: 'Tap a bar to open that company', th: 'แตะแท่งเพื่อดูรายบริษัท' })]),
     ])]));
     const ccBody = el('div', { class: 'panel-body chart-body' });
-    ccBody.appendChild(columnsEl(compCols, { share: true, trunc: 9, short: true, onPick: (it) => openCompany(it.key) }));
+    ccBody.appendChild(columnsEl(compCols, { share: true, trunc: 9, onPick: (it) => openCompany(it.key) }));
     ccPanel.appendChild(ccBody);
     const cdPanel = el('section', { class: 'panel chart-panel' });
     cdPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [
@@ -12069,7 +12081,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260829-085825';
+  const BUILD_ID = '20260829-093100';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
