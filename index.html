@@ -3947,6 +3947,37 @@ tbody tr.clickable { cursor: pointer; }
 .cl-item.hot .cl-dot { box-shadow: 0 0 8px 1px currentColor; }
 .cl-val { font-weight: 800; color: var(--text); }
 
+/* --- Rotating legend: one customer at a time, swapping on a loop --- */
+.cl-rotate { display: flex; justify-content: center; width: 100%; }
+.cl-rot-chip { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; font: inherit; font-size: 13px; color: var(--text-dim);
+  cursor: pointer; padding: 6px 8px 6px 12px; border-radius: 999px; border: 1px solid var(--edge);
+  background: color-mix(in srgb, var(--text-faint) 8%, transparent); transition: border-color .18s, background .18s, transform .18s, box-shadow .18s; }
+.cl-rot-chip:hover { border-color: color-mix(in srgb, var(--accent-blue) 55%, var(--edge)); background: color-mix(in srgb, var(--accent-blue) 12%, transparent); transform: translateY(-1px); box-shadow: 0 6px 18px -10px rgba(0,0,0,.5); }
+.cl-rot-chip:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
+.cl-rot-chip .cl-dot { box-shadow: 0 0 8px 1px currentColor; }
+.cl-rot-chip .cl-label { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; color: var(--text); }
+.cl-rot-chip .cl-val { font-size: 12px; color: var(--text-dim); font-weight: 800; }
+.cl-rot-more { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; font-weight: 800; letter-spacing: .02em;
+  color: var(--accent-blue); background: color-mix(in srgb, var(--accent-blue) 15%, transparent); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.cl-rot-more svg { width: 13px; height: 13px; }
+.cl-rot-in { animation: clRotIn .5s cubic-bezier(.3,1,.35,1) both; }
+@keyframes clRotIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .cl-rot-in { animation: none; } }
+
+/* --- Full customer list popup (from the rotating legend) --- */
+.cll-list { display: flex; flex-direction: column; gap: 4px; max-height: 60vh; overflow-y: auto; margin: -2px -4px; padding: 2px 4px; }
+.cll-row { display: grid; grid-template-columns: 12px minmax(90px, 1fr) minmax(70px, 130px) auto; align-items: center; gap: 11px;
+  padding: 9px 11px; border-radius: 12px; border: 1px solid transparent; transition: background .15s, border-color .15s, transform .12s; }
+.cll-row.is-click { cursor: pointer; }
+.cll-row.is-click:hover { background: color-mix(in srgb, var(--text-faint) 10%, transparent); border-color: var(--edge); transform: translateX(2px); }
+.cll-dot { width: 12px; height: 12px; border-radius: 4px; flex: 0 0 auto; }
+.cll-name { font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cll-bar { height: 7px; border-radius: 999px; background: color-mix(in srgb, var(--text-faint) 16%, transparent); overflow: hidden; }
+.cll-fill { display: block; height: 100%; border-radius: 999px; transform-origin: left; animation: cllGrow .6s cubic-bezier(.3,1,.35,1) both; }
+@keyframes cllGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+.cll-val { font-weight: 800; color: var(--text-dim); font-size: 12.5px; white-space: nowrap; text-align: right; }
+@media (prefers-reduced-motion: reduce) { .cll-fill { animation: none; } }
+
 /* --- Pillar columns: grow up from the axis, lift + reveal % on hover --- */
 .chart-cols { width: 100%; overflow-x: auto; }
 .col-svg { width: 100%; height: auto; min-width: 360px; display: block; overflow: visible; }
@@ -4364,7 +4395,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260829-082312"></script>
+<script src="firebase-bundle.js?v=20260829-085825"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -8649,6 +8680,55 @@ const FNCloud = (function () {
     const bigEl = holder.querySelector('.donut-big');
     const smallEl = holder.querySelector('.donut-small');
     const arcEls = holder.querySelectorAll('.donut-arc');
+
+    /* Rotating preview legend: instead of a long wall of company names,
+       show ONE at a time swapping on a loop (each drives the centre + its
+       slice), and let a tap open the full list. Used where the segment
+       count is large, e.g. requirements-by-company. */
+    if (opts.rotate && shown.length) {
+      const chipDot = el('span', { class: 'cl-dot' });
+      const chipLabel = el('span', { class: 'cl-label' });
+      const chipVal = el('span', { class: 'cl-val' });
+      const chip = el('button', {
+        class: 'cl-rot-chip', type: 'button',
+        'aria-label': T({ en: 'Show all customers', th: 'ดูรายชื่อลูกค้าทั้งหมด' }),
+        title: T({ en: 'Tap to see every customer', th: 'แตะเพื่อดูลูกค้าทุกราย' }),
+      }, [
+        chipDot, chipLabel, chipVal,
+        el('span', { class: 'cl-rot-more' }, [icon('records', 13), L({ en: 'all ', th: 'ทั้งหมด ' }), String(shown.length)]),
+      ]);
+      const rot = el('div', { class: 'cl-rotate' }, [chip]);
+      let idx = 0;
+      const paint = (i) => {
+        const s = shown[i]; const pct = Math.round(s.value / (total || 1) * 100);
+        chipDot.style.background = s.color;
+        chipLabel.textContent = T(s.label);
+        chipVal.textContent = s.value + ' · ' + pct + '%';
+        bigEl.textContent = String(s.value);
+        smallEl.textContent = T(s.label) + ' · ' + pct + '%';
+        holder.classList.add('is-hot');
+        arcEls.forEach((a) => a.classList.remove('hot'));
+        if (arcEls[i]) arcEls[i].classList.add('hot');
+        chip.classList.remove('cl-rot-in'); void chip.offsetWidth; chip.classList.add('cl-rot-in');
+      };
+      paint(0);
+      let timer = 0;
+      const stop = () => { if (timer) { clearInterval(timer); timer = 0; } };
+      const tick = () => {
+        /* Once this donut is re-rendered away, the node detaches — stop the
+           loop so intervals never pile up across renders. */
+        if (!document.body.contains(rot)) { stop(); return; }
+        idx = (idx + 1) % shown.length; paint(idx);
+      };
+      const start = () => { stop(); if (shown.length > 1) timer = setInterval(tick, 2000); };
+      start();
+      chip.addEventListener('mouseenter', stop);
+      chip.addEventListener('mouseleave', start);
+      chip.addEventListener('click', () => { stop(); openCustomerList(shown, total, opts); start(); });
+      wrap.appendChild(rot);
+      return wrap;
+    }
+
     shown.forEach((s, i) => {
       const pct = Math.round(s.value / (total || 1) * 100);
       const item = el('span', { class: 'cl-item', tabindex: '0' }, [
@@ -8683,6 +8763,32 @@ const FNCloud = (function () {
     });
     wrap.appendChild(legend);
     return wrap;
+  }
+  /* Full customer list popup — opened from the rotating donut legend.
+     Ranks companies by volume, each a share bar; tap one to drill in. */
+  function openCustomerList(segs, total, opts) {
+    const ordered = segs.slice().sort((a, b) => b.value - a.value);
+    let handle;
+    const rows = ordered.map((s) => {
+      const pct = Math.round(s.value / (total || 1) * 100);
+      const clickable = !!(opts && opts.onPick);
+      const row = el('div', { class: 'cll-row' + (clickable ? ' is-click' : '') }, [
+        el('span', { class: 'cll-dot', style: `background:${s.color}` }),
+        el('span', { class: 'cll-name' }, [T(s.label)]),
+        el('span', { class: 'cll-bar' }, [el('span', { class: 'cll-fill', style: `width:${Math.max(4, pct)}%;background:${s.color}` })]),
+        el('span', { class: 'cll-val', text: s.value + ' · ' + pct + '%' }),
+      ]);
+      if (clickable) row.addEventListener('click', () => { if (handle) handle.close(); opts.onPick(s); });
+      return row;
+    });
+    handle = modal({
+      title: { en: 'All customers', th: 'รายชื่อลูกค้าทั้งหมด' },
+      note: (opts && opts.onPick)
+        ? { en: ordered.length + ' companies · tap one to open', th: ordered.length + ' บริษัท · แตะเพื่อเปิด' }
+        : { en: ordered.length + ' companies', th: ordered.length + ' บริษัท' },
+      body: [el('div', { class: 'cll-list' }, rows)],
+      confirmLabel: { en: 'Close', th: 'ปิด' },
+    });
   }
   function chartTrunc(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
   function columnsEl(items, opts) {
@@ -8807,7 +8913,7 @@ const FNCloud = (function () {
       el('div', { class: 'panel-sub' }, [L({ en: 'Tap a slice', th: 'แตะเพื่อดู' })]),
     ])]));
     const cdBody = el('div', { class: 'panel-body chart-body' });
-    cdBody.appendChild(donutEl(compSegs, String(m.total), T({ en: 'total', th: 'ทั้งหมด' }), { onPick: (s) => openCompany(s.key) }));
+    cdBody.appendChild(donutEl(compSegs, String(m.total), T({ en: 'total', th: 'ทั้งหมด' }), { rotate: true, onPick: (s) => openCompany(s.key) }));
     cdPanel.appendChild(cdBody);
     cc.appendChild(ccPanel); cc.appendChild(cdPanel);
     /* appended later, as its own section below the overall charts */
@@ -11963,7 +12069,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260829-082312';
+  const BUILD_ID = '20260829-085825';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
