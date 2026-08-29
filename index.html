@@ -3987,13 +3987,13 @@ tbody tr.clickable { cursor: pointer; }
 .col-bar { cursor: pointer; }
 .col-bar rect { transform-box: fill-box; transform-origin: center bottom; transition: filter .2s, transform .2s;
   animation: colGrow .7s cubic-bezier(.25,1.25,.4,1) both; animation-delay: inherit; }
-.col-bar:hover rect { filter: brightness(1.18) saturate(1.1); transform: translateY(-4px); }
+.col-bar:hover rect, .col-bar.hot rect { filter: brightness(1.18) saturate(1.1); transform: translateY(-4px); }
 .col-val { fill: var(--text); font-size: 14px; font-weight: 800; transition: font-size .18s; }
-.col-bar:hover .col-val { font-size: 16px; }
+.col-bar:hover .col-val, .col-bar.hot .col-val { font-size: 16px; }
 .col-pct { fill: var(--text-faint); font-size: 10px; font-weight: 700; opacity: 0; transition: opacity .2s; }
-.col-bar:hover .col-pct { opacity: 1; }
+.col-bar:hover .col-pct, .col-bar.hot .col-pct { opacity: 1; }
 .col-lbl { fill: var(--text-faint); font-size: 11px; font-weight: 700; transition: fill .18s; }
-.col-bar:hover .col-lbl { fill: var(--text); }
+.col-bar:hover .col-lbl, .col-bar.hot .col-lbl { fill: var(--text); }
 @keyframes colGrow { from { transform: scaleY(0); } }
 
 /* --- Entrance for the phase bars and the KPI tiles (each its own move) --- */
@@ -4398,7 +4398,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260829-093100"></script>
+<script src="firebase-bundle.js?v=20260829-093739"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -8737,6 +8737,15 @@ const FNCloud = (function () {
         arc.addEventListener('mouseleave', start);
         if (opts.onPick) arc.addEventListener('click', () => { stop(); opts.onPick(shown[i]); });
       });
+      /* Let another chart drive this donut: hovering a company bar can
+         preview the matching slice here, exactly like hovering the slice. */
+      if (opts.onReady) opts.onReady({
+        preview(key, on) {
+          const i = shown.findIndex((s) => s.key === key);
+          if (i < 0) { if (!on) start(); return; }
+          if (on) { stop(); idx = i; paint(i); } else { start(); }
+        },
+      });
       wrap.appendChild(rot);
       return wrap;
     }
@@ -8825,7 +8834,13 @@ const FNCloud = (function () {
     }).join('');
     const holder = el('div', { class: 'chart-cols' });
     holder.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="col-svg" preserveAspectRatio="xMidYMax meet">${bars}</svg>`;
-    if (opts.onPick) holder.querySelectorAll('.col-bar').forEach((g, i) => g.addEventListener('click', () => opts.onPick(items[i])));
+    holder.querySelectorAll('.col-bar').forEach((g, i) => {
+      if (opts.onPick) g.addEventListener('click', () => opts.onPick(items[i]));
+      /* Hover a bar: light it up and — via onHover — preview the same
+         company on the paired donut. */
+      g.addEventListener('mouseenter', () => { g.classList.add('hot'); if (opts.onHover) opts.onHover(items[i], true); });
+      g.addEventListener('mouseleave', () => { g.classList.remove('hot'); if (opts.onHover) opts.onHover(items[i], false); });
+    });
     return holder;
   }
 
@@ -8917,7 +8932,10 @@ const FNCloud = (function () {
       el('div', { class: 'panel-sub' }, [L({ en: 'Tap a bar to open that company', th: 'แตะแท่งเพื่อดูรายบริษัท' })]),
     ])]));
     const ccBody = el('div', { class: 'panel-body chart-body' });
-    ccBody.appendChild(columnsEl(compCols, { share: true, trunc: 9, onPick: (it) => openCompany(it.key) }));
+    /* Shared handle: the volume bars preview the matching slice on the
+       share donut (set by the donut's onReady, below). */
+    let compDonut = null;
+    ccBody.appendChild(columnsEl(compCols, { share: true, trunc: 9, onPick: (it) => openCompany(it.key), onHover: (it, on) => { if (compDonut) compDonut.preview(it.key, on); } }));
     ccPanel.appendChild(ccBody);
     const cdPanel = el('section', { class: 'panel chart-panel' });
     cdPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [
@@ -8925,7 +8943,7 @@ const FNCloud = (function () {
       el('div', { class: 'panel-sub' }, [L({ en: 'Tap a slice', th: 'แตะเพื่อดู' })]),
     ])]));
     const cdBody = el('div', { class: 'panel-body chart-body' });
-    cdBody.appendChild(donutEl(compSegs, String(m.total), T({ en: 'total', th: 'ทั้งหมด' }), { rotate: true, onPick: (s) => openCompany(s.key) }));
+    cdBody.appendChild(donutEl(compSegs, String(m.total), T({ en: 'total', th: 'ทั้งหมด' }), { rotate: true, onPick: (s) => openCompany(s.key), onReady: (api) => { compDonut = api; } }));
     cdPanel.appendChild(cdBody);
     cc.appendChild(ccPanel); cc.appendChild(cdPanel);
     /* appended later, as its own section below the overall charts */
@@ -12081,7 +12099,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260829-093100';
+  const BUILD_ID = '20260829-093739';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
