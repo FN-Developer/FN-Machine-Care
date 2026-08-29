@@ -4398,7 +4398,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260829-093739"></script>
+<script src="firebase-bundle.js?v=20260829-094444"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -8654,6 +8654,34 @@ const FNCloud = (function () {
 
   /* Small dependency-free SVG charts, drawn in the app's own colours, with
      a draw-in entrance and a hover preview on every value. */
+  /* Shared hover tooltip for every Project Phase graph, styled exactly
+     like the Machine Care charts (chart-tip: title, sub, swatch+key+value
+     rows). Wires the same enter/move/leave/focus/blur set. */
+  function attachChartTip(node, getData) {
+    const show = (e) => {
+      const d = getData(); if (!d) return;
+      const tip = chartTip();
+      tip.innerHTML = '';
+      tip.appendChild(el('div', { class: 'tip-title', text: d.title }));
+      if (d.sub) tip.appendChild(el('div', { class: 'tip-sub', text: d.sub }));
+      (d.rows || []).forEach((r) => {
+        tip.appendChild(el('div', { class: 'tip-row' }, [
+          el('span', { class: 'legend-swatch', style: `background:${r.color}` }),
+          el('span', { class: 'tip-key', text: r.key }),
+          el('span', { class: 'tip-val', text: String(r.val) }),
+        ]));
+      });
+      placeChartTip(tip, (e.currentTarget || node).getBoundingClientRect());
+    };
+    node.addEventListener('mouseenter', show);
+    node.addEventListener('mousemove', show);
+    node.addEventListener('mouseleave', hideChartTip);
+    node.addEventListener('focus', show);
+    node.addEventListener('blur', hideChartTip);
+  }
+  const TIP_REQS = { en: 'Requirements', th: 'ความต้องการ' };
+  const TIP_SHARE = { en: 'Share', th: 'สัดส่วน' };
+
   function donutEl(segs, bigText, smallLabel, opts) {
     opts = opts || {};
     const shown = segs.filter((s) => s.value > 0);
@@ -8683,6 +8711,19 @@ const FNCloud = (function () {
     const bigEl = holder.querySelector('.donut-big');
     const smallEl = holder.querySelector('.donut-small');
     const arcEls = holder.querySelectorAll('.donut-arc');
+
+    /* Machine-Care-style hover tooltip on every slice: name, count, share. */
+    arcEls.forEach((arc, i) => {
+      if (!arc) return;
+      const s = shown[i]; const pct = Math.round(s.value / (total || 1) * 100);
+      attachChartTip(arc, () => ({
+        title: T(s.label),
+        rows: [
+          { color: s.color, key: T(opts.tipKey || TIP_REQS), val: s.value },
+          { color: 'transparent', key: T(TIP_SHARE), val: pct + '%' },
+        ],
+      }));
+    });
 
     /* Rotating preview legend: instead of a long wall of company names,
        show ONE at a time swapping on a loop (each drives the centre + its
@@ -8835,11 +8876,21 @@ const FNCloud = (function () {
     const holder = el('div', { class: 'chart-cols' });
     holder.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="col-svg" preserveAspectRatio="xMidYMax meet">${bars}</svg>`;
     holder.querySelectorAll('.col-bar').forEach((g, i) => {
-      if (opts.onPick) g.addEventListener('click', () => opts.onPick(items[i]));
+      const it = items[i];
+      const pct = base ? Math.round(it.value / base * 100) : 0;
+      if (opts.onPick) g.addEventListener('click', () => opts.onPick(it));
       /* Hover a bar: light it up and — via onHover — preview the same
          company on the paired donut. */
-      g.addEventListener('mouseenter', () => { g.classList.add('hot'); if (opts.onHover) opts.onHover(items[i], true); });
-      g.addEventListener('mouseleave', () => { g.classList.remove('hot'); if (opts.onHover) opts.onHover(items[i], false); });
+      g.addEventListener('mouseenter', () => { g.classList.add('hot'); if (opts.onHover) opts.onHover(it, true); });
+      g.addEventListener('mouseleave', () => { g.classList.remove('hot'); if (opts.onHover) opts.onHover(it, false); });
+      /* Machine-Care-style hover tooltip: name, count, share. */
+      attachChartTip(g, () => ({
+        title: T(it.label),
+        rows: [
+          { color: it.color, key: T(opts.tipKey || TIP_REQS), val: it.value },
+          { color: 'transparent', key: T(TIP_SHARE), val: pct + '%' },
+        ],
+      }));
     });
     return holder;
   }
@@ -8958,11 +9009,20 @@ const FNCloud = (function () {
     const maxCount = Math.max(1, ...phaseStages.map((s) => m.byStage[s.key] || 0));
     phaseStages.forEach((s, i) => {
       const c = m.byStage[s.key] || 0;
-      pbody.appendChild(el('div', { class: 'phase-row', style: `--pc:${s.color}` }, [
+      const pct = m.total ? Math.round(c / m.total * 100) : 0;
+      const prow = el('div', { class: 'phase-row', style: `--pc:${s.color}`, tabindex: '0' }, [
         el('span', { class: 'phase-name' }, [L(s.label)]),
         el('span', { class: 'phase-track' }, [el('span', { class: 'phase-fill', style: `width:${Math.round(c / maxCount * 100)}%;animation-delay:${(i * 0.07).toFixed(2)}s` })]),
         el('span', { class: 'phase-count', text: String(c) }),
-      ]));
+      ]);
+      attachChartTip(prow, () => ({
+        title: T(s.label),
+        rows: [
+          { color: s.color, key: T(TIP_REQS), val: c },
+          { color: 'transparent', key: T({ en: 'of all', th: 'จากทั้งหมด' }), val: pct + '%' },
+        ],
+      }));
+      pbody.appendChild(prow);
     });
     phaseSec.appendChild(pbody);
     root.appendChild(phaseSec);
@@ -12099,7 +12159,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260829-093739';
+  const BUILD_ID = '20260829-094444';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
