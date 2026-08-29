@@ -3656,33 +3656,341 @@ tbody tr.clickable { cursor: pointer; }
 .btn-ghost { background: transparent; border-color: color-mix(in srgb, var(--fail) 34%, var(--edge)); color: var(--fail); }
 .btn-ghost:hover { background: color-mix(in srgb, var(--fail) 10%, transparent); }
 
+/* Filter (Active/Won) + sort tabs sit together on the left */
+.req-tabwrap { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.seg-count { font-size: 10.5px; font-weight: 800; line-height: 1; padding: 2px 6px; border-radius: 999px;
+  background: color-mix(in srgb, var(--text-faint) 22%, transparent); color: var(--text-dim); }
+.req-sort .seg-btn.on .seg-count { background: color-mix(in srgb, var(--accent-blue) 26%, transparent); color: var(--text); }
+
 .req-group-head { display: flex; align-items: center; gap: 9px; margin: 22px 0 10px; }
 .req-group-head:first-of-type { margin-top: 4px; }
 .req-group-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--sc); flex: 0 0 auto;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc) 22%, transparent); animation: reqDot 2s ease-in-out infinite; }
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc) 22%, transparent); }
+.req-group-head.is-blink .req-group-dot { animation: reqDot var(--blink-dur, 2s) ease-in-out infinite; }
+.req-group-ico { display: inline-flex; color: var(--sc); }
+.req-group-ico svg { width: 14px; height: 14px; }
 .req-group-name { font-size: 12px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--sc); }
 .req-group-count { font-size: 11px; font-weight: 700; color: var(--text-faint); background: color-mix(in srgb, var(--sc) 14%, transparent);
   border: 1px solid color-mix(in srgb, var(--sc) 32%, transparent); border-radius: 999px; padding: 1px 8px; }
 .req-group-head + .req-list { margin-bottom: 4px; }
 
-.req-card { position: relative; overflow: hidden; border-color: color-mix(in srgb, var(--sc, var(--edge)) 38%, var(--edge));
-  animation: reqPulse 2.6s ease-in-out infinite; }
-.req-card:hover { animation-play-state: paused; }
-.req-status-rail { position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--sc, var(--accent-blue));
-  box-shadow: 0 0 10px 0 color-mix(in srgb, var(--sc) 60%, transparent); animation: reqRail 2.6s ease-in-out infinite; }
-.req-card:nth-child(2n) { animation-delay: .5s; }
-.req-card:nth-child(3n) { animation-delay: 1s; }
-.req-card:nth-child(2n) .req-status-rail { animation-delay: .5s; }
-.req-card:nth-child(3n) .req-status-rail { animation-delay: 1s; }
+/* Cards carry the colour of what they are waiting on. Blinking ones
+   (a stage still to confirm) pulse the border at a speed set per stage;
+   final ones (won / lost) hold a steady coloured border. */
+.req-card { position: relative; overflow: hidden; padding: 0; gap: 0; align-items: stretch;
+  border-color: color-mix(in srgb, var(--sc, var(--edge)) 42%, var(--edge));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--sc) 8%, transparent), transparent 42%), var(--glass); }
+.req-card.is-blink { animation: reqPulse var(--blink-dur, 2.4s) ease-in-out infinite; }
+.req-card.is-blink:hover { animation-play-state: paused; }
+.req-card.is-final { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 40%, transparent); }
+.req-card.status-won  { background: linear-gradient(90deg, color-mix(in srgb, var(--sc) 12%, transparent), transparent 46%), var(--glass); }
+.req-card.status-lost { background: linear-gradient(90deg, color-mix(in srgb, var(--sc) 11%, transparent), transparent 46%), var(--glass); opacity: .9; }
+
+/* ---- Compact single-line requirement row ---- */
+.req-list { gap: 8px; }
+.req-card.req-compact { display: flex; align-items: center; gap: 11px; padding: 0 16px 0 12px; min-height: 52px; overflow: visible; border-left: 4px solid var(--sc); }
+.rc-status { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; min-width: 128px; color: var(--sc); }
+.rc-status-ico { display: inline-flex; }
+.rc-status-ico svg { width: 15px; height: 15px; }
+.rc-status-name { font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-no { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; font-weight: 700; color: var(--text-faint); flex: 0 0 auto; }
+.rc-title { font-size: 14px; font-weight: 650; color: var(--text); flex: 0 1 auto; min-width: 50px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-cust { font-size: 12.5px; color: var(--text-faint); flex: 0 1 auto; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rc-cust::before { content: '· '; opacity: .5; }
+.rc-spring { flex: 1 1 auto; min-width: 8px; }
+.rc-needs { display: inline-flex; gap: 5px; flex: 0 0 auto; }
+.rc-need { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 750; white-space: nowrap;
+  color: var(--nc); border: 1px solid color-mix(in srgb, var(--nc) 42%, var(--edge)); background: color-mix(in srgb, var(--nc) 9%, transparent); }
+.rc-need.sent { color: #fff; background: var(--nc); border-color: transparent; }
+.rc-people { display: inline-flex; gap: 6px; flex: 0 0 auto; }
+.rc-person { position: relative; display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 999px;
+  font-size: 11px; font-weight: 650; color: var(--text); background: color-mix(in srgb, var(--role) 8%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--role) 48%, var(--edge)); white-space: nowrap; }
+.rc-person-ico { display: inline-flex; color: var(--role); }
+.rc-person-ico svg { width: 11px; height: 11px; }
+.rc-person.is-eng { border-color: color-mix(in srgb, var(--role) 38%, var(--edge)); }
+.rc-person.is-eng::before {
+  content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--run-a), transparent 0deg, transparent 40deg,
+    color-mix(in srgb, var(--role) 75%, transparent) 90deg, #fff 200deg,
+    color-mix(in srgb, var(--role) 75%, transparent) 310deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); mask-composite: exclude;
+  animation: nav-run 1.4s linear infinite; }
+.rc-person.is-eng > * { position: relative; z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .rc-person.is-eng::before { animation: none; } }
+.rc-date { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; --dc: #38bdf8;
+  font-size: 12px; font-weight: 750; padding: 3px 9px; border-radius: 8px; color: var(--dc);
+  background: color-mix(in srgb, var(--dc) 12%, transparent); border: 1px solid color-mix(in srgb, var(--dc) 35%, transparent); }
+.rc-date svg { width: 12px; height: 12px; }
+/* Deadline pressure: 8–15 days blinks slowly, 0–7 days blinks fast, and a
+   past-due date breathes with a warning. */
+.rc-date.blink-slow { animation: dateBlink 3s ease-in-out infinite; }
+.rc-date.blink-fast { animation: dateBlink .85s ease-in-out infinite; }
+.rc-date.blink-breath { animation: dateBreath 2.6s ease-in-out infinite; }
+@keyframes dateBlink {
+  0%, 100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--dc) 26%, transparent); }
+  50%      { box-shadow: 0 0 0 1.5px var(--dc), 0 0 9px 0 color-mix(in srgb, var(--dc) 55%, transparent); }
+}
+@keyframes dateBreath {
+  0%, 100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--dc) 38%, transparent); filter: brightness(.88); }
+  50%      { box-shadow: 0 0 0 1.5px var(--dc), 0 0 15px 1px color-mix(in srgb, var(--dc) 58%, transparent); filter: brightness(1.12); }
+}
+.rc-date-late { font-size: 9px; font-weight: 900; letter-spacing: .05em; padding: 1px 5px; border-radius: 5px; background: var(--dc); color: #fff; }
+@media (prefers-reduced-motion: reduce) { .rc-date.blink-slow, .rc-date.blink-fast, .rc-date.blink-breath { animation: none; } }
+.rc-arrow { color: var(--text-faint); font-size: 16px; flex: 0 0 auto; }
+/* Lift the hovered row above its neighbours so its preview is never
+   overlapped (which read as see-through). */
+.req-card.req-compact:hover { transform: translateY(-1px); z-index: 50; }
+
+/* Hover preview popover — the full detail the one-line row truncates */
+.rc-pop { position: absolute; top: calc(100% + 6px); left: 4px; z-index: 60; width: min(330px, 88vw);
+  background: linear-gradient(color-mix(in srgb, var(--glass-drawer) 95%, transparent), color-mix(in srgb, var(--glass-drawer) 95%, transparent)), var(--env-2, #14161c);
+  border: 1px solid var(--edge); border-radius: 14px;
+  box-shadow: var(--lift-2), 0 10px 34px rgba(0,0,0,.42); padding: 13px 15px; text-align: left;
+  opacity: 0; visibility: hidden; transform: translateY(-6px) scale(.98); transform-origin: top left;
+  transition: opacity .16s ease, transform .16s ease, visibility .16s; pointer-events: none; }
+@media (hover: hover) and (pointer: fine) {
+  .req-card.req-compact:hover .rc-pop { opacity: 1; visibility: visible; transform: none; }
+}
+.rp-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 7px; }
+.rp-status { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; color: var(--sc); }
+.rp-status svg { width: 13px; height: 13px; }
+.rp-no { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; font-weight: 700; color: var(--text-faint); }
+.rp-title { font-size: 14.5px; font-weight: 750; color: var(--text); line-height: 1.3; margin-bottom: 10px; white-space: normal; }
+.rp-rows { display: flex; flex-direction: column; gap: 5px; }
+.rp-row { display: flex; gap: 10px; font-size: 12.5px; align-items: baseline; }
+.rp-k { flex: 0 0 92px; color: var(--text-faint); font-weight: 600; }
+.rp-v { flex: 1 1 auto; color: var(--text); font-weight: 650; text-align: right; }
+.rp-v.rp-over { color: var(--fail); font-weight: 800; }
+.rp-needs { display: flex; gap: 5px; justify-content: flex-end; flex-wrap: wrap; }
+.rp-foot { margin-top: 11px; padding-top: 9px; border-top: 1px solid var(--edge); font-size: 11px; font-weight: 750; color: var(--accent-blue); text-align: right; }
+@media (max-width: 900px) { .rc-person.is-admin { display: none; } .rc-cust { max-width: 110px; } }
+@media (max-width: 640px) { .rc-no, .rc-cust, .rc-needs { display: none; } .rc-status { min-width: 34px; } .rc-status-name { display: none; } }
+
+/* Left status stamp — the per-status panel the eye lands on first */
+.req-stamp { flex: 0 0 118px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+  padding: 14px 8px; text-align: center; background: color-mix(in srgb, var(--sc) 15%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--sc) 34%, var(--edge)); }
+.req-stamp-ico { display: inline-flex; color: var(--sc); }
+.req-stamp-ico svg { width: 24px; height: 24px; }
+.req-stamp-name { font-size: 11px; font-weight: 800; line-height: 1.15; letter-spacing: .02em; color: var(--sc); }
+.req-stamp-sub { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--text-faint);
+  padding: 1px 7px; border-radius: 999px; background: color-mix(in srgb, var(--sc) 12%, transparent); }
+.req-card.is-blink .req-stamp-ico { animation: reqRail var(--blink-dur, 2.4s) ease-in-out infinite; }
+
+/* Details, aligned to the right edge */
+.req-card-main.req-right { padding: 13px 17px; display: flex; flex-direction: column; align-items: flex-end; text-align: right; gap: 0; }
+.req-right .req-card-top, .req-right .req-meta, .req-right .req-people { justify-content: flex-end; }
+.req-right .req-title { white-space: normal; }
+
+/* The meeting stage glows with a soft aura on top of the blink. */
+.req-card.is-aura.is-blink { animation: reqAura var(--blink-dur, 1.4s) ease-in-out infinite; }
 @keyframes reqPulse {
-  0%, 100% { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 26%, transparent); }
-  50%      { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 62%, transparent), 0 0 15px -1px color-mix(in srgb, var(--sc) 40%, transparent); }
+  0%, 100% { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 28%, transparent); }
+  50%      { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 66%, transparent), 0 0 16px -1px color-mix(in srgb, var(--sc) 44%, transparent); }
+}
+@keyframes reqAura {
+  0%, 100% { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 34%, transparent), 0 0 10px -2px color-mix(in srgb, var(--sc) 30%, transparent); }
+  50%      { box-shadow: var(--lift-1), 0 0 0 1.5px color-mix(in srgb, var(--sc) 78%, transparent), 0 0 26px 1px color-mix(in srgb, var(--sc) 55%, transparent); }
 }
 @keyframes reqRail { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
 @keyframes reqDot { 0%, 100% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--sc) 22%, transparent); } 50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--sc) 10%, transparent); } }
+
+/* The "needs to be confirmed" line inside a card */
+.req-need { display: flex; align-items: center; gap: 7px; margin-top: 9px; font-size: 12px; }
+.req-need-ico { display: inline-flex; color: var(--sc); }
+.req-need-ico svg { width: 14px; height: 14px; }
+.req-need-name { font-weight: 750; color: var(--sc); }
+.req-need-note { color: var(--text-faint); padding-left: 8px; border-left: 1px solid color-mix(in srgb, var(--text-faint) 30%, transparent); }
+.req-need.is-final-tag .req-need-name { color: var(--sc); }
+
+/* Who's on the hook — Admin then Engineer, centred, each colour-coded by
+   role. The engineer's border runs on a loop. */
+.req-people { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; width: 100%; justify-content: center; }
+.req-person { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 9px; border-radius: 999px;
+  font-size: 11.5px; background: color-mix(in srgb, var(--role) 9%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--role) 55%, var(--edge)); }
+.req-person-ico { display: inline-flex; color: var(--role); }
+.req-person-ico svg { width: 12px; height: 12px; }
+.req-person-role { font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; color: var(--role); }
+.req-person-name { font-weight: 700; color: var(--text); }
+
+/* The engineer chip: a lit arc chases its border, forever. */
+.req-person.is-eng { border-color: color-mix(in srgb, var(--role) 40%, var(--edge)); }
+.req-person.is-eng::before {
+  content: ''; position: absolute; inset: 0; z-index: 1; border-radius: inherit; padding: 1.5px; pointer-events: none;
+  background: conic-gradient(from var(--run-a),
+    transparent 0deg, transparent 40deg,
+    color-mix(in srgb, var(--role) 75%, transparent) 90deg,
+    #ffffff 200deg,
+    color-mix(in srgb, var(--role) 75%, transparent) 310deg,
+    transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+          mask-composite: exclude;
+  animation: nav-run 1.4s linear infinite;
+}
+.req-person.is-eng > * { position: relative; z-index: 2; }
+@media (prefers-reduced-motion: reduce) { .req-person.is-eng::before { animation: none; } }
+
+@media (max-width: 560px) {
+  .req-stamp { flex-basis: 88px; }
+  .req-stamp-ico svg { width: 20px; height: 20px; }
+}
+
+/* The date that matters now — the schedule anchor, made prominent so it
+   cannot be missed. Colour and label follow the requirement's status. */
+.req-date { --dc: #ff9f0a; display: inline-flex; align-items: center; gap: 11px; align-self: center; margin-top: 12px;
+  padding: 9px 15px; border-radius: 13px; text-align: left;
+  background: color-mix(in srgb, var(--dc) 13%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--dc) 45%, var(--edge));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--dc) 12%, transparent), var(--lift-1); }
+.req-date.is-meeting { --dc: #15e6cf; }
+.req-date.is-solution { --dc: #ff9f0a; }
+.req-date.is-overdue { --dc: var(--fail); }
+.req-date-ico { display: inline-flex; color: var(--dc); flex: 0 0 auto; }
+.req-date-ico svg { width: 18px; height: 18px; }
+.req-date-body { display: flex; flex-direction: column; line-height: 1.15; }
+.req-date-label { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: color-mix(in srgb, var(--dc) 85%, var(--text)); }
+.req-date-value { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: .01em; }
+.req-date-flag { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; padding: 2px 8px; border-radius: 999px;
+  color: #fff; background: var(--fail); }
+
+/* Customer-need checkboxes in the Overview form */
+.need-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 6px; }
+.need-check { --nc: var(--accent-blue); display: inline-flex; align-items: center; gap: 9px; padding: 9px 15px 9px 11px; border-radius: 12px; cursor: pointer;
+  font-size: 13.5px; font-weight: 650; color: var(--text-dim); background: var(--surface); border: 1.5px solid var(--edge); transition: border-color .15s, background .15s, color .15s; }
+.need-check:hover { border-color: color-mix(in srgb, var(--nc) 45%, var(--edge)); }
+.need-check.on { color: var(--text); border-color: color-mix(in srgb, var(--nc) 60%, var(--edge)); background: color-mix(in srgb, var(--nc) 12%, var(--surface)); }
+.need-box { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; flex: 0 0 auto;
+  border: 1.5px solid color-mix(in srgb, var(--nc) 50%, var(--edge)); color: #fff; }
+.need-check.on .need-box { background: var(--nc); border-color: var(--nc); }
+
+/* Customer-need badges on a card */
+.req-needs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; justify-content: flex-end; }
+.need-badge { --nc: var(--accent-blue); display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 750; color: color-mix(in srgb, var(--nc) 85%, var(--text));
+  background: color-mix(in srgb, var(--nc) 10%, transparent); border: 1px solid color-mix(in srgb, var(--nc) 35%, transparent); }
+.need-badge-ico { display: inline-flex; opacity: .6; }
+.need-badge-ico svg { width: 11px; height: 11px; }
+.need-badge.is-sent { color: #fff; background: color-mix(in srgb, var(--nc) 78%, transparent); border-color: transparent; }
+.need-badge.is-sent .need-badge-ico { opacity: 1; }
+
+/* Dashboard: phase bars */
+.phase-row { --pc: var(--accent-blue); display: grid; grid-template-columns: 150px 1fr 40px; align-items: center; gap: 12px; padding: 7px 0; }
+.phase-name { font-size: 12.5px; font-weight: 650; color: var(--text-dim); }
+.phase-track { height: 12px; border-radius: 999px; background: color-mix(in srgb, var(--pc) 10%, var(--surface)); overflow: hidden; }
+.phase-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, color-mix(in srgb, var(--pc) 65%, transparent), var(--pc));
+  box-shadow: 0 0 10px -2px color-mix(in srgb, var(--pc) 60%, transparent); transition: width .5s cubic-bezier(.3,1,.4,1); min-width: 2px; }
+.phase-count { font-size: 14px; font-weight: 800; color: var(--pc); text-align: right; }
+@media (max-width: 560px) { .phase-row { grid-template-columns: 110px 1fr 32px; } .phase-name { font-size: 11px; } }
+
+/* Dashboard: per-company table */
+.proj-table-wrap { overflow-x: auto; }
+.proj-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 480px; }
+.proj-table th { text-align: right; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: .03em; color: var(--text-faint);
+  padding: 8px 9px; border-bottom: 1px solid var(--edge); white-space: nowrap; }
+.proj-table th:first-child { text-align: left; }
+.proj-table td { text-align: right; padding: 10px 9px; border-bottom: 1px solid var(--hairline-soft, var(--edge)); color: var(--text-dim); }
+.proj-table td:first-child { text-align: left; }
+.proj-table tbody tr:hover { background: color-mix(in srgb, var(--accent-blue) 6%, transparent); }
+.pt-company { font-weight: 700; color: var(--text); }
+.pt-num { font-weight: 800; color: var(--text); }
+.pt-won { font-weight: 800; color: #1f8a3b; background: color-mix(in srgb, #30d158 15%, transparent); padding: 2px 9px; border-radius: 999px; }
+:root:not([data-theme="light"]) .pt-won { color: #5fe08a; }
+.pt-drop { font-weight: 800; color: var(--fail); background: color-mix(in srgb, var(--fail) 13%, transparent); padding: 2px 9px; border-radius: 999px; }
+.pt-zero { color: var(--text-faint); opacity: .5; }
+.pt-click { cursor: pointer; transition: background .15s; }
+.pt-cdot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+.company-title { display: inline-flex; align-items: center; gap: 11px; }
+.company-title .pt-cdot { width: 15px; height: 15px; border-radius: 5px; margin: 0; }
+.col-bar.is-click { cursor: pointer; }
+.cl-item.is-click { cursor: pointer; }
+
+/* Dashboard charts — donut + pillar columns */
+@property --arcLen { syntax: '<number>'; inherits: false; initial-value: 0; }
+.chart-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+@media (max-width: 820px) { .chart-2col { grid-template-columns: 1fr; } }
+/* Company row: volume pillar 70% left, share donut 30% right */
+.chart-2col.is-7030 { grid-template-columns: minmax(0, 7fr) minmax(0, 3fr); align-items: start; }
+@media (max-width: 820px) { .chart-2col.is-7030 { grid-template-columns: 1fr; } }
+.chart-2col.is-7030 .chart-body { min-height: 0; }
+.chart-2col.is-7030 .col-svg { max-height: 210px; }
+
+/* Section divider between the overall charts and the by-company section */
+.dash-section { display: flex; align-items: center; gap: 14px; margin: 28px 0 14px; }
+.dash-section-line { flex: 1 1 auto; height: 1px; background: linear-gradient(90deg, transparent, var(--edge), transparent); }
+.dash-section-title { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--text-dim); white-space: nowrap; }
+.dash-section-title svg { width: 16px; height: 16px; color: var(--accent-blue); }
+.company-tag { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; padding: 3px 10px; border-radius: 999px;
+  color: var(--sc); background: color-mix(in srgb, var(--sc) 14%, transparent); border: 1px solid color-mix(in srgb, var(--sc) 40%, transparent); }
+.chart-panel { margin: 0 !important; }
+.chart-body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; min-height: 220px; }
+.chart-donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; }
+
+/* --- Donut: arcs draw in, and a slice pops + previews in the centre --- */
+.chart-donut { width: 190px; max-width: 100%; }
+.donut-svg { width: 100%; height: auto; display: block; overflow: visible; }
+.donut-arc { animation: arcGrow .9s cubic-bezier(.35,1,.35,1) both; transition: stroke-width .22s cubic-bezier(.3,1.4,.5,1), filter .22s; cursor: pointer; }
+.donut-arc.hot { stroke-width: 22; filter: brightness(1.15) drop-shadow(0 0 5px rgba(255,255,255,.25)); }
+.chart-donut.is-hot .donut-arc:not(.hot) { opacity: .34; }
+@keyframes arcGrow { from { --arcLen: 0; } }
+.donut-big { fill: var(--text); font-size: 26px; font-weight: 800; transition: fill .2s; }
+.donut-small { fill: var(--text-faint); font-size: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; }
+.chart-donut.is-hot .donut-big { fill: var(--text); }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 8px 14px; justify-content: center; }
+.cl-item { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--text-dim); cursor: pointer; padding: 3px 9px; border-radius: 999px; border: 1px solid transparent; transition: background .18s, border-color .18s, transform .18s; }
+.cl-item:hover, .cl-item.hot { background: var(--glass-hover, color-mix(in srgb, var(--text-faint) 10%, transparent)); border-color: var(--edge); transform: translateY(-1px); }
+.cl-dot { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; box-shadow: 0 0 0 0 transparent; transition: box-shadow .18s; }
+.cl-item.hot .cl-dot { box-shadow: 0 0 8px 1px currentColor; }
+.cl-val { font-weight: 800; color: var(--text); }
+
+/* --- Pillar columns: grow up from the axis, lift + reveal % on hover --- */
+.chart-cols { width: 100%; overflow-x: auto; }
+.col-svg { width: 100%; height: auto; min-width: 360px; display: block; overflow: visible; }
+.col-bar { cursor: pointer; }
+.col-bar rect { transform-box: fill-box; transform-origin: center bottom; transition: filter .2s, transform .2s;
+  animation: colGrow .7s cubic-bezier(.25,1.25,.4,1) both; animation-delay: inherit; }
+.col-bar:hover rect { filter: brightness(1.18) saturate(1.1); transform: translateY(-4px); }
+.col-val { fill: var(--text); font-size: 14px; font-weight: 800; transition: font-size .18s; }
+.col-bar:hover .col-val { font-size: 16px; }
+.col-pct { fill: var(--text-faint); font-size: 10px; font-weight: 700; opacity: 0; transition: opacity .2s; }
+.col-bar:hover .col-pct { opacity: 1; }
+.col-lbl { fill: var(--text-faint); font-size: 11px; font-weight: 700; transition: fill .18s; }
+.col-bar:hover .col-lbl { fill: var(--text); }
+@keyframes colGrow { from { transform: scaleY(0); } }
+
+/* --- Entrance for the phase bars and the KPI tiles (each its own move) --- */
+.phase-fill { animation: barGrow .8s cubic-bezier(.3,1,.4,1) both; }
+.phase-row:hover .phase-fill { filter: brightness(1.16); }
+@keyframes barGrow { from { width: 0 !important; } }
+.stat-pop { animation: tilePop .5s cubic-bezier(.3,1.3,.5,1) both; }
+@keyframes tilePop { from { opacity: 0; transform: translateY(10px) scale(.96); } }
+
 @media (prefers-reduced-motion: reduce) {
-  .req-card, .req-status-rail, .req-group-dot { animation: none; }
-  .req-card { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 45%, transparent); }
+  .donut-arc, .col-bar, .phase-fill, .stat-pop { animation: none !important; }
+}
+
+/* Assignee dropdown (owner / engineer / your-name) — a calmer blue take
+   on the participant select rather than the meeting amber. */
+.assignee-field, .req-person-filter-wrap { max-width: 320px; }
+.assignee-select, .req-person-filter {
+  background-color: color-mix(in srgb, var(--accent-blue) 8%, var(--surface));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230a84ff' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  border-color: color-mix(in srgb, var(--accent-blue) 38%, var(--edge)); }
+.assignee-select:hover, .req-person-filter:hover { border-color: color-mix(in srgb, var(--accent-blue) 60%, var(--edge)); background-color: color-mix(in srgb, var(--accent-blue) 12%, var(--surface)); }
+.assignee-select:focus, .req-person-filter:focus { border-color: var(--accent-blue); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-blue) 24%, transparent), var(--lift-1); }
+.req-person-filter { padding-top: 8px; padding-bottom: 8px; font-size: 12.5px; }
+
+/* Your-name picker in the settings panel */
+.me-switch { margin-bottom: 4px; }
+.me-switch .assignee-field { max-width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .req-card.is-blink, .req-card.is-blink .req-status-rail, .req-group-head.is-blink .req-group-dot { animation: none; }
+  .req-card.is-blink { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--sc) 48%, transparent); }
 }
 
 /* Participant dropdown — decorated */
@@ -3708,6 +4016,41 @@ tbody tr.clickable { cursor: pointer; }
 .lock-tag { color: var(--text-faint); opacity: .6; }
 .pipe-sec.is-locked { opacity: .62; }
 .lock-hint { font-size: 13px; color: var(--text-faint); font-style: italic; padding: 4px 0; }
+
+/* A confirmed step's fields go read-only until its Edit button is pressed.
+   `inert` on the element does the real blocking; these are the cue + a
+   fallback for older engines. */
+.sec-edit.is-locked { opacity: .82; pointer-events: none; -webkit-user-select: none; user-select: none; }
+.gate-hint { display: flex; align-items: center; gap: 10px; padding: 14px 16px; border-radius: 14px; margin-top: 2px;
+  font-size: 13.5px; font-weight: 600; color: var(--text-dim);
+  background: color-mix(in srgb, var(--accent-blue) 8%, var(--surface));
+  border: 1px dashed color-mix(in srgb, var(--accent-blue) 40%, var(--edge)); }
+.gate-hint svg { width: 15px; height: 15px; color: var(--accent-blue); flex: 0 0 auto; }
+.confirmed-chip .reopen { display: inline-flex; align-items: center; gap: 4px; }
+.confirmed-chip .reopen svg { width: 13px; height: 13px; }
+
+/* The section the project is currently waiting on: its border blinks in
+   the stage colour at the stage's speed, with a note to fill it in. */
+.pipe-sec.is-pending { border-color: color-mix(in srgb, var(--pend) 55%, var(--edge));
+  animation: pendPulse var(--blink-dur, 2s) ease-in-out infinite; }
+.pipe-sec.is-pending.is-aura { animation: pendAura var(--blink-dur, 1.4s) ease-in-out infinite; }
+.pipe-sec.is-pending .pipe-ico { color: var(--pend); background: color-mix(in srgb, var(--pend) 18%, transparent); }
+@keyframes pendPulse {
+  0%, 100% { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--pend) 30%, transparent); }
+  50%      { box-shadow: var(--lift-1), 0 0 0 1.5px color-mix(in srgb, var(--pend) 70%, transparent), 0 0 20px -2px color-mix(in srgb, var(--pend) 42%, transparent); }
+}
+@keyframes pendAura {
+  0%, 100% { box-shadow: var(--lift-1), 0 0 0 1px color-mix(in srgb, var(--pend) 36%, transparent), 0 0 14px -3px color-mix(in srgb, var(--pend) 34%, transparent); }
+  50%      { box-shadow: var(--lift-1), 0 0 0 2px color-mix(in srgb, var(--pend) 82%, transparent), 0 0 34px 2px color-mix(in srgb, var(--pend) 58%, transparent); }
+}
+.pend-note { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; padding: 10px 13px; border-radius: 11px;
+  font-size: 13px; font-weight: 650; color: var(--pend);
+  background: color-mix(in srgb, var(--pend) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pend) 38%, transparent); }
+.pend-note svg { width: 15px; height: 15px; flex: 0 0 auto; }
+@media (prefers-reduced-motion: reduce) {
+  .pipe-sec.is-pending { animation: none; box-shadow: var(--lift-1), 0 0 0 1.5px color-mix(in srgb, var(--pend) 55%, transparent); }
+}
 .sec-hint { font-size: 13px; color: var(--text-dim); line-height: 1.55; margin-bottom: 14px; }
 .sub-h { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: var(--text-faint); margin: 20px 0 11px; }
 
@@ -4021,7 +4364,7 @@ tbody tr.clickable { cursor: pointer; }
 <!-- Firebase SDK, bundled into the app. Loads from the same place as the
      page, so it works on any network that can open the app at all — no
      dependency on Google's CDN. Must come before cloud.js. -->
-<script src="firebase-bundle.js?v=20260827-092744"></script>
+<script src="firebase-bundle.js?v=20260829-082312"></script>
 <script>
 /* =============================================================
    FN MACHINE CARE — Form Definitions
@@ -5364,6 +5707,13 @@ const FNCloud = (function () {
     try { localStorage.setItem('fn-machine-care.lang', lang); } catch (e) { /* private mode */ }
   }
 
+  /* Who is using THIS device — the admin/operator. Kept per-device (not
+     synced), so each tablet remembers its own person. New requirements
+     are logged under this name automatically. */
+  const ME_KEY = 'fn-machine-care.me';
+  function meName() { try { return localStorage.getItem(ME_KEY) || ''; } catch (e) { return ''; } }
+  function setMeName(name) { try { localStorage.setItem(ME_KEY, name || ''); } catch (e) { /* private mode */ } }
+
   /* ---------------- Theme ----------------
      'auto' follows the device. On a shop-floor tablet that means the
      app dims itself with the rest of the screen in the evening. */
@@ -5578,6 +5928,30 @@ const FNCloud = (function () {
 
   function uid() {
     return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
+  /* Whole days from today to an ISO date (negative = already past). */
+  function daysUntil(iso) {
+    if (!iso) return null;
+    const a = new Date(iso + 'T00:00:00');
+    const t = new Date(todayISO() + 'T00:00:00');
+    return Math.round((a - t) / 86400000);
+  }
+  /* How urgent a still-pending target date is, by distance from today:
+       > 30 days      → sky (relaxed)
+       16–30 days     → yellow
+       8–15 days      → red, slow blink
+       0–7 days       → red, fast blink
+       past due       → red, breathing "late" glow
+     A date whose milestone is already delivered is calm grey, no blink. */
+  function dateUrgency(iso, pending) {
+    const d = daysUntil(iso);
+    if (!pending) return { color: '#8e8e93', blink: '', late: false, days: d };
+    if (d < 0) return { color: '#ff453a', blink: 'breath', late: true, days: d };
+    if (d <= 7) return { color: '#ff453a', blink: 'fast', late: false, days: d };
+    if (d <= 15) return { color: '#ff453a', blink: 'slow', late: false, days: d };
+    if (d <= 30) return { color: '#ffd60a', blink: '', late: false, days: d };
+    return { color: '#38bdf8', blink: '', late: false, days: d };
   }
 
   /* Document numbers: FAT-2026-00125 */
@@ -6316,13 +6690,13 @@ const FNCloud = (function () {
   const state = { view: 'main', module: 'main', recordId: null, machineKey: null, projectId: null,
                   search: '', customer: null,
                   filterCustomer: null, filterMachine: null, openMachine: null,
-                  projSort: 'status' };
+                  projSort: 'status', projFilter: 'active', projPerson: null, dashCompany: null };
 
   /* Which module each view belongs to — drives the sidebar menu and the
      "back to main menu" behaviour. 'data' (Backup) is shared, so it
      keeps whichever module it was reached from. */
   const CARE_VIEWS = { home: 1, newform: 1, records: 1, machines: 1, dashboard: 1, form: 1, machine: 1 };
-  const PROJ_VIEWS = { projhome: 1, reqnew: 1, reqlist: 1, reqview: 1, followup: 1, kickoff: 1 };
+  const PROJ_VIEWS = { projhome: 1, reqnew: 1, reqlist: 1, reqview: 1, followup: 1, kickoff: 1, projdash: 1 };
   const MENU_VIEWS = { main: 1, home: 1, projhome: 1 };   /* full-screen menus, no sidebar */
   function moduleOf(view) {
     if (view === 'main') return 'main';
@@ -6378,13 +6752,17 @@ const FNCloud = (function () {
   const NAV_ORDER = {
     main: -1, home: 0, projhome: 0,
     newform: 1, records: 2, form: 2.4, machines: 3, machine: 3.4, dashboard: 4, data: 5,
-    reqnew: 1, reqlist: 2, reqview: 2.4, followup: 3, kickoff: 4,
+    reqnew: 1, reqlist: 2, reqview: 2.4, followup: 3, kickoff: 4, projdash: 5,
   };
 
   function go(view, opts) {
     closeNav();
     if (view !== 'dashboard') state.customer = null;
     const from = state.view;
+    /* Leaving a requirement editor? Discard it if it is still an empty
+       draft, so an accidental "New Requirement" never becomes clutter. */
+    if (from === 'reqview' && view !== 'reqview' && state.projectId) dropEmptyDraft(state.projectId);
+    if (view !== 'projdash') state.dashCompany = null;   /* leave the company drill-down */
     state.view = view;
     state.recordId = (opts && opts.recordId) || null;
     state.machineKey = (opts && opts.machineKey) || null;
@@ -6530,6 +6908,7 @@ const FNCloud = (function () {
       reqview: viewReqView,
       followup: viewFollowup,
       kickoff: viewKickoff,
+      projdash: viewProjDash,
     };
     /* A blank screen tells a technician nothing and tells me less.
        Twice now a single bad record has taken a whole page down — once
@@ -6625,6 +7004,7 @@ const FNCloud = (function () {
     const projItems = [
       ['reqnew', 'reqnew', UI.nav_req_new],
       ['reqlist', 'reqlist', UI.nav_req_list],
+      ['projdash', 'dashboard', UI.nav_dashboard],
       ['followup', 'followup', UI.nav_followup],
       ['kickoff', 'kickoff', UI.nav_kickoff],
       ['data', 'backup', UI.nav_data],
@@ -6635,7 +7015,7 @@ const FNCloud = (function () {
        a colourful set rather than one uniform blue. */
     const NAV_ACCENT = {
       newform: '#4b49ff', records: '#0a84ff', machines: '#00c2d6', dashboard: '#bf5af3', data: '#30d158',
-      reqnew: '#00c2d6', reqlist: '#0a84ff', followup: '#ffb454', kickoff: '#30d158',
+      reqnew: '#00c2d6', reqlist: '#0a84ff', followup: '#ffb454', kickoff: '#30d158', projdash: '#bf5af3',
     };
     const activeMap = state.module === 'project'
       ? { reqlist: state.view === 'reqview' }
@@ -6698,6 +7078,24 @@ const FNCloud = (function () {
         })
       );
     });
+
+    /* "You (this device)" — the operator new requirements are logged
+       under. Injected once into the settings panel. */
+    const inner = document.querySelector('#footPanel .foot-panel-inner');
+    if (inner) {
+      let meBox = document.getElementById('meSwitch');
+      if (!meBox) {
+        inner.appendChild(el('div', { class: 'seg-label' }, [L({ en: 'You (this device)', th: 'คุณ (เครื่องนี้)' })]));
+        meBox = el('div', { id: 'meSwitch', class: 'me-switch' });
+        inner.appendChild(meBox);
+      }
+      meBox.innerHTML = '';
+      meBox.appendChild(personSelect({
+        value: meName(),
+        placeholder: { en: '— set your name —', th: '— ตั้งชื่อของคุณ —' },
+        onPick: (name) => { setMeName(name); toast(name ? T({ en: 'Signed in as ', th: 'ใช้งานในชื่อ ' }) + name : T({ en: 'Name cleared', th: 'ล้างชื่อแล้ว' })); },
+      }));
+    }
   }
 
   /* ---------------- View: Dashboard ---------------- */
@@ -6990,12 +7388,13 @@ const FNCloud = (function () {
 
   function viewProjHome(root) {
     const hero = menuHero('Project Phase', { en: 'From customer requirement to project kickoff', th: 'ตั้งแต่ความต้องการลูกค้าจนถึงเริ่มโครงการ' }, true);
-    const projs = projectRecords();
+    const projs = listableProjects();
     const openN = projs.filter((p) => !['won', 'lost'].includes(projStage(p))).length;
     const waitN = projs.filter((p) => projStage(p) === 'decision').length;
     const cards = [
       ['reqnew', 'reqnew', '#00c2d6', UI.nav_req_new, { en: 'Capture a new customer requirement', th: 'บันทึกความต้องการลูกค้าใหม่' }, () => createAndOpenProject()],
       ['reqlist', 'reqlist', '#0a84ff', UI.nav_req_list, { en: `${projs.length} requirements`, th: `${projs.length} ความต้องการ` }, () => go('reqlist')],
+      ['projdash', 'dashboard', '#bf5af3', UI.nav_dashboard, { en: 'Overall status, wins, losses & company breakdown', th: 'ภาพรวมสถานะ ได้งาน เสียงาน และแยกตามบริษัท' }, () => go('projdash')],
       ['followup', 'followup', '#ffb454', UI.nav_followup, { en: `${openN} open · ${waitN} awaiting decision`, th: `กำลังดำเนินการ ${openN} · รอตัดสินใจ ${waitN}` }, () => go('followup')],
       ['kickoff', 'kickoff', '#30d158', UI.nav_kickoff, { en: 'Start delivery on a won project', th: 'เริ่มส่งมอบโครงการที่ได้งาน' }, () => go('kickoff')],
       ['data', 'backup', 'var(--erp-indigo)', UI.nav_data, { en: 'Export, restore, manage data', th: 'สำรอง กู้คืน จัดการข้อมูล' }, () => go('data')],
@@ -7015,9 +7414,11 @@ const FNCloud = (function () {
       docNo: nextProjNo(),
       createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       status: 'draft',
-      fields: { customer: '', title: '', contact: '', enquiryDate: todayISO() },
+      started: false,                   /* gate the pipeline until the overview is submitted */
+      overviewConfirmed: false,
+      fields: { customer: '', title: '', contact: '', enquiryDate: todayISO(), owner: '', needConcept: false, needQuotation: false },
       topics: [],                       /* [{id, title, desc, img}] */
-      feasibility: { confirmed: false, disc: {} },  /* disc: { key:{on,idea} } */
+      feasibility: { confirmed: false, disc: {}, engineer: '', solutionDate: '' },  /* disc: { key:{on,idea} } */
       solution: { confirmed: false, files: [] },
       proposal: { confirmed: false, present: [], scope: [], cost: [], timeline: [] },
       meeting: { date: '', time: '', end: '', people: [], confirmed: false },
@@ -7036,9 +7437,31 @@ const FNCloud = (function () {
 
   function createAndOpenProject() {
     const p = newProject();
+    p.fields.owner = meName();   /* logged under whoever is on this device */
+    p.draft = true;
+    /* Held in memory only — NOT saved or synced yet. It becomes a real,
+       persisted requirement the moment the user types anything into it
+       (touch → saveDB). Until then, leaving the page just discards it, so
+       clicking "New Requirement" and backing out never spams the list. */
     db.records.push(p);
-    saveDB();
     go('reqview', { projectId: p.id });
+  }
+
+  /* Leaving an untouched, empty draft throws it away. If it had already
+     been saved/synced (the user typed then cleared everything), it is
+     tombstoned so the empty shell does not linger on other devices.
+     Deferred out of the navigation frame — mutating db.records inside the
+     view transition strands the render — and the list already hides empty
+     drafts, so nothing shows in the gap. */
+  function dropEmptyDraft(id) {
+    const p = db.records.find((r) => r.id === id && r.type === 'PROJECT');
+    if (!p || projHasContent(p)) return;
+    setTimeout(() => {
+      const q = db.records.find((r) => r.id === id && r.type === 'PROJECT');
+      if (!q || projHasContent(q)) return;   /* got content in the meantime */
+      if (q.updatedAt !== q.createdAt) tombstoneRecord(q);   /* was saved → tombstone */
+      else db.records = db.records.filter((r) => r.id !== id);   /* never saved → drop */
+    }, 0);
   }
 
   /* ---- Example data ----
@@ -7144,26 +7567,72 @@ const FNCloud = (function () {
         timeline: [imgF('Plan', '#ff453a', '#bf5af3')],
         mdate: '2026-06-18', people: ['Alice Wong', 'Ploy R.'],
         topics: [topic('Mark quality', 'Grade-A 2D code, verify each part.', [demoPic('Code grade', '#ff453a', '#0a84ff')])] },
+
+      /* A second wave — more companies, repeat customers, more outcomes so
+         the dashboard has something to show. */
+      { level: 0, date: '2026-08-27', customer: 'Delta Electronics', title: 'Tray labeling upgrade', nc: false, nq: true,
+        topics: [topic('Label print', 'Print + verify 2 labels per tray.', [])] },
+      { level: 1, date: '2026-08-15', customer: 'Seagate', title: 'Screw feeder retrofit', nc: true, nq: true,
+        disc: mkDisc(['mechanical', 'electrical']) },
+      { level: 2, date: '2026-08-02', customer: 'Western Digital', title: 'Gantry vision add-on', nc: true, nq: true,
+        disc: mkDisc(['electrical', 'vision', 'software']), solFiles: [imgF('Concept render', '#bf5af3', '#0a84ff')] },
+      { level: 3, date: '2026-07-20', customer: 'Benchmark', title: 'Palletizer cell', nc: true, nq: true,
+        disc: mkDisc(['mechanical', 'robot', 'plc']), solFiles: [imgF('Cell CAD', '#30d158', '#0a84ff')],
+        present: [docF('Quotation.pdf', 'application/pdf', 1200000)], cost: [docF('Cost.xlsx', 'application/vnd.ms-excel', 70000)] },
+      { level: 4, date: '2026-07-05', customer: 'Delta Electronics', title: 'Leak test bench', decision: 'pending', nc: true, nq: true,
+        disc: mkDisc(['mechanical', 'electrical', 'plc']), solFiles: [imgF('Bench CAD', '#00c2d6', '#0a84ff')],
+        present: [docF('Quote.pdf', 'application/pdf', 900000)], mdate: '2026-08-28', people: ['Somchai P.', 'K. Warit'] },
+      { level: 5, date: '2026-06-12', customer: 'Fabrinet', title: 'Auto glue dispense', decision: 'won', nc: true, nq: true,
+        disc: mkDisc(['mechanical', 'electrical', 'robot']), solFiles: [imgF('Dispense CAD', '#30d158', '#0a84ff')],
+        present: [docF('Quote.pdf', 'application/pdf', 1500000)], mdate: '2026-07-02', people: ['Alice Wong', 'Nattapong S.'],
+        milestones: [{ id: uid(), label: 'Kickoff meeting held', done: true }, { id: uid(), label: 'PO received', done: true }] },
+      { level: 5, date: '2026-06-01', customer: 'Celestica', title: 'Barcode sorter', decision: 'lost', nc: true, nq: true,
+        disc: mkDisc(['mechanical', 'software']), solFiles: [imgF('Sorter CAD', '#ff453a', '#ff9f0a')],
+        present: [docF('Quote.pdf', 'application/pdf', 800000)], mdate: '2026-06-25', people: ['Ploy R.'] },
+      { level: 5, date: '2026-05-20', customer: 'Seagate', title: 'Press-fit station', decision: 'won', nc: false, nq: true,
+        disc: mkDisc(['mechanical', 'electrical']), present: [docF('Quote.pdf', 'application/pdf', 1100000)],
+        mdate: '2026-06-10', people: ['Somchai P.'] },
     ];
 
+    const admins = ['Norawid K.', 'Ploy R.'];
+    const engs = ['Somchai P.', 'Alice Wong', 'K. Warit', 'Nattapong S.'];
+    admins.forEach((n) => addPerson(n, ''));
+    const addDays = (iso, n) => { const d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+    /* Pending target dates spread across the urgency tiers (relative to
+       today) so the sample shows sky / yellow / slow / fast / late. */
+    const solOffsets = [45, 22, 10]; let solK = 0;
+    const mtgOffsets = [5, -3]; let mtgK = 0;
     configs.forEach((o, i) => {
       const p = newProject();
       p.demo = true;
       p.docNo = 'REQ-2026-' + String(9001 + i).padStart(4, '0');
       p.createdAt = o.date + 'T08:00:00.000Z';
       p.updatedAt = o.date + 'T08:00:00.000Z';
-      p.fields = { customer: o.customer, title: o.title, contact: o.contact || '', enquiryDate: o.date };
+      p.fields = { customer: o.customer, title: o.title, contact: o.contact || '', enquiryDate: o.date, owner: admins[i % admins.length],
+        needQuotation: (o.nq === undefined) ? true : o.nq,
+        needConcept: (o.nc === undefined) ? (o.level >= 2) : o.nc };
+      p.overviewConfirmed = true; p.started = true;   /* these samples are already past the overview */
       p.topics = o.topics || [];
       if (o.level >= 1) p.feasibility = { confirmed: true, disc: o.disc || mkDisc(['mechanical', 'electrical']) };
+      /* engineer + promised solution date on everyone from feasibility on;
+         a couple of early ones stay unassigned to show that state too. */
+      p.feasibility.engineer = (o.level >= 1 || i % 3 !== 0) ? engs[i % engs.length] : '';
+      /* solution still owed (level < 2) → a today-relative tier date; already
+         delivered → keep a historical date (shows calm). */
+      p.feasibility.solutionDate = (o.level >= 1 || i % 3 !== 0)
+        ? (o.level < 2 ? addDays(todayISO(), solOffsets[solK++ % solOffsets.length]) : addDays(o.date, 18 + i * 4))
+        : '';
       if (o.level >= 2) p.solution = { confirmed: true, files: o.solFiles || [] };
       if (o.level >= 3) p.proposal = { confirmed: true, present: o.present || [], scope: o.scope || [], cost: o.cost || [], timeline: o.timeline || [] };
       if (o.level >= 4) p.meeting = { date: o.mdate || o.date, time: '10:00', end: '11:30', people: o.people || [], confirmed: true };
+      /* a meeting still awaiting the customer's decision → today-relative too */
+      if (o.decision === 'pending' && p.meeting) p.meeting.date = addDays(todayISO(), mtgOffsets[mtgK++ % mtgOffsets.length]);
       if (o.decision) p.decision = o.decision;
       if (o.decision === 'won') p.kickoff = { date: o.mdate || o.date, lead: (o.people && o.people[0]) || '', team: o.people || [], milestones: o.milestones || [] };
       db.records.push(p);
     });
     saveDB(); render();
-    toast(T({ en: '7 example projects loaded', th: 'โหลดตัวอย่าง 7 โครงการแล้ว' }));
+    toast(configs.length + T({ en: ' example projects loaded', th: ' โครงการตัวอย่างถูกโหลดแล้ว' }));
   }
 
   /* Which stage a project has reached, from its confirmations/decision. */
@@ -7331,44 +7800,187 @@ const FNCloud = (function () {
   }
 
   /* ---- Requirement list ---- */
-  /* Position of a stage in the pipeline, for ordering. */
+  /* Position of a stage in the pipeline, for ordering (begin → final). */
   const STAGE_ORDER = PROJ_STAGES.reduce((a, s, i) => { a[s.key] = i; return a; }, {});
-  function stageColor(p) { return (PROJ_STAGE_BY_KEY[projStage(p)] || PROJ_STAGE_BY_KEY.requirement).color; }
 
+  /* What a project is waiting on next — the form to confirm, its colour,
+     an icon and name for the list, and how fast the card blinks. Later,
+     more time-sensitive stages carry a higher priority, so they blink
+     faster (a smaller duration). */
+  const PENDING = {
+    requirement: { form: 'feasibility', icon: 'feasible', color: '#ffd60a', dur: 3.2, name: { en: 'Technical Feasibility', th: 'ความเป็นไปได้ทางเทคนิค' } },
+    solution:    { form: 'solution',    icon: 'solution', color: '#ff9f0a', dur: 2.5, name: { en: 'Solution Design',      th: 'ออกแบบโซลูชัน' } },
+    proposal:    { form: 'proposal',    icon: 'proposal', color: '#00c2d6', dur: 1.9, name: { en: 'Proposal',             th: 'ข้อเสนอ' } },
+    meeting:     { form: 'meeting',     icon: 'meeting',  color: '#15e6cf', dur: 1.4, name: { en: 'Customer Meeting',      th: 'นัดประชุมลูกค้า' }, aura: true },
+    decision:    { form: 'decision',    icon: 'clock',    color: '#ffd60a', dur: 1.2, name: { en: 'Awaiting decision',     th: 'รอลูกค้าตัดสินใจ' }, waiting: true },
+  };
+  /* The card's live status: a final outcome (won/lost, no blink), or the
+     next pending form (blinks in its colour at its speed). */
+  function cardStatus(p) {
+    const st = projStage(p);
+    if (st === 'won')  return { key: 'won',  color: '#30d158', icon: 'won',  name: { en: 'Won',  th: 'ได้งาน' }, blink: false };
+    if (st === 'lost') return { key: 'lost', color: '#ff453a', icon: 'lost', name: { en: 'Lost', th: 'เสียงาน' }, blink: false };
+    const pd = PENDING[st] || PENDING.requirement;
+    return { key: st, color: pd.color, icon: pd.icon, name: pd.name, dur: pd.dur, aura: pd.aura, waiting: pd.waiting, blink: true };
+  }
+
+  /* A project is worth listing only once it holds real content — any
+     overview field, a topic, or a confirmed stage. Opening "New
+     Requirement" and walking away leaves an empty draft that never
+     reaches the list (or the shared database). */
+  function projHasContent(p) {
+    const f = p.fields || {};
+    if ((f.title || '').trim() || (f.customer || '').trim() || (f.contact || '').trim()) return true;
+    if ((p.topics || []).length) return true;
+    if (p.feasibility && p.feasibility.confirmed) return true;
+    if (p.solution && p.solution.confirmed) return true;
+    if (p.proposal && p.proposal.confirmed) return true;
+    if (p.meeting && p.meeting.confirmed) return true;
+    if (p.decision && p.decision !== 'pending') return true;
+    if (p.submitted) return true;
+    return false;
+  }
+  function listableProjects() { return projectRecords().filter(projHasContent); }
+
+  function projOwner(p) { return (p.fields && p.fields.owner) || ''; }
+  function projEngineer(p) { return (p.feasibility && p.feasibility.engineer) || ''; }
+  function projSolutionDate(p) { return (p.feasibility && p.feasibility.solutionDate) || ''; }
+  /* Everyone a project is on the hook for — used by the person filter. */
+  function projPeopleNames(p) {
+    const s = new Set();
+    if (projOwner(p)) s.add(projOwner(p));
+    if (projEngineer(p)) s.add(projEngineer(p));
+    return s;
+  }
+
+  /* One requirement = one compact line: status · no · title · customer ·
+     needs · people · date. Everything sits on a single row, short height. */
   function reqCard(p) {
+    const cs = cardStatus(p);
+    const cls = 'req-card req-compact status-' + cs.key + ' ' + (cs.blink ? 'is-blink' : 'is-final') + (cs.aura ? ' is-aura' : '');
+    const style = `--sc:${cs.color};--blink-dur:${cs.dur || 2.2}s`;
+    const f = p.fields || {};
+    const owner = projOwner(p), eng = projEngineer(p);
+
+    /* Customer-need chips with full names, filled once delivered. */
+    const needMini = [];
+    if (f.needConcept) needMini.push(el('span', { class: 'rc-need' + (p.solution && p.solution.confirmed ? ' sent' : ''), style: '--nc:#bf5af3' }, [L({ en: 'Concept', th: 'คอนเซ็ปต์' })]));
+    if (f.needQuotation) needMini.push(el('span', { class: 'rc-need' + (p.proposal && p.proposal.confirmed ? ' sent' : ''), style: '--nc:#00c2d6' }, [L({ en: 'Quotation', th: 'ใบเสนอราคา' })]));
+    const needsEl = needMini.length ? el('span', { class: 'rc-needs' }, needMini) : null;
+
+    /* People — admin then engineer; engineer's border runs on a loop. */
+    const person = (cls2, color, ic, roleLabel, name) => el('span', { class: 'rc-person ' + cls2, style: `--role:${color}`, title: T(roleLabel) + ': ' + name }, [
+      el('span', { class: 'rc-person-ico' }, [icon(ic, 11)]), el('span', { class: 'rc-person-name', text: name }),
+    ]);
+    const people = [];
+    if (owner) people.push(person('is-admin', '#5e5ce6', 'reqnew', { en: 'Admin', th: 'แอดมิน' }, owner));
+    if (eng) people.push(person('is-eng', '#0a84ff', 'feasible', { en: 'Engineer', th: 'วิศวกร' }, eng));
+    const peopleEl = people.length ? el('span', { class: 'rc-people' }, people) : null;
+
+    /* The date that matters now, by status: send-solution or meet-customer.
+       Its colour and blink follow how close it is to today (see
+       dateUrgency); a delivered milestone is calm. */
+    const stage = projStage(p), mtg = p.meeting || {}, solDate = projSolutionDate(p);
+    let dateEl = null, dateLabel = null, dateValue = null, dateOverdue = false;
+    let targetISO = null, dateIcon = null, pending = false;
+    if (mtg.date && (mtg.confirmed || stage === 'meeting' || stage === 'decision')) {
+      targetISO = mtg.date; dateIcon = 'meeting'; pending = p.decision === 'pending';
+      dateLabel = { en: 'Meet customer', th: 'นัดพบลูกค้า' };
+      dateValue = fmtDate(mtg.date) + (mtg.time ? '  ' + mtg.time : '');
+    } else if (solDate) {
+      targetISO = solDate; dateIcon = 'solution'; pending = !(p.solution && p.solution.confirmed);
+      dateLabel = { en: 'Send solution to customer', th: 'ส่งโซลูชันให้ลูกค้า' };
+      dateValue = fmtDate(solDate);
+    }
+    if (targetISO) {
+      const u = dateUrgency(targetISO, pending);
+      dateOverdue = u.late;
+      dateEl = el('span', { class: 'rc-date' + (u.blink ? ' blink-' + u.blink : ''), style: `--dc:${u.color}`, title: T(dateLabel) }, [
+        icon(u.late ? 'clock' : dateIcon, 12),
+        u.late ? el('span', { class: 'rc-date-late' }, [L({ en: 'LATE', th: 'เลย' })]) : null,
+        el('span', { text: fmtDate(targetISO) }),
+      ]);
+    }
+
+    /* Hover preview — the full detail of what the compact line squeezes,
+       so nothing is lost to truncation before the user clicks in. */
+    const pop = reqPreview(p, cs, { owner, eng, needConcept: f.needConcept, needQuotation: f.needQuotation,
+      conceptSent: !!(p.solution && p.solution.confirmed), quoteSent: !!(p.proposal && p.proposal.confirmed),
+      dateLabel, dateValue, dateOverdue });
+
+    return el('button', { class: cls, style, onclick: () => go('reqview', { projectId: p.id }) }, [
+      el('span', { class: 'rc-status' }, [el('span', { class: 'rc-status-ico' }, [icon(cs.icon, 15)]), el('span', { class: 'rc-status-name' }, [L(cs.name)])]),
+      el('span', { class: 'rc-no', text: p.docNo }),
+      el('span', { class: 'rc-title', text: p.fields.title || T({ en: '(untitled requirement)', th: '(ยังไม่ตั้งชื่อ)' }) }),
+      el('span', { class: 'rc-cust', text: p.fields.customer || '—' }),
+      el('span', { class: 'rc-spring' }),
+      needsEl,
+      peopleEl,
+      dateEl,
+      pop,
+    ]);
+  }
+
+  /* The little card that appears on hovering a requirement row. */
+  function reqPreview(p, cs, d) {
+    const row = (labelObj, node) => node ? el('div', { class: 'rp-row' }, [el('span', { class: 'rp-k' }, [L(labelObj)]), el('span', { class: 'rp-v' }, [node])]) : null;
+    const txt = (s) => el('span', { text: s });
+    const needChips = [];
+    if (d.needConcept) needChips.push(el('span', { class: 'rc-need' + (d.conceptSent ? ' sent' : ''), style: '--nc:#bf5af3' }, [L({ en: 'Concept', th: 'คอนเซ็ปต์' }), d.conceptSent ? ' ✓' : '']));
+    if (d.needQuotation) needChips.push(el('span', { class: 'rc-need' + (d.quoteSent ? ' sent' : ''), style: '--nc:#00c2d6' }, [L({ en: 'Quotation', th: 'ใบเสนอราคา' }), d.quoteSent ? ' ✓' : '']));
     const topics = (p.topics || []).length;
-    const sc = stageColor(p);
-    return el('button', { class: 'req-card', style: `--sc:${sc}`, onclick: () => go('reqview', { projectId: p.id }) }, [
-      el('span', { class: 'req-status-rail', 'aria-hidden': 'true' }),
-      el('div', { class: 'req-card-main' }, [
-        el('div', { class: 'req-card-top' }, [
-          el('span', { class: 'req-no', text: p.docNo }),
-          stageBadge(p),
-        ]),
-        el('div', { class: 'req-title', text: p.fields.title || T({ en: '(untitled requirement)', th: '(ยังไม่ตั้งชื่อ)' }) }),
-        el('div', { class: 'req-meta' }, [
-          el('span', { text: p.fields.customer || '—' }),
-          el('span', { class: 'req-dot', text: '·' }),
-          el('span', { text: fmtDate(p.fields.enquiryDate) }),
-          el('span', { class: 'req-dot', text: '·' }),
-          el('span', { text: topics + ' ' + T({ en: 'topics', th: 'หัวข้อ' }) }),
-        ]),
+    return el('div', { class: 'rc-pop', 'aria-hidden': 'true' }, [
+      el('div', { class: 'rp-head' }, [
+        el('span', { class: 'rp-status', style: `--sc:${cs.color}` }, [icon(cs.icon, 13), L(cs.name)]),
+        el('span', { class: 'rp-no', text: p.docNo }),
       ]),
-      el('span', { class: 'req-arrow', text: '→' }),
+      el('div', { class: 'rp-title', text: p.fields.title || T({ en: '(untitled requirement)', th: '(ยังไม่ตั้งชื่อ)' }) }),
+      el('div', { class: 'rp-rows' }, [
+        row({ en: 'Customer', th: 'ลูกค้า' }, txt(p.fields.customer || '—')),
+        d.needConcept || d.needQuotation ? el('div', { class: 'rp-row' }, [el('span', { class: 'rp-k' }, [L({ en: 'Needs', th: 'ต้องการ' })]), el('span', { class: 'rp-v rp-needs' }, needChips)]) : null,
+        row({ en: 'Admin', th: 'แอดมิน' }, d.owner ? txt(d.owner) : null),
+        row({ en: 'Engineer', th: 'วิศวกร' }, d.eng ? txt(d.eng) : null),
+        d.dateValue ? el('div', { class: 'rp-row' }, [el('span', { class: 'rp-k' }, [L(d.dateLabel)]), el('span', { class: 'rp-v' + (d.dateOverdue ? ' rp-over' : '') }, [d.dateValue + (d.dateOverdue ? '  ⚠' : '')])]) : null,
+        row({ en: 'Enquiry date', th: 'วันที่สอบถาม' }, txt(fmtDate(p.fields.enquiryDate))),
+        row({ en: 'Topics', th: 'หัวข้อ' }, txt(String(topics))),
+      ]),
+      el('div', { class: 'rp-foot' }, [L({ en: 'Click to open →', th: 'คลิกเพื่อเปิด →' })]),
     ]);
   }
 
   function viewReqList(root) {
-    const projs = projectRecords().slice();
+    const all = listableProjects();
+
+    /* People who own or engineer at least one requirement — the choices
+       for the "whose list" filter. */
+    const peopleSet = new Set();
+    all.forEach((p) => projPeopleNames(p).forEach((n) => peopleSet.add(n)));
+    const peopleOptions = Array.from(peopleSet).sort((a, b) => a.localeCompare(b));
+    if (state.projPerson && !peopleSet.has(state.projPerson)) state.projPerson = null;
+    const byPerson = (arr) => state.projPerson ? arr.filter((p) => projPeopleNames(p).has(state.projPerson)) : arr;
+
+    const wonList = byPerson(all.filter((p) => projStage(p) === 'won'));
+    const activeList = byPerson(all.filter((p) => projStage(p) !== 'won'));
+    const filter = state.projFilter === 'won' ? 'won' : 'active';
+    const shown = filter === 'won' ? wonList : activeList;
+
     root.appendChild(el('div', { class: 'page-head' }, [
       el('div', {}, [
         el('h1', { class: 'page-title' }, [L(UI.nav_req_list)]),
-        el('div', { class: 'page-sub' }, [String(projs.length) + ' ', L({ en: 'total', th: 'รายการ' })]),
+        el('div', { class: 'page-sub' }, [String(shown.length) + ' ', L(filter === 'won' ? { en: 'won', th: 'ได้งาน' } : { en: 'active', th: 'กำลังดำเนินการ' })]),
       ]),
       el('button', { class: 'btn btn-primary no-print', onclick: () => createAndOpenProject() }, [L(UI.nav_req_new)]),
     ]));
 
-    /* Toolbar: sort mode + example-data controls */
+    /* Filter tabs: Active vs Won (won lives in its own list). */
+    const tab = (key, ic, label, n) => el('button', { class: 'seg-btn' + (filter === key ? ' on' : ''), type: 'button',
+      onclick: () => { state.projFilter = key; render(); } },
+      [icon(ic, 14), L(label), el('span', { class: 'seg-count', text: String(n) })]);
+    const filterSeg = el('div', { class: 'req-sort seg no-print', role: 'group' }, [
+      tab('active', 'reqlist', { en: 'Active', th: 'กำลังดำเนินการ' }, activeList.length),
+      tab('won', 'won', { en: 'Won', th: 'ได้งาน' }, wonList.length),
+    ]);
+    /* Sort mode — only meaningful for the grouped Active list. */
     const sortSeg = el('div', { class: 'req-sort seg no-print', role: 'group' }, [
       el('button', { class: 'seg-btn' + (state.projSort === 'status' ? ' on' : ''), type: 'button',
         onclick: () => { state.projSort = 'status'; render(); } }, [icon('feasible', 14), L({ en: 'By status', th: 'ตามสถานะ' })]),
@@ -7378,33 +7990,54 @@ const FNCloud = (function () {
     const demoBtn = projExamplesPresent()
       ? el('button', { class: 'btn btn-sm btn-ghost no-print', onclick: () => clearProjectExamples() }, [L({ en: 'Clear examples', th: 'ลบตัวอย่าง' })])
       : el('button', { class: 'btn btn-sm no-print', onclick: () => seedProjectExamples() }, [L({ en: 'Load examples', th: 'โหลดตัวอย่าง' })]);
-    root.appendChild(el('div', { class: 'req-toolbar' }, [sortSeg, demoBtn]));
+    /* "Whose list" — each person can see just their own requirements. */
+    const personSel = el('select', { class: 'part-select req-person-filter' });
+    personSel.appendChild(el('option', { value: '', text: T({ en: '👤 Everyone', th: '👤 ทุกคน' }) }));
+    const me = meName();
+    if (me && peopleSet.has(me)) personSel.appendChild(el('option', { value: me, text: T({ en: '👤 My list', th: '👤 รายการของฉัน' }) + ' (' + me + ')' }));
+    peopleOptions.forEach((n) => personSel.appendChild(el('option', { value: n, text: n })));
+    personSel.value = state.projPerson || '';
+    personSel.addEventListener('change', () => { state.projPerson = personSel.value || null; render(); });
+    const personWrap = peopleOptions.length ? el('div', { class: 'req-person-filter-wrap' }, [personSel]) : null;
 
-    if (!projs.length) { root.appendChild(el('div', { class: 'empty' }, [L(UI.noProjects)])); return; }
+    const leftControls = [filterSeg];
+    if (filter === 'active') leftControls.push(sortSeg);
+    if (personWrap) leftControls.push(personWrap);
+    root.appendChild(el('div', { class: 'req-toolbar' }, [el('div', { class: 'req-tabwrap' }, leftControls), demoBtn]));
 
-    if (state.projSort === 'date') {
-      projs.sort((a, b) => ((b.fields.enquiryDate || '') > (a.fields.enquiryDate || '') ? 1 : -1));
-      const list = el('div', { class: 'req-list' });
-      projs.forEach((p) => list.appendChild(reqCard(p)));
-      root.appendChild(list);
-    } else {
-      /* Group by status, ordered latest stage first, cards newest-first within */
-      const groups = {};
-      projs.forEach((p) => { const k = projStage(p); (groups[k] = groups[k] || []).push(p); });
-      const order = PROJ_STAGES.map((s) => s.key).filter((k) => groups[k]).reverse();
-      order.forEach((k) => {
-        const s = PROJ_STAGE_BY_KEY[k];
-        const items = groups[k].sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1));
-        root.appendChild(el('div', { class: 'req-group-head', style: `--sc:${s.color}` }, [
-          el('span', { class: 'req-group-dot' }),
-          el('span', { class: 'req-group-name' }, [L(s.label)]),
-          el('span', { class: 'req-group-count', text: String(items.length) }),
-        ]));
-        const list = el('div', { class: 'req-list' });
-        items.forEach((p) => list.appendChild(reqCard(p)));
-        root.appendChild(list);
-      });
+    if (!shown.length) {
+      root.appendChild(el('div', { class: 'empty' }, [L(filter === 'won'
+        ? { en: 'No won projects yet.', th: 'ยังไม่มีโครงการที่ได้งาน' }
+        : UI.noProjects)]));
+      return;
     }
+
+    /* Won list, and Active-by-date, are flat lists newest-first. */
+    if (filter === 'won' || state.projSort === 'date') {
+      const items = shown.slice().sort((a, b) => ((b.fields.enquiryDate || '') > (a.fields.enquiryDate || '') ? 1 : -1));
+      const list = el('div', { class: 'req-list' });
+      items.forEach((p) => list.appendChild(reqCard(p)));
+      root.appendChild(list);
+      return;
+    }
+
+    /* Active, by status: groups ordered begin → final. */
+    const groups = {};
+    shown.forEach((p) => { const k = projStage(p); (groups[k] = groups[k] || []).push(p); });
+    const order = PROJ_STAGES.map((s) => s.key).filter((k) => groups[k] && k !== 'won');
+    order.forEach((k) => {
+      const items = groups[k].sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1));
+      const cs = cardStatus(items[0]);
+      root.appendChild(el('div', { class: 'req-group-head' + (cs.blink ? ' is-blink' : ''), style: `--sc:${cs.color};--blink-dur:${cs.dur || 2.2}s` }, [
+        el('span', { class: 'req-group-dot' }),
+        el('span', { class: 'req-group-ico' }, [icon(cs.icon, 14)]),
+        el('span', { class: 'req-group-name' }, [L(cs.name)]),
+        el('span', { class: 'req-group-count', text: String(items.length) }),
+      ]));
+      const list = el('div', { class: 'req-list' });
+      items.forEach((p) => list.appendChild(reqCard(p)));
+      root.appendChild(list);
+    });
   }
 
   /* ---- Requirement detail: the gated pipeline ---- */
@@ -7414,6 +8047,17 @@ const FNCloud = (function () {
     /* keep older records forward-compatible */
     rec.feasibility = rec.feasibility || { confirmed: false, disc: {} };
     rec.feasibility.disc = rec.feasibility.disc || {};
+    if (rec.feasibility.engineer === undefined) rec.feasibility.engineer = '';
+    if (rec.feasibility.solutionDate === undefined) rec.feasibility.solutionDate = '';
+    if (rec.fields.owner === undefined) rec.fields.owner = '';
+    if (rec.fields.needConcept === undefined) rec.fields.needConcept = false;
+    if (rec.fields.needQuotation === undefined) rec.fields.needQuotation = false;
+    /* A record that predates these flags is already underway: show its full
+       pipeline and keep the overview editable, so nothing an older record
+       holds can ever become unreachable. Only requirements created new (which
+       set started:false in newProject) start gated on the overview. */
+    if (rec.started === undefined) rec.started = true;
+    if (rec.overviewConfirmed === undefined) rec.overviewConfirmed = false;
     rec.solution = rec.solution || { confirmed: false, files: [] };
     rec.proposal = rec.proposal || { confirmed: false, present: [], scope: [], cost: [], timeline: [] };
     rec.meeting = rec.meeting || { date: '', time: '', end: '', people: [], confirmed: false };
@@ -7458,14 +8102,40 @@ const FNCloud = (function () {
 
     const shell = el('div', { class: 'form-shell' });
 
-    /* ---- Requirement (always editable) ---- */
+    /* ---- Requirement / Overview (locked once submitted) ---- */
     const reqSec = pipeSection('reqnew', '#00c2d6', UI.req_summary, false);
+    const ovWrap = editWrap(rec.overviewConfirmed);
     const grid = el('div', { class: 'field-grid' });
+    /* Requirement number — auto-suggested, but you can type your own. */
+    const noInput = el('input', { type: 'text', value: rec.docNo || '', placeholder: 'REQ-2026-0024' });
+    noInput.addEventListener('input', () => { rec.docNo = noInput.value; });
+    noInput.addEventListener('change', () => { rec.docNo = noInput.value.trim() || rec.docNo; touch(rec); render(); });
+    grid.appendChild(fieldWrap({ en: 'Requirement No.', th: 'เลขที่ความต้องการ' }, noInput));
     grid.appendChild(fieldWrap(UI.req_customer, tInput(rec.fields, 'customer', 'ABC Manufacturing')));
     grid.appendChild(fieldWrap(UI.req_title, tInput(rec.fields, 'title', T({ en: 'e.g. Auto vision sorter line', th: 'เช่น สายคัดแยกด้วยวิชัน' }))));
     grid.appendChild(fieldWrap(UI.req_contact, tInput(rec.fields, 'contact', '')));
     grid.appendChild(fieldWrap(UI.req_date, dInput(rec.fields, 'enquiryDate', 'date')));
-    reqSec.body.appendChild(grid);
+    grid.appendChild(fieldWrap({ en: 'Received by (admin)', th: 'ผู้รับเรื่อง (แอดมิน)' },
+      personSelect({ value: rec.fields.owner || '', placeholder: { en: '— who took this? —', th: '— ใครรับเรื่อง? —' },
+        onPick: (name) => { rec.fields.owner = name; touch(rec); } })));
+    ovWrap.appendChild(grid);
+
+    /* What the customer actually asked us for — the admin ticks these when
+       logging the enquiry. They drive the dashboard's per-company demand. */
+    const needBox = (key, label, color) => {
+      const on = !!rec.fields[key];
+      const b = el('button', { class: 'need-check' + (on ? ' on' : ''), type: 'button', style: `--nc:${color}`,
+        onclick: () => { rec.fields[key] = !rec.fields[key]; touch(rec); render(); } }, [
+        el('span', { class: 'need-box' }, on ? [icon('pdi', 13)] : []),
+        el('span', {}, [L(label)]),
+      ]);
+      return b;
+    };
+    ovWrap.appendChild(el('div', { class: 'sub-h' }, [L({ en: 'Customer needs', th: 'สิ่งที่ลูกค้าต้องการ' })]));
+    ovWrap.appendChild(el('div', { class: 'need-row' }, [
+      needBox('needConcept', { en: 'Concept / design', th: 'คอนเซ็ปต์ / ออกแบบ' }, '#bf5af3'),
+      needBox('needQuotation', { en: 'Quotation', th: 'ใบเสนอราคา' }, '#00c2d6'),
+    ]));
 
     /* Topics — added and edited through a popup, shown as ready cards.
        Clicking a card reopens the same popup pre-filled (button →
@@ -7516,7 +8186,7 @@ const FNCloud = (function () {
       setTimeout(() => titleIn.focus(), 80);
     };
 
-    reqSec.body.appendChild(el('div', { class: 'sub-h' }, [L(UI.req_topics)]));
+    ovWrap.appendChild(el('div', { class: 'sub-h' }, [L(UI.req_topics)]));
     const topicWrap = el('div', { class: 'topic-cards' });
     if (!rec.topics.length) topicWrap.appendChild(el('div', { class: 'topic-empty' }, [L(UI.req_topic_empty)]));
     rec.topics.forEach((tp, idx) => {
@@ -7541,14 +8211,56 @@ const FNCloud = (function () {
       kids.push(el('span', { class: 'topic-card-edit', title: T({ en: 'Edit', th: 'แก้ไข' }) }, [icon('records', 15)]));
       topicWrap.appendChild(el('button', { class: 'topic-card', type: 'button', onclick: () => openTopicEditor(tp) }, kids));
     });
-    reqSec.body.appendChild(topicWrap);
-    reqSec.body.appendChild(el('button', { class: 'btn btn-sm no-print topic-add-btn', onclick: () => openTopicEditor(null) }, [L(UI.req_topic_add)]));
+    ovWrap.appendChild(topicWrap);
+    ovWrap.appendChild(el('button', { class: 'btn btn-sm no-print topic-add-btn', onclick: () => openTopicEditor(null) }, [L(UI.req_topic_add)]));
+    reqSec.body.appendChild(ovWrap);
+    /* Submit locks the overview to read-only; Edit unlocks it again. */
+    if (rec.overviewConfirmed) {
+      reqSec.body.appendChild(el('div', { class: 'confirmed-chip' }, [
+        icon('pdi', 14), L({ en: 'Overview submitted', th: 'บันทึกข้อมูลแล้ว' }),
+        el('button', { class: 'reopen', type: 'button', onclick: () => { rec.overviewConfirmed = false; touch(rec); render(); } },
+          [icon('records', 13), L({ en: 'Edit', th: 'แก้ไข' })]),
+      ]));
+    } else {
+      reqSec.body.appendChild(el('div', { class: 'confirm-row' }, [
+        el('button', { class: 'btn btn-primary', onclick: () => {
+          if (!(rec.fields.title || '').trim() && !(rec.fields.customer || '').trim()) {
+            toast(T({ en: 'Add a customer or title first', th: 'กรุณากรอกลูกค้าหรือชื่อก่อน' }), true); return;
+          }
+          rec.overviewConfirmed = true; rec.started = true; touch(rec); render(); toast(T({ en: 'Overview submitted — next steps unlocked', th: 'บันทึกแล้ว — ปลดล็อกขั้นตอนถัดไป' }));
+        } }, [icon('pdi', 15), L({ en: 'Submit overview', th: 'บันทึกข้อมูล' })]),
+      ]));
+    }
     shell.appendChild(reqSec.box);
+
+    /* The rest of the pipeline only appears once the overview is submitted,
+       so opening "New Requirement" shows just the name + overview form.
+       (After the first submit it stays visible even while re-editing.) */
+    if (!rec.started) {
+      shell.appendChild(el('div', { class: 'gate-hint' }, [
+        icon('feasible', 15),
+        L({ en: 'Submit the overview above to unlock Technical Feasibility and the rest of the steps.',
+            th: 'กดบันทึกข้อมูลด้านบนเพื่อปลดล็อกขั้นตอนถัดไป' }),
+      ]));
+      root.appendChild(shell);
+      return;
+    }
 
     /* ---- 1. Technical Feasibility ---- */
     const feas = rec.feasibility;
     const fSec = pipeSection('feasible', '#0a84ff', UI.feas_title, false);
-    fSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.feas_hint)]));
+    if (stage === 'requirement') markPending(fSec, PENDING.requirement);
+    const fBody = editWrap(feas.confirmed);
+    fBody.appendChild(el('p', { class: 'sec-hint' }, [L(UI.feas_hint)]));
+    /* Who owns the engineering, and when the solution is promised. Both
+       surface on the requirement list so the team can plan the schedule. */
+    const feasGrid = el('div', { class: 'field-grid' });
+    feasGrid.appendChild(fieldWrap({ en: 'Assigned engineer', th: 'วิศวกรผู้รับผิดชอบ' },
+      personSelect({ value: feas.engineer || '', placeholder: { en: '— assign an engineer —', th: '— มอบหมายวิศวกร —' },
+        onPick: (name) => { feas.engineer = name; touch(rec); render(); } })));
+    feasGrid.appendChild(fieldWrap({ en: 'Target solution date', th: 'กำหนดส่งโซลูชัน' },
+      dateField({ value: feas.solutionDate || '', onCommit: (iso) => { feas.solutionDate = iso; touch(rec); render(); } })));
+    fBody.appendChild(feasGrid);
     /* The big description editor for one discipline. Opened when a
        discipline is ticked, or when its filled preview is clicked. */
     const openDiscEditor = (d, cur) => {
@@ -7610,16 +8322,20 @@ const FNCloud = (function () {
       }
       discGrid.appendChild(box);
     });
-    fSec.body.appendChild(discGrid);
+    fBody.appendChild(discGrid);
+    fSec.body.appendChild(fBody);
     fSec.body.appendChild(confirmRow(rec, feas, UI.feas_confirm, UI.feas_confirmed));
     shell.appendChild(fSec.box);
 
     /* ---- 2. Solution Design (locked until feasibility) ---- */
     const sol = rec.solution;
     const sSec = pipeSection('solution', '#bf5af3', UI.sol_title, !feas.confirmed);
+    if (stage === 'solution') markPending(sSec, PENDING.solution);
     if (feas.confirmed) {
-      sSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.sol_hint)]));
-      sSec.body.appendChild(uploadZone(rec, sol.files, !sol.confirmed, null, '.xlsx,.xls,.pdf,image/*,.stl'));
+      const sBody = editWrap(sol.confirmed);
+      sBody.appendChild(el('p', { class: 'sec-hint' }, [L(UI.sol_hint)]));
+      sBody.appendChild(uploadZone(rec, sol.files, !sol.confirmed, null, '.xlsx,.xls,.pdf,image/*,.stl'));
+      sSec.body.appendChild(sBody);
       sSec.body.appendChild(confirmRow(rec, sol, UI.sol_confirm, UI.sol_confirmed));
     }
     shell.appendChild(sSec.box);
@@ -7627,13 +8343,16 @@ const FNCloud = (function () {
     /* ---- 3. Proposal (locked until solution) ---- */
     const prop = rec.proposal;
     const pSec = pipeSection('proposal', '#00c2d6', UI.prop_title, !sol.confirmed);
+    if (stage === 'proposal') markPending(pSec, PENDING.proposal);
     if (sol.confirmed) {
-      pSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.prop_hint)]));
+      const pBody = editWrap(prop.confirmed);
+      pBody.appendChild(el('p', { class: 'sec-hint' }, [L(UI.prop_hint)]));
       const ed = !prop.confirmed;
-      pSec.body.appendChild(uploadZone(rec, prop.present, ed, UI.prop_present, ''));
-      pSec.body.appendChild(uploadZone(rec, prop.scope, ed, UI.prop_scope, ''));
-      pSec.body.appendChild(uploadZone(rec, prop.cost, ed, UI.prop_cost, ''));
-      pSec.body.appendChild(uploadZone(rec, prop.timeline, ed, UI.prop_timeline, ''));
+      pBody.appendChild(uploadZone(rec, prop.present, ed, UI.prop_present, ''));
+      pBody.appendChild(uploadZone(rec, prop.scope, ed, UI.prop_scope, ''));
+      pBody.appendChild(uploadZone(rec, prop.cost, ed, UI.prop_cost, ''));
+      pBody.appendChild(uploadZone(rec, prop.timeline, ed, UI.prop_timeline, ''));
+      pSec.body.appendChild(pBody);
       pSec.body.appendChild(confirmRow(rec, prop, UI.prop_confirm, UI.prop_confirmed));
     }
     shell.appendChild(pSec.box);
@@ -7641,16 +8360,19 @@ const FNCloud = (function () {
     /* ---- 4. Customer Meeting (locked until proposal) ---- */
     const mt = rec.meeting;
     const mSec = pipeSection('meeting', '#ff9f0a', UI.meet_title, !prop.confirmed);
+    if (stage === 'meeting') markPending(mSec, PENDING.meeting);
     if (prop.confirmed) {
-      mSec.body.appendChild(el('p', { class: 'sec-hint' }, [L(UI.meet_hint)]));
+      const mBody = editWrap(mt.confirmed);
+      mBody.appendChild(el('p', { class: 'sec-hint' }, [L(UI.meet_hint)]));
       const mg = el('div', { class: 'field-grid' });
       mg.appendChild(fieldWrap(UI.meet_date, dInput(mt, 'date', 'date')));
       mg.appendChild(fieldWrap(UI.meet_time, dInput(mt, 'time', 'time')));
       mg.appendChild(fieldWrap(UI.meet_end, dInput(mt, 'end', 'time')));
-      mSec.body.appendChild(mg);
-      mSec.body.appendChild(el('div', { class: 'sub-h' }, [L(UI.meet_people)]));
+      mBody.appendChild(mg);
+      mBody.appendChild(el('div', { class: 'sub-h' }, [L(UI.meet_people)]));
       mt.people = mt.people || [];
-      mSec.body.appendChild(participantPicker(rec, mt));
+      mBody.appendChild(participantPicker(rec, mt));
+      mSec.body.appendChild(mBody);
       if (!mt.confirmed) {
         mSec.body.appendChild(el('div', { class: 'confirm-row' }, [
           el('button', { class: 'btn btn-primary', onclick: () => {
@@ -7659,7 +8381,7 @@ const FNCloud = (function () {
           } }, [L(UI.meet_confirm)]),
         ]));
       } else {
-        mSec.body.appendChild(el('div', { class: 'confirmed-chip' }, [icon('pdi', 14), L(UI.meet_set), el('button', { class: 'reopen', type: 'button', onclick: () => { mt.confirmed = false; touch(rec); render(); } }, [L({ en: 'reopen', th: 'แก้ไข' })])]));
+        mSec.body.appendChild(el('div', { class: 'confirmed-chip' }, [icon('pdi', 14), L(UI.meet_set), el('button', { class: 'reopen', type: 'button', onclick: () => { mt.confirmed = false; touch(rec); render(); } }, [icon('records', 13), L({ en: 'Edit', th: 'แก้ไข' })])]));
       }
     }
     shell.appendChild(mSec.box);
@@ -7704,13 +8426,31 @@ const FNCloud = (function () {
     return { box, body };
   }
 
+  /* Flag the one section the project is currently waiting on: its border
+     blinks in the stage's colour (and glows, for the meeting) at the
+     stage's speed, with a note telling the user to fill it in. */
+  function markPending(sec, pd) {
+    sec.box.classList.add('is-pending');
+    if (pd.aura) sec.box.classList.add('is-aura');
+    sec.box.style.setProperty('--pend', pd.color);
+    sec.box.style.setProperty('--blink-dur', (pd.dur || 2) + 's');
+    sec.body.insertBefore(
+      el('div', { class: 'pend-note' }, [
+        icon(pd.icon, 15),
+        el('span', {}, [L({ en: 'Please fill this in and confirm to continue.', th: 'กรุณากรอกและกดยืนยันเพื่อไปต่อ' })]),
+      ]),
+      sec.body.firstChild,
+    );
+  }
+
   /* A confirm button that becomes a green confirmed chip (with a reopen
      link to revise). `obj.confirmed` is the gate for the next stage. */
   function confirmRow(rec, obj, labelConfirm, labelDone) {
     if (obj.confirmed) {
       return el('div', { class: 'confirmed-chip' }, [
         icon('pdi', 14), L(labelDone),
-        el('button', { class: 'reopen', type: 'button', onclick: () => { obj.confirmed = false; touch(rec); render(); } }, [L({ en: 'reopen', th: 'แก้ไข' })]),
+        el('button', { class: 'reopen', type: 'button', onclick: () => { obj.confirmed = false; touch(rec); render(); } },
+          [icon('records', 13), L({ en: 'Edit', th: 'แก้ไข' })]),
       ]);
     }
     return el('div', { class: 'confirm-row' }, [
@@ -7718,9 +8458,18 @@ const FNCloud = (function () {
     ]);
   }
 
+  /* A container whose contents become read-only once a step is confirmed:
+     `inert` blocks every input, and only the section's Edit button (kept
+     outside this wrapper) can unlock it. */
+  function editWrap(locked) {
+    const w = el('div', { class: 'sec-edit' + (locked ? ' is-locked' : '') });
+    if (locked) w.setAttribute('inert', '');
+    return w;
+  }
+
   /* ---- Project Follow-up ---- */
   function viewFollowup(root) {
-    const projs = projectRecords().slice().sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1));
+    const projs = listableProjects().slice().sort((a, b) => ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1));
     root.appendChild(el('div', { class: 'page-head' }, [
       el('div', {}, [
         el('h1', { class: 'page-title' }, [L(UI.nav_followup)]),
@@ -7817,6 +8566,397 @@ const FNCloud = (function () {
       card.appendChild(ml);
       root.appendChild(card);
     });
+  }
+
+  /* Customer-need badges on a requirement card: what the customer asked
+     for, and a tick once we have delivered it (concept = solution sent,
+     quotation = proposal sent). */
+  function needBadges(p) {
+    const f = p.fields || {};
+    if (!f.needConcept && !f.needQuotation) return null;
+    const badge = (label, color, sent) => el('span', { class: 'need-badge' + (sent ? ' is-sent' : ''), style: `--nc:${color}` }, [
+      el('span', { class: 'need-badge-ico' }, [icon(sent ? 'pdi' : 'clock', 11)]),
+      el('span', {}, [L(label)]),
+    ]);
+    const out = [];
+    if (f.needConcept) out.push(badge({ en: 'Concept', th: 'คอนเซ็ปต์' }, '#bf5af3', !!(p.solution && p.solution.confirmed)));
+    if (f.needQuotation) out.push(badge({ en: 'Quotation', th: 'ใบเสนอราคา' }, '#00c2d6', !!(p.proposal && p.proposal.confirmed)));
+    return el('div', { class: 'req-needs' }, out);
+  }
+
+  /* ---- Project Phase dashboard metrics ---- */
+  function projMetrics(list) {
+    const m = { total: list.length, byStage: {}, won: 0, lost: 0, meetingsDone: 0, quotationsSent: 0, conceptsSent: 0, needConcept: 0, needQuotation: 0 };
+    PROJ_STAGES.forEach((s) => { m.byStage[s.key] = 0; });
+    list.forEach((p) => {
+      const st = projStage(p);
+      m.byStage[st] = (m.byStage[st] || 0) + 1;
+      if (st === 'won') m.won++;
+      if (st === 'lost') m.lost++;
+      if (p.meeting && p.meeting.confirmed) m.meetingsDone++;
+      if (p.proposal && p.proposal.confirmed) m.quotationsSent++;
+      if (p.solution && p.solution.confirmed) m.conceptsSent++;
+      if (p.fields && p.fields.needConcept) m.needConcept++;
+      if (p.fields && p.fields.needQuotation) m.needQuotation++;
+    });
+    return m;
+  }
+  function companyMetrics(list) {
+    const map = new Map();
+    list.forEach((p) => {
+      const c = ((p.fields && p.fields.customer) || '').trim() || '—';
+      let e = map.get(c);
+      if (!e) { e = { company: c, total: 0, reqConcept: 0, reqQuote: 0, conceptSent: 0, quoteSent: 0, conceptDropped: 0, won: 0 }; map.set(c, e); }
+      e.total++;
+      if (p.fields && p.fields.needConcept) e.reqConcept++;
+      if (p.fields && p.fields.needQuotation) e.reqQuote++;
+      if (p.solution && p.solution.confirmed) e.conceptSent++;
+      if (p.proposal && p.proposal.confirmed) e.quoteSent++;
+      if (p.solution && p.solution.confirmed && p.decision === 'lost') e.conceptDropped++;
+      if (p.decision === 'won') e.won++;
+    });
+    return Array.from(map.values()).sort((a, b) => b.total - a.total || b.won - a.won);
+  }
+
+  /* Small dependency-free SVG charts, drawn in the app's own colours, with
+     a draw-in entrance and a hover preview on every value. */
+  function donutEl(segs, bigText, smallLabel, opts) {
+    opts = opts || {};
+    const shown = segs.filter((s) => s.value > 0);
+    const total = shown.reduce((s, x) => s + x.value, 0);
+    const r = 42, cx = 60, cy = 60, sw = 16, C = 2 * Math.PI * r;
+    let start = 0;
+    const arcs = shown.map((s, i) => {
+      const len = (s.value / (total || 1)) * C;
+      const off = (-start).toFixed(2);
+      start += len;
+      return `<circle class="donut-arc" data-i="${i}" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${s.color}" stroke-width="${sw}" stroke-dasharray="var(--arcLen) 9999" stroke-dashoffset="${off}" transform="rotate(-90 ${cx} ${cy})" style="--arcLen:${len.toFixed(2)};animation-delay:${(i * 0.12).toFixed(2)}s"/>`;
+    }).join('');
+
+    const wrap = el('div', { class: 'chart-donut-wrap' });
+    const holder = el('div', { class: 'chart-donut' });
+    holder.innerHTML = `<svg viewBox="0 0 120 120" class="donut-svg" role="img">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(140,140,150,0.16)" stroke-width="${sw}"/>
+      ${arcs}
+      <text x="60" y="58" text-anchor="middle" class="donut-big">${bigText}</text>
+      <text x="60" y="76" text-anchor="middle" class="donut-small">${smallLabel}</text>
+    </svg>`;
+    wrap.appendChild(holder);
+
+    /* Linked legend + shared hover: pointing at a slice or a legend row
+       previews that value (and its share) in the centre. */
+    const legend = el('div', { class: 'chart-legend' });
+    const bigEl = holder.querySelector('.donut-big');
+    const smallEl = holder.querySelector('.donut-small');
+    const arcEls = holder.querySelectorAll('.donut-arc');
+    shown.forEach((s, i) => {
+      const pct = Math.round(s.value / (total || 1) * 100);
+      const item = el('span', { class: 'cl-item', tabindex: '0' }, [
+        el('span', { class: 'cl-dot', style: `background:${s.color}` }),
+        el('span', { class: 'cl-label' }, [L(s.label)]),
+        el('span', { class: 'cl-val', text: String(s.value) }),
+      ]);
+      const arc = arcEls[i];
+      const enter = () => {
+        bigEl.textContent = String(s.value);
+        smallEl.textContent = T(s.label) + ' · ' + pct + '%';
+        holder.classList.add('is-hot');
+        if (arc) arc.classList.add('hot');
+        item.classList.add('hot');
+      };
+      const leave = () => {
+        bigEl.textContent = bigText;
+        smallEl.textContent = smallLabel;
+        holder.classList.remove('is-hot');
+        if (arc) arc.classList.remove('hot');
+        item.classList.remove('hot');
+      };
+      [item, arc].forEach((n) => { if (!n) return; n.addEventListener('mouseenter', enter); n.addEventListener('mouseleave', leave); });
+      item.addEventListener('focus', enter); item.addEventListener('blur', leave);
+      if (opts.onPick) {
+        item.classList.add('is-click');
+        const pick = () => opts.onPick(s);
+        item.addEventListener('click', pick);
+        if (arc) { arc.style.cursor = 'pointer'; arc.addEventListener('click', pick); }
+      }
+      legend.appendChild(item);
+    });
+    wrap.appendChild(legend);
+    return wrap;
+  }
+  function chartTrunc(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+  function columnsEl(items, opts) {
+    opts = opts || {};
+    const max = Math.max(1, ...items.map((i) => i.value));
+    const base = opts.share ? items.reduce((s, i) => s + i.value, 0) : (items.length ? items[0].value : 0);
+    const n = items.length, bw = 46, gap = 24, padX = 16;
+    const padTop = 24, plotH = opts.short ? 82 : 150, padBot = opts.short ? 26 : 34;
+    const W = padX * 2 + n * bw + (n - 1) * gap, H = padTop + plotH + padBot;
+    const bars = items.map((it, i) => {
+      const x = padX + i * (bw + gap);
+      const h = Math.max(2, (it.value / max) * plotH);
+      const y = padTop + plotH - h;
+      const pct = base ? Math.round(it.value / base * 100) : 0;
+      const lbl = opts.trunc ? chartTrunc(T(it.label), opts.trunc) : T(it.label);
+      return `<g class="col-bar${opts.onPick ? ' is-click' : ''}" style="animation-delay:${(i * 0.08).toFixed(2)}s">
+        <rect x="${x}" y="${y}" width="${bw}" height="${h}" rx="6" fill="${it.color}"/>
+        <text x="${x + bw / 2}" y="${y - 7}" text-anchor="middle" class="col-val">${it.value}</text>
+        <text x="${x + bw / 2}" y="${y - 22}" text-anchor="middle" class="col-pct">${pct}%</text>
+        <text x="${x + bw / 2}" y="${padTop + plotH + 20}" text-anchor="middle" class="col-lbl">${lbl}</text>
+      </g>`;
+    }).join('');
+    const holder = el('div', { class: 'chart-cols' });
+    holder.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="col-svg" preserveAspectRatio="xMidYMax meet">${bars}</svg>`;
+    if (opts.onPick) holder.querySelectorAll('.col-bar').forEach((g, i) => g.addEventListener('click', () => opts.onPick(items[i])));
+    return holder;
+  }
+
+  const COMPANY_COLORS = ['#0a84ff', '#bf5af3', '#00c2d6', '#ff9f0a', '#30d158', '#ff6b5e', '#5e5ce6', '#ffd60a', '#15e6cf', '#ff453a'];
+  function companyColor(name, list) {
+    const names = Array.from(new Set(list.map((p) => ((p.fields && p.fields.customer) || '').trim() || '—'))).sort((a, b) => a.localeCompare(b));
+    const i = names.indexOf(name);
+    return COMPANY_COLORS[(i < 0 ? 0 : i) % COMPANY_COLORS.length];
+  }
+  function openCompany(name) { state.dashCompany = name; render(); }
+
+  function viewProjDash(root) {
+    const list = listableProjects();
+    if (state.dashCompany) return viewProjDashCompany(root, list, state.dashCompany);
+    const m = projMetrics(list);
+
+    root.appendChild(el('div', { class: 'page-head' }, [
+      el('div', {}, [
+        el('h1', { class: 'page-title' }, [L(UI.nav_dashboard)]),
+        el('div', { class: 'page-sub' }, [L({ en: 'Project Phase — overall status and demand by company', th: 'เฟสโครงการ — ภาพรวมสถานะและความต้องการแยกตามบริษัท' })]),
+      ]),
+      el('button', { class: 'btn btn-primary no-print', onclick: () => go('reqlist') }, [L(UI.nav_req_list)]),
+    ]));
+
+    if (!list.length) {
+      root.appendChild(el('div', { class: 'empty' }, [L({ en: 'No requirements yet — add one, or load examples from the Requirements page.', th: 'ยังไม่มีความต้องการ — เพิ่มใหม่ หรือโหลดตัวอย่างจากหน้ารายการ' })]));
+      return;
+    }
+
+    const winRate = (m.won + m.lost) ? Math.round(m.won / (m.won + m.lost) * 100) : 0;
+    const tiles = [
+      [m.total, { en: 'Total requirements', th: 'ความต้องการทั้งหมด' }, '#0a84ff'],
+      [m.conceptsSent, { en: 'Concepts sent', th: 'ส่งคอนเซ็ปต์' }, '#bf5af3'],
+      [m.quotationsSent, { en: 'Quotations sent', th: 'ส่งใบเสนอราคา' }, '#00c2d6'],
+      [m.meetingsDone, { en: 'Meetings held', th: 'ประชุมแล้ว' }, '#ff9f0a'],
+      [m.won, { en: 'Won', th: 'ได้งาน' }, '#30d158'],
+      [m.lost, { en: 'Lost', th: 'เสียงาน' }, '#ff453a'],
+      [winRate + '%', { en: 'Win rate', th: 'อัตราได้งาน' }, '#ffd60a'],
+    ];
+    const grid = el('div', { class: 'stat-grid' });
+    tiles.forEach(([v, label, color], i) => {
+      grid.appendChild(el('div', { class: 'stat stat-pop', style: `--stat-accent:${color};animation-delay:${(i * 0.06).toFixed(2)}s` }, [
+        el('div', { class: 'stat-value', text: String(v) }),
+        el('div', { class: 'stat-label' }, [L(label)]),
+      ]));
+    });
+    root.appendChild(grid);
+
+    /* Donut (outcome mix) + pillar (pipeline funnel), side by side. */
+    const openN = m.total - m.won - m.lost;
+    const outSegs = [
+      { label: { en: 'Won', th: 'ได้งาน' }, value: m.won, color: '#30d158' },
+      { label: { en: 'In progress', th: 'กำลังดำเนินการ' }, value: openN, color: '#0a84ff' },
+      { label: { en: 'Lost', th: 'เสียงาน' }, value: m.lost, color: '#ff453a' },
+    ];
+    const funnel = [
+      { label: { en: 'Reqs', th: 'ทั้งหมด' }, value: m.total, color: '#0a84ff' },
+      { label: { en: 'Concept', th: 'คอนเซ็ปต์' }, value: m.conceptsSent, color: '#bf5af3' },
+      { label: { en: 'Quote', th: 'ใบเสนอ' }, value: m.quotationsSent, color: '#00c2d6' },
+      { label: { en: 'Meeting', th: 'ประชุม' }, value: m.meetingsDone, color: '#ff9f0a' },
+      { label: { en: 'Won', th: 'ได้งาน' }, value: m.won, color: '#30d158' },
+    ];
+    const charts = el('div', { class: 'chart-2col' });
+    const dPanel = el('section', { class: 'panel chart-panel' });
+    dPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [el('h2', { class: 'panel-title' }, [L({ en: 'Outcome mix', th: 'สัดส่วนผลลัพธ์' })])])]));
+    const dBody = el('div', { class: 'panel-body chart-body' });
+    dBody.appendChild(donutEl(outSegs, String(m.total), T({ en: 'total', th: 'ทั้งหมด' })));
+    dPanel.appendChild(dBody);
+    const cPanel = el('section', { class: 'panel chart-panel' });
+    cPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [
+      el('h2', { class: 'panel-title' }, [L({ en: 'Pipeline funnel', th: 'กรวยไปป์ไลน์' })]),
+      el('div', { class: 'panel-sub' }, [L({ en: 'How many reach each stage', th: 'จำนวนที่ผ่านแต่ละขั้น' })]),
+    ])]));
+    const cBody = el('div', { class: 'panel-body chart-body' });
+    cBody.appendChild(columnsEl(funnel));
+    cPanel.appendChild(cBody);
+    charts.appendChild(dPanel); charts.appendChild(cPanel);
+    root.appendChild(charts);
+
+    /* By company — a donut (share of requirements) + a pillar (count per
+       company), both clickable to drill into that company's own dashboard. */
+    const comp = companyMetrics(list);
+    const compSegs = comp.map((c) => ({ label: { en: c.company, th: c.company }, value: c.total, color: companyColor(c.company, list), key: c.company }));
+    const compCols = comp.map((c) => ({ label: { en: c.company, th: c.company }, value: c.total, color: companyColor(c.company, list), key: c.company }));
+    const cc = el('div', { class: 'chart-2col is-7030' });
+    const ccPanel = el('section', { class: 'panel chart-panel' });
+    ccPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [
+      el('h2', { class: 'panel-title' }, [L({ en: 'Company volume', th: 'ปริมาณต่อบริษัท' })]),
+      el('div', { class: 'panel-sub' }, [L({ en: 'Tap a bar to open that company', th: 'แตะแท่งเพื่อดูรายบริษัท' })]),
+    ])]));
+    const ccBody = el('div', { class: 'panel-body chart-body' });
+    ccBody.appendChild(columnsEl(compCols, { share: true, trunc: 9, short: true, onPick: (it) => openCompany(it.key) }));
+    ccPanel.appendChild(ccBody);
+    const cdPanel = el('section', { class: 'panel chart-panel' });
+    cdPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [
+      el('h2', { class: 'panel-title' }, [L({ en: 'Requirements share', th: 'สัดส่วนความต้องการ' })]),
+      el('div', { class: 'panel-sub' }, [L({ en: 'Tap a slice', th: 'แตะเพื่อดู' })]),
+    ])]));
+    const cdBody = el('div', { class: 'panel-body chart-body' });
+    cdBody.appendChild(donutEl(compSegs, String(m.total), T({ en: 'total', th: 'ทั้งหมด' }), { onPick: (s) => openCompany(s.key) }));
+    cdPanel.appendChild(cdBody);
+    cc.appendChild(ccPanel); cc.appendChild(cdPanel);
+    /* appended later, as its own section below the overall charts */
+
+    /* Count in each phase — a labelled bar per pipeline stage. */
+    const phaseSec = el('section', { class: 'panel' });
+    phaseSec.appendChild(el('header', { class: 'panel-head' }, [
+      el('div', {}, [el('h2', { class: 'panel-title' }, [L({ en: 'Requirements by phase', th: 'ความต้องการแยกตามเฟส' })])]),
+    ]));
+    const pbody = el('div', { class: 'panel-body' });
+    const phaseStages = PROJ_STAGES.filter((s) => s.key !== 'feasibility');
+    const maxCount = Math.max(1, ...phaseStages.map((s) => m.byStage[s.key] || 0));
+    phaseStages.forEach((s, i) => {
+      const c = m.byStage[s.key] || 0;
+      pbody.appendChild(el('div', { class: 'phase-row', style: `--pc:${s.color}` }, [
+        el('span', { class: 'phase-name' }, [L(s.label)]),
+        el('span', { class: 'phase-track' }, [el('span', { class: 'phase-fill', style: `width:${Math.round(c / maxCount * 100)}%;animation-delay:${(i * 0.07).toFixed(2)}s` })]),
+        el('span', { class: 'phase-count', text: String(c) }),
+      ]));
+    });
+    phaseSec.appendChild(pbody);
+    root.appendChild(phaseSec);
+
+    /* ---- Its own section: everything broken down by company ---- */
+    root.appendChild(el('div', { class: 'dash-section' }, [
+      el('span', { class: 'dash-section-line' }),
+      el('h2', { class: 'dash-section-title' }, [icon('records', 16), L({ en: 'By company', th: 'แยกตามบริษัท' })]),
+      el('span', { class: 'dash-section-line' }),
+    ]));
+    root.appendChild(cc);
+
+    /* Per-company demand and outcome. */
+    const rows = companyMetrics(list);
+    const tableSec = el('section', { class: 'panel' });
+    tableSec.appendChild(el('header', { class: 'panel-head' }, [
+      el('div', {}, [
+        el('h2', { class: 'panel-title' }, [L({ en: 'Company detail', th: 'รายละเอียดรายบริษัท' })]),
+        el('div', { class: 'panel-sub' }, [L({ en: 'What each customer asked for, and where it landed. Tap a row to open.', th: 'สิ่งที่ลูกค้าแต่ละรายขอ และผลลัพธ์ — แตะแถวเพื่อเปิด' })]),
+      ]),
+    ]));
+    const wrap = el('div', { class: 'proj-table-wrap' });
+    const table = el('table', { class: 'proj-table' });
+    const H = (obj) => el('th', {}, [L(obj)]);
+    table.appendChild(el('thead', {}, [el('tr', {}, [
+      H({ en: 'Company', th: 'บริษัท' }),
+      H({ en: 'Reqs', th: 'ทั้งหมด' }),
+      H({ en: 'Concept req.', th: 'ขอคอนเซ็ปต์' }),
+      H({ en: 'Quote req.', th: 'ขอใบเสนอราคา' }),
+      H({ en: 'Dropped', th: 'ไม่ไปต่อ' }),
+      H({ en: 'Won', th: 'ได้งาน' }),
+    ])]));
+    const tbody = el('tbody', {});
+    rows.forEach((r) => {
+      tbody.appendChild(el('tr', { class: 'pt-click', onclick: () => openCompany(r.company), title: T({ en: 'Open ', th: 'เปิด ' }) + r.company }, [
+        el('td', { class: 'pt-company' }, [el('span', { class: 'pt-cdot', style: `background:${companyColor(r.company, list)}` }), r.company]),
+        el('td', {}, [el('span', { class: 'pt-num', text: String(r.total) })]),
+        el('td', { text: String(r.reqConcept) }),
+        el('td', { text: String(r.reqQuote) }),
+        el('td', {}, [r.conceptDropped ? el('span', { class: 'pt-drop', text: String(r.conceptDropped) }) : el('span', { class: 'pt-zero', text: '0' })]),
+        el('td', {}, [r.won ? el('span', { class: 'pt-won', text: String(r.won) }) : el('span', { class: 'pt-zero', text: '0' })]),
+      ]));
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+    tableSec.appendChild(wrap);
+    root.appendChild(tableSec);
+  }
+
+  /* One company's own dashboard — reached by clicking a company anywhere
+     on the overview. Same donut + pillar, scoped to that customer. */
+  function viewProjDashCompany(root, all, company) {
+    const list = all.filter((p) => (((p.fields && p.fields.customer) || '').trim() || '—') === company);
+    const m = projMetrics(list);
+    const accent = companyColor(company, all);
+    const winRate = (m.won + m.lost) ? Math.round(m.won / (m.won + m.lost) * 100) : 0;
+
+    root.appendChild(el('div', { class: 'page-head' }, [
+      el('div', {}, [
+        el('h1', { class: 'page-title company-title' }, [
+          el('span', { class: 'pt-cdot', style: `background:${accent}` }),
+          el('span', { text: company }),
+          el('span', { class: 'company-tag', style: `--sc:${accent}` }, [L({ en: 'customer', th: 'ลูกค้า' })]),
+        ]),
+        el('div', { class: 'page-sub' }, [
+          L({ en: 'Everything for this customer — ', th: 'ภาพรวมของลูกค้ารายนี้ — ' }),
+          String(list.length) + ' ', L({ en: 'requirements', th: 'ความต้องการ' }),
+          ' · ' + m.won + ' ', L({ en: 'won', th: 'ได้งาน' }),
+          ' · ' + m.lost + ' ', L({ en: 'lost', th: 'เสียงาน' }),
+          ' · ' + winRate + '% ', L({ en: 'win rate', th: 'อัตราได้งาน' }),
+        ]),
+      ]),
+      el('button', { class: 'btn no-print', onclick: () => { state.dashCompany = null; render(); } }, [L({ en: '← All companies', th: '← ทุกบริษัท' })]),
+    ]));
+
+    const tiles = [
+      [m.total, { en: 'Requirements', th: 'ความต้องการ' }, accent],
+      [m.conceptsSent, { en: 'Concepts sent', th: 'ส่งคอนเซ็ปต์' }, '#bf5af3'],
+      [m.quotationsSent, { en: 'Quotations sent', th: 'ส่งใบเสนอราคา' }, '#00c2d6'],
+      [m.won, { en: 'Won', th: 'ได้งาน' }, '#30d158'],
+      [m.lost, { en: 'Lost', th: 'เสียงาน' }, '#ff453a'],
+      [winRate + '%', { en: 'Win rate', th: 'อัตราได้งาน' }, '#ffd60a'],
+    ];
+    const grid = el('div', { class: 'stat-grid' });
+    tiles.forEach(([v, label, color], i) => {
+      grid.appendChild(el('div', { class: 'stat stat-pop', style: `--stat-accent:${color};animation-delay:${(i * 0.06).toFixed(2)}s` }, [
+        el('div', { class: 'stat-value', text: String(v) }),
+        el('div', { class: 'stat-label' }, [L(label)]),
+      ]));
+    });
+    root.appendChild(grid);
+
+    const openN = m.total - m.won - m.lost;
+    const outSegs = [
+      { label: { en: 'Won', th: 'ได้งาน' }, value: m.won, color: '#30d158' },
+      { label: { en: 'In progress', th: 'กำลังดำเนินการ' }, value: openN, color: '#0a84ff' },
+      { label: { en: 'Lost', th: 'เสียงาน' }, value: m.lost, color: '#ff453a' },
+    ];
+    const funnel = [
+      { label: { en: 'Reqs', th: 'ทั้งหมด' }, value: m.total, color: '#0a84ff' },
+      { label: { en: 'Concept', th: 'คอนเซ็ปต์' }, value: m.conceptsSent, color: '#bf5af3' },
+      { label: { en: 'Quote', th: 'ใบเสนอ' }, value: m.quotationsSent, color: '#00c2d6' },
+      { label: { en: 'Meeting', th: 'ประชุม' }, value: m.meetingsDone, color: '#ff9f0a' },
+      { label: { en: 'Won', th: 'ได้งาน' }, value: m.won, color: '#30d158' },
+    ];
+    const charts = el('div', { class: 'chart-2col' });
+    const dPanel = el('section', { class: 'panel chart-panel' });
+    dPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [el('h2', { class: 'panel-title' }, [L({ en: 'Outcome mix', th: 'สัดส่วนผลลัพธ์' })])])]));
+    const dBody = el('div', { class: 'panel-body chart-body' });
+    dBody.appendChild(donutEl(outSegs, String(m.total), T({ en: 'total', th: 'ทั้งหมด' })));
+    dPanel.appendChild(dBody);
+    const cPanel = el('section', { class: 'panel chart-panel' });
+    cPanel.appendChild(el('header', { class: 'panel-head' }, [el('div', {}, [el('h2', { class: 'panel-title' }, [L({ en: 'Pipeline funnel', th: 'กรวยไปป์ไลน์' })])])]));
+    const cBody = el('div', { class: 'panel-body chart-body' });
+    cBody.appendChild(columnsEl(funnel));
+    cPanel.appendChild(cBody);
+    charts.appendChild(dPanel); charts.appendChild(cPanel);
+    root.appendChild(charts);
+
+    /* This company's requirements, as the same compact rows. */
+    const listSec = el('section', { class: 'panel' });
+    listSec.appendChild(el('header', { class: 'panel-head' }, [
+      el('div', {}, [el('h2', { class: 'panel-title' }, [L({ en: 'Requirements', th: 'รายการความต้องการ' })])]),
+    ]));
+    const lb = el('div', { class: 'panel-body' });
+    const rl = el('div', { class: 'req-list' });
+    list.slice().sort((a, b) => (STAGE_ORDER[projStage(a)] - STAGE_ORDER[projStage(b)]) || ((b.updatedAt || '') > (a.updatedAt || '') ? 1 : -1)).forEach((p) => rl.appendChild(reqCard(p)));
+    lb.appendChild(rl);
+    listSec.appendChild(lb);
+    root.appendChild(listSec);
   }
 
   function viewDashboard(root) {
@@ -9738,6 +10878,63 @@ const FNCloud = (function () {
     });
   }
 
+  /* Add a name to the register (with an optional position), then hand it
+     back — used by every single-person picker. */
+  function openAddName(onAdded) {
+    const nameInput = el('input', { type: 'text', placeholder: T({ en: 'Full name', th: 'ชื่อ-นามสกุล' }) });
+    const posSel = el('select', {});
+    posSel.appendChild(el('option', { value: '', text: T({ en: '— position (optional) —', th: '— ตำแหน่ง (ถ้ามี) —' }) }));
+    POSITIONS.forEach((p) => posSel.appendChild(el('option', { value: p.value, text: T(p.label) })));
+    const err = el('div', { class: 'modal-error', style: 'display:none' });
+    modal({
+      title: { en: 'Add a name', th: 'เพิ่มรายชื่อ' },
+      note: { en: 'Saved to the list, so you can reuse it next time.', th: 'บันทึกไว้ในรายชื่อ เลือกใช้ซ้ำได้ครั้งต่อไป' },
+      body: [
+        err,
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Name', th: 'ชื่อ' })]), nameInput]),
+        el('div', { class: 'field' }, [el('label', {}, [L({ en: 'Position', th: 'ตำแหน่ง' })]), posSel]),
+      ],
+      confirmLabel: { en: 'Add', th: 'เพิ่ม' },
+      onConfirm: () => {
+        const name = nameInput.value.trim();
+        if (!name) { err.style.display = ''; err.textContent = T({ en: 'Please type a name.', th: 'กรุณากรอกชื่อ' }); return false; }
+        addPerson(name, posSel.value);
+        if (onAdded) onAdded(name);
+        toast(T({ en: 'Name added', th: 'เพิ่มรายชื่อแล้ว' }));
+        return true;
+      },
+    });
+    setTimeout(() => nameInput.focus(), 60);
+  }
+
+  /* One dropdown that assigns a single person: pick from the register,
+     add a new name (kept for reuse), or clear. opts = { value, onPick,
+     placeholder }. */
+  function personSelect(opts) {
+    const holder = el('div', { class: 'assignee-field' });
+    function rebuild() {
+      holder.innerHTML = '';
+      const sel = el('select', { class: 'part-select assignee-select' });
+      sel.appendChild(el('option', { value: '', text: T(opts.placeholder || { en: '— unassigned —', th: '— ยังไม่มอบหมาย —' }) }));
+      people().forEach((p) => sel.appendChild(el('option', { value: 'name:' + p.name, text: p.position ? `${p.name} — ${T(positionLabel(p.position))}` : p.name })));
+      if (opts.value && !people().some((p) => p.name.toLowerCase() === opts.value.toLowerCase())) {
+        sel.appendChild(el('option', { value: 'name:' + opts.value, text: opts.value }));
+      }
+      sel.appendChild(el('option', { value: '__add', text: T({ en: '+ Add new name…', th: '+ เพิ่มรายชื่อใหม่…' }) }));
+      sel.value = opts.value ? 'name:' + opts.value : '';
+      sel.addEventListener('change', () => {
+        const v = sel.value;
+        if (v === '__add') { sel.value = opts.value ? 'name:' + opts.value : ''; openAddName((name) => { opts.value = name; opts.onPick(name); rebuild(); }); return; }
+        const name = v.startsWith('name:') ? v.slice(5) : '';
+        opts.value = name;
+        opts.onPick(name);
+      });
+      holder.appendChild(sel);
+    }
+    rebuild();
+    return holder;
+  }
+
   /* Choosing one known identity value fills in the rest. */
   function autofillIdentity(rec, key, value) {
     const match = machineMatching(key, value, rec.id);
@@ -10766,7 +11963,7 @@ const FNCloud = (function () {
      Cheap: one small request, ignored entirely when offline, and
      throttled so switching tabs does not hammer it. */
 
-  const BUILD_ID = '20260827-092744';
+  const BUILD_ID = '20260829-082312';
   let lastUpdateCheck = 0;
 
   async function checkForUpdate() {
